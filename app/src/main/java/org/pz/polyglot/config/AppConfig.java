@@ -17,21 +17,32 @@ public class AppConfig {
     private static final ObjectMapper objectMapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
     private static final Logger logger = Logger.getLogger(AppConfig.class.getName());
 
-    private static volatile AppConfig instance;
-    private File gameFolder, steamModsFolder, userModsFolder;
+    private static AppConfig instance;
 
     @JsonProperty("language")
     private String language = "en";
+    @JsonProperty("gamePath")
+    private String gamePath;
+    @JsonProperty("steamModsPath")
+    private String steamModsPath;
+    @JsonProperty("userModsPath")
+    private String userModsPath;
 
-    @JsonProperty("gameFolder")
-    private String gameFolderPath;
-    @JsonProperty("steamModsFolder")
-    private String steamModsFolderPath;
-    @JsonProperty("userModsFolder")
-    private String userModsFolderPath;
+    public static AppConfig getInstance() {
+        if (instance == null) {
+            instance = loadOrCreate();
+        }
+        return instance;
+    }
 
-    private static Path getConfigFilePath() {
-        return Path.of(System.getProperty("user.dir"), CONFIG_FILE_NAME);
+    public void save() {
+        Path configPath = getConfigFilePath();
+        File configFile = configPath.toFile();
+        try {
+            objectMapper.writeValue(configFile, this);
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, "Failed to save config file", e);
+        }
     }
 
     public String getLanguage() {
@@ -50,15 +61,28 @@ public class AppConfig {
         this.language = languageCode.trim();
     }
 
-    public static AppConfig getInstance() {
-        if (instance == null) {
-            synchronized (AppConfig.class) {
-                if (instance == null) {
-                    instance = loadOrCreate();
-                }
-            }
-        }
-        return instance;
+    public String getGamePath() {
+        return gamePath;
+    }
+
+    public void setGamePath(String path) {
+        this.gamePath = path;
+    }
+
+    public String getSteamModsPath() {
+        return steamModsPath;
+    }
+
+    public void setSteamModsPath(String path) {
+        this.steamModsPath = path;
+    }
+
+    public String getUserModsPath() {
+        return userModsPath;
+    }
+
+    public void setUserModsPath(String path) {
+        this.userModsPath = path;
     }
 
     private static AppConfig loadOrCreate() {
@@ -79,55 +103,7 @@ public class AppConfig {
         return config;
     }
 
-    public synchronized void save() {
-        Path configPath = getConfigFilePath();
-        File configFile = configPath.toFile();
-        try {
-            objectMapper.writeValue(configFile, this);
-        } catch (IOException e) {
-            logger.log(Level.SEVERE, "Failed to save config file", e);
-        }
-    }
-
-    public boolean hasValidFolders() {
-        return getGameFolder() != null && getGameFolder().exists() &&
-                getSteamModsFolder() != null && getSteamModsFolder().exists() &&
-                getUserModsFolder() != null && getUserModsFolder().exists();
-    }
-
-    public File getGameFolder() {
-        if (gameFolder == null && gameFolderPath != null) {
-            gameFolder = new File(gameFolderPath);
-        }
-        return gameFolder;
-    }
-
-    public void setGameFolder(File f) {
-        this.gameFolder = f;
-        this.gameFolderPath = (f != null) ? f.getAbsolutePath() : null;
-    }
-
-    public File getSteamModsFolder() {
-        if (steamModsFolder == null && steamModsFolderPath != null) {
-            steamModsFolder = new File(steamModsFolderPath);
-        }
-        return steamModsFolder;
-    }
-
-    public void setSteamModsFolder(File f) {
-        this.steamModsFolder = f;
-        this.steamModsFolderPath = (f != null) ? f.getAbsolutePath() : null;
-    }
-
-    public File getUserModsFolder() {
-        if (userModsFolder == null && userModsFolderPath != null) {
-            userModsFolder = new File(userModsFolderPath);
-        }
-        return userModsFolder;
-    }
-
-    public void setUserModsFolder(File f) {
-        this.userModsFolder = f;
-        this.userModsFolderPath = (f != null) ? f.getAbsolutePath() : null;
+    private static Path getConfigFilePath() {
+        return Path.of(System.getProperty("user.dir"), CONFIG_FILE_NAME);
     }
 }

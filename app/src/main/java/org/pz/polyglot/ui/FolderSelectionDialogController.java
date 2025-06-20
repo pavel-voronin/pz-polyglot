@@ -42,12 +42,12 @@ public class FolderSelectionDialogController {
 
     public void setConfig(AppConfig config) {
         this.config = config;
-        if (config.getGameFolder() != null)
-            gameField.setText(config.getGameFolder().getAbsolutePath());
-        if (config.getSteamModsFolder() != null)
-            steamField.setText(config.getSteamModsFolder().getAbsolutePath());
-        if (config.getUserModsFolder() != null)
-            userField.setText(config.getUserModsFolder().getAbsolutePath());
+        if (config.getGamePath() != null)
+            gameField.setText(config.getGamePath());
+        if (config.getSteamModsPath() != null)
+            steamField.setText(config.getSteamModsPath());
+        if (config.getUserModsPath() != null)
+            userField.setText(config.getUserModsPath());
     }
 
     public void setDialogStage(Stage stage) {
@@ -120,9 +120,9 @@ public class FolderSelectionDialogController {
 
     @FXML
     private void onOk(ActionEvent e) {
-        config.setGameFolder(new File(gameField.getText()));
-        config.setSteamModsFolder(new File(steamField.getText()));
-        config.setUserModsFolder(new File(userField.getText()));
+        config.setGamePath(gameField.getText());
+        config.setSteamModsPath(steamField.getText());
+        config.setUserModsPath(userField.getText());
         config.save();
         foldersSelected = true;
         dialogStage.close();

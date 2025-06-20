@@ -7,7 +7,6 @@ import javafx.scene.Scene;
 import java.util.logging.Logger;
 
 import org.pz.polyglot.App;
-import org.pz.polyglot.config.AppConfig;
 import org.pz.polyglot.i18n.I18nManager;
 
 import java.util.logging.Level;
@@ -21,7 +20,7 @@ public class MainWindowManager {
     private static final int DEFAULT_WIDTH = 1200;
     private static final int DEFAULT_HEIGHT = 800;
 
-    public static void showMain(Stage stage, AppConfig config) {
+    public static void showMain(Stage stage) {
         try {
             FXMLLoader loader = new FXMLLoader(App.class.getResource("/fxml/Main.fxml"), i18n.getBundle());
             Parent root = loader.load();
