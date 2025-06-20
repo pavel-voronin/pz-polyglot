@@ -1,14 +1,13 @@
-package org.pz.polyglot;
+package org.pz.polyglot.config;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -22,7 +21,7 @@ public class AppConfig {
     private File gameFolder, steamModsFolder, userModsFolder;
 
     @JsonProperty("language")
-    private Language language = Language.ENGLISH;
+    private String language = "en";
 
     @JsonProperty("gameFolder")
     private String gameFolderPath;
@@ -31,44 +30,24 @@ public class AppConfig {
     @JsonProperty("userModsFolder")
     private String userModsFolderPath;
 
-    public enum Language {
-        ENGLISH("en");
-
-        @JsonValue
-        private final String code;
-
-        Language(String code) {
-            this.code = code;
-        }
-
-        public String getCode() {
-            return code;
-        }
-
-        @JsonCreator
-        public static Language fromCode(String code) {
-            for (Language lang : values()) {
-                if (lang.code.equalsIgnoreCase(code)) {
-                    return lang;
-                }
-            }
-            throw new IllegalArgumentException("Unsupported language: " + code);
-        }
-    }
-
     private static Path getConfigFilePath() {
         return Path.of(System.getProperty("user.dir"), CONFIG_FILE_NAME);
     }
 
     public String getLanguage() {
-        return language.getCode();
+        return language;
     }
 
     public void setLanguage(String languageCode) {
         if (languageCode == null || languageCode.trim().isEmpty()) {
             throw new IllegalArgumentException("Language cannot be null or empty");
         }
-        this.language = Language.fromCode(languageCode.trim());
+        // Validate using Locale.forLanguageTag (accepts any valid BCP 47 tag)
+        Locale locale = Locale.forLanguageTag(languageCode.trim());
+        if (locale.getLanguage().isEmpty()) {
+            throw new IllegalArgumentException("Invalid language code: " + languageCode);
+        }
+        this.language = languageCode.trim();
     }
 
     public static AppConfig getInstance() {

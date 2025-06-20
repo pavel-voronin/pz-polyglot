@@ -1,4 +1,4 @@
-package org.pz.polyglot;
+package org.pz.polyglot.ui;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.TreeTableColumn;
@@ -41,6 +41,20 @@ public class MainController {
     private TreeTableColumn<ExampleRow, String> enColumn;
     @FXML
     private TreeTableView<ExampleRow> treeTableView;
+    @FXML
+    private javafx.scene.control.MenuBar menuBar;
+    @FXML
+    private javafx.scene.control.Menu fileMenu;
+    @FXML
+    private javafx.scene.control.Menu helpMenu;
+    @FXML
+    private javafx.scene.control.MenuItem quitMenuItem;
+    @FXML
+    private javafx.scene.control.MenuItem aboutMenuItem;
+    @FXML
+    private javafx.scene.control.MenuItem documentationMenuItem;
+    @FXML
+    private javafx.scene.control.MenuItem discordMenuItem;
 
     /**
      * Represents an icon and its associated action for use in a tree table cell.
@@ -75,28 +89,26 @@ public class MainController {
      */
     @FXML
     private void initialize() {
-        if (treeTableView != null) {
-            // Set up columns
-            if (keyColumn != null) {
-                keyColumn
-                        .setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getValue().getValue()));
-                keyColumn.setCellFactory(col -> createIconTreeTableCell(List.of(
-                        new IconAction("/fxml/icon.png", "First icon clicked!", true),
-                        new IconAction("/fxml/icon.png", "Second icon clicked!", false))));
-            }
-            if (enColumn != null) {
-                enColumn.setCellValueFactory(
-                        param -> new SimpleStringProperty("EN: " + param.getValue().getValue().getValue()));
-            }
-            // Add 40 example rows
-            TreeItem<ExampleRow> root = new TreeItem<>(new ExampleRow("Root"));
-            root.setExpanded(true);
-            IntStream.rangeClosed(1, 40).forEach(i -> {
-                root.getChildren().add(new TreeItem<>(new ExampleRow("Item " + i)));
-            });
-            treeTableView.setRoot(root);
-            treeTableView.setShowRoot(false);
+        // All text is now set via FXML resource bundle, so no manual setText here
+        // Set up columns
+        if (keyColumn != null) {
+            keyColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getValue().getValue()));
+            keyColumn.setCellFactory(col -> createIconTreeTableCell(List.of(
+                    new IconAction("/fxml/icon.png", "First icon clicked!", true),
+                    new IconAction("/fxml/icon.png", "Second icon clicked!", false))));
         }
+        if (enColumn != null) {
+            enColumn.setCellValueFactory(
+                    param -> new SimpleStringProperty("EN: " + param.getValue().getValue().getValue()));
+        }
+        // Add 40 example rows
+        TreeItem<ExampleRow> root = new TreeItem<>(new ExampleRow("Root"));
+        root.setExpanded(true);
+        IntStream.rangeClosed(1, 40).forEach(i -> {
+            root.getChildren().add(new TreeItem<>(new ExampleRow("Item " + i)));
+        });
+        treeTableView.setRoot(root);
+        treeTableView.setShowRoot(false);
     }
 
     /**

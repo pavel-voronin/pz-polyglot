@@ -1,13 +1,20 @@
-package org.pz.polyglot;
+package org.pz.polyglot.ui;
 
 import javafx.stage.Stage;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import java.util.logging.Logger;
+
+import org.pz.polyglot.App;
+import org.pz.polyglot.config.AppConfig;
+import org.pz.polyglot.i18n.I18nManager;
+
 import java.util.logging.Level;
+import javafx.application.Platform;
 
 public class MainWindowManager {
+    private static final I18nManager i18n = I18nManager.getInstance();
     private static final Logger logger = Logger.getLogger(MainWindowManager.class.getName());
     private static final int MIN_WIDTH = 300;
     private static final int MIN_HEIGHT = 200;
@@ -16,10 +23,10 @@ public class MainWindowManager {
 
     public static void showMain(Stage stage, AppConfig config) {
         try {
-            FXMLLoader loader = new FXMLLoader(App.class.getResource("/fxml/Main.fxml"));
+            FXMLLoader loader = new FXMLLoader(App.class.getResource("/fxml/Main.fxml"), i18n.getBundle());
             Parent root = loader.load();
             Scene scene = new Scene(root, DEFAULT_WIDTH, DEFAULT_HEIGHT);
-            stage.setTitle("PZ Polyglot");
+            stage.setTitle(i18n.getString("app.title"));
             stage.setScene(scene);
             stage.setMinWidth(MIN_WIDTH);
             stage.setMinHeight(MIN_HEIGHT);
@@ -28,7 +35,7 @@ public class MainWindowManager {
             stage.show();
         } catch (java.io.IOException | IllegalStateException e) {
             logger.log(Level.SEVERE, "Error opening main window", e);
-            javafx.application.Platform.exit();
+            Platform.exit();
         }
     }
 }

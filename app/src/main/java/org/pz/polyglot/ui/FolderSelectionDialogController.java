@@ -1,9 +1,11 @@
-package org.pz.polyglot;
+package org.pz.polyglot.ui;
 
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.TextField;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
@@ -12,7 +14,13 @@ import java.io.File;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import org.pz.polyglot.config.AppConfig;
+import org.pz.polyglot.i18n.I18nManager;
+import org.pz.polyglot.util.OsUtils;
+
 public class FolderSelectionDialogController {
+    private static final I18nManager i18n = I18nManager.getInstance();
+
     @FXML
     private TextField gameField;
     @FXML
@@ -46,13 +54,12 @@ public class FolderSelectionDialogController {
         this.dialogStage = stage;
         this.dialogStage.setOnCloseRequest(e -> {
             if (!foldersSelected) {
-                javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
-                        javafx.scene.control.Alert.AlertType.CONFIRMATION);
-                alert.setTitle("Exit Confirmation");
-                alert.setHeaderText("Folders not selected");
-                alert.setContentText("Are you sure you want to exit the application?");
-                java.util.Optional<javafx.scene.control.ButtonType> result = alert.showAndWait();
-                if (result.isPresent() && result.get() == javafx.scene.control.ButtonType.OK) {
+                Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+                alert.setTitle(i18n.getString("language-not-set-alert.exit.title"));
+                alert.setHeaderText(i18n.getString("language-not-set-alert.exit.header"));
+                alert.setContentText(i18n.getString("language-not-set-alert.exit.message"));
+                Optional<ButtonType> result = alert.showAndWait();
+                if (result.isPresent() && result.get() == ButtonType.OK) {
                     Platform.exit();
                 } else {
                     e.consume(); // Prevent closing
@@ -63,7 +70,6 @@ public class FolderSelectionDialogController {
 
     @FXML
     private void initialize() {
-        // Try to guess folders if fields are empty
         if (gameField.getText().isEmpty()) {
             Optional<File> guess = OsUtils.guessGameFolder();
             guess.ifPresent(f -> gameField.setText(f.getAbsolutePath()));
@@ -85,22 +91,22 @@ public class FolderSelectionDialogController {
 
     @FXML
     private void onGameBrowse(ActionEvent e) {
-        chooseDirectory(gameField, "Select Project Zomboid game folder");
+        chooseDirectory(gameField, "language-dialog.choose.game.title");
     }
 
     @FXML
     private void onSteamBrowse(ActionEvent e) {
-        chooseDirectory(steamField, "Select Steam mods folder");
+        chooseDirectory(steamField, "language-dialog.choose.steam.title");
     }
 
     @FXML
     private void onUserBrowse(ActionEvent e) {
-        chooseDirectory(userField, "Select user mods folder");
+        chooseDirectory(userField, "language-dialog.choose.user.title");
     }
 
-    private void chooseDirectory(TextField field, String title) {
+    private void chooseDirectory(TextField field, String key) {
         DirectoryChooser dc = new DirectoryChooser();
-        dc.setTitle(title);
+        dc.setTitle(i18n.getString(key));
         String path = field.getText().trim();
         if (!path.isEmpty()) {
             File initial = new File(path);

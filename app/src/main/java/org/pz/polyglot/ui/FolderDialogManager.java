@@ -1,4 +1,4 @@
-package org.pz.polyglot;
+package org.pz.polyglot.ui;
 
 import javafx.stage.Stage;
 import javafx.stage.Modality;
@@ -6,7 +6,13 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import java.util.logging.Logger;
+
+import org.pz.polyglot.App;
+import org.pz.polyglot.config.AppConfig;
+import org.pz.polyglot.i18n.I18nManager;
+
 import java.util.logging.Level;
+import java.util.ResourceBundle;
 
 public class FolderDialogManager {
     private static final Logger logger = Logger.getLogger(FolderDialogManager.class.getName());
@@ -15,13 +21,14 @@ public class FolderDialogManager {
 
     public static boolean showFolderDialog(Stage owner, AppConfig config) {
         try {
-            FXMLLoader loader = new FXMLLoader(App.class.getResource("/fxml/FolderSelectionDialog.fxml"));
+            ResourceBundle bundle = I18nManager.getInstance().getBundle();
+            FXMLLoader loader = new FXMLLoader(App.class.getResource("/fxml/FolderSelectionDialog.fxml"), bundle);
             Parent root = loader.load();
             FolderSelectionDialogController controller = loader.getController();
             Stage dialog = new Stage();
             controller.setConfig(config);
             controller.setDialogStage(dialog);
-            dialog.setTitle("Select Project Zomboid Folders");
+            dialog.setTitle(bundle.getString("language-dialog.title"));
             dialog.initOwner(owner);
             dialog.initModality(Modality.APPLICATION_MODAL);
             dialog.setResizable(false);
