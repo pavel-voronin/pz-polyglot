@@ -25,8 +25,8 @@ public class AppConfig {
     private String gamePath;
     @JsonProperty("steamModsPath")
     private String steamModsPath;
-    @JsonProperty("userModsPath")
-    private String userModsPath;
+    @JsonProperty("cachePath")
+    private String cachePath;
 
     public static AppConfig getInstance() {
         if (instance == null) {
@@ -77,12 +77,12 @@ public class AppConfig {
         this.steamModsPath = path;
     }
 
-    public String getUserModsPath() {
-        return userModsPath;
+    public String getCachePath() {
+        return cachePath;
     }
 
-    public void setUserModsPath(String path) {
-        this.userModsPath = path;
+    public void setCachePath(String path) {
+        this.cachePath = path;
     }
 
     private static AppConfig loadOrCreate() {

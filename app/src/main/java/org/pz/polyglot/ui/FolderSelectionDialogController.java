@@ -26,13 +26,13 @@ public class FolderSelectionDialogController {
     @FXML
     private TextField steamField;
     @FXML
-    private TextField userField;
+    private TextField cacheField;
     @FXML
     private Button gameBrowse;
     @FXML
     private Button steamBrowse;
     @FXML
-    private Button userBrowse;
+    private Button cacheBrowse;
     @FXML
     private Button okButton;
 
@@ -46,8 +46,8 @@ public class FolderSelectionDialogController {
             gameField.setText(config.getGamePath());
         if (config.getSteamModsPath() != null)
             steamField.setText(config.getSteamModsPath());
-        if (config.getUserModsPath() != null)
-            userField.setText(config.getUserModsPath());
+        if (config.getCachePath() != null)
+            cacheField.setText(config.getCachePath());
     }
 
     public void setDialogStage(Stage stage) {
@@ -78,15 +78,15 @@ public class FolderSelectionDialogController {
             Optional<File> guess = OsUtils.guessSteamModsFolder();
             guess.ifPresent(f -> steamField.setText(f.getAbsolutePath()));
         }
-        if (userField.getText().isEmpty()) {
-            Optional<File> guess = OsUtils.guessUserModsFolder();
-            guess.ifPresent(f -> userField.setText(f.getAbsolutePath()));
+        if (cacheField.getText().isEmpty()) {
+            Optional<File> guess = OsUtils.guessCacheFolder();
+            guess.ifPresent(f -> cacheField.setText(f.getAbsolutePath()));
         }
         okButton.setDisable(true); // Set initial state in code, not FXML
         validateFields();
         gameField.textProperty().addListener((obs, o, n) -> validateFields());
         steamField.textProperty().addListener((obs, o, n) -> validateFields());
-        userField.textProperty().addListener((obs, o, n) -> validateFields());
+        cacheField.textProperty().addListener((obs, o, n) -> validateFields());
     }
 
     @FXML
@@ -100,8 +100,8 @@ public class FolderSelectionDialogController {
     }
 
     @FXML
-    private void onUserBrowse(ActionEvent e) {
-        chooseDirectory(userField, "language-dialog.choose.user.title");
+    private void onCacheBrowse(ActionEvent e) {
+        chooseDirectory(cacheField, "language-dialog.choose.cache.title");
     }
 
     private void chooseDirectory(TextField field, String key) {
@@ -122,14 +122,14 @@ public class FolderSelectionDialogController {
     private void onOk(ActionEvent e) {
         config.setGamePath(gameField.getText());
         config.setSteamModsPath(steamField.getText());
-        config.setUserModsPath(userField.getText());
+        config.setCachePath(cacheField.getText());
         config.save();
         foldersSelected = true;
         dialogStage.close();
     }
 
     private void validateFields() {
-        boolean valid = Stream.of(gameField, steamField, userField)
+        boolean valid = Stream.of(gameField, steamField, cacheField)
                 .map(tf -> tf.getText().trim())
                 .allMatch(text -> !text.isEmpty() && new File(text).exists() && new File(text).isDirectory());
         okButton.setDisable(!valid);

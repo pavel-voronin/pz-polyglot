@@ -60,19 +60,19 @@ public class OsUtils {
         return path.exists() ? Optional.of(path) : Optional.empty();
     }
 
-    public static Optional<File> guessUserModsFolder() {
+    public static Optional<File> guessCacheFolder() {
         OSType os = getOsType();
         String userHome = System.getProperty("user.home");
         File path = null;
         switch (os) {
             case WINDOWS:
-                path = new File(userHome + "\\Zomboid\\Workshop");
+                path = new File(userHome + "\\Zomboid");
                 break;
             case MAC:
-                path = new File(userHome + "/Zomboid/Workshop");
+                path = new File(userHome + "/Zomboid");
                 break;
             case LINUX:
-                path = new File(userHome + "/Zomboid/Workshop");
+                path = new File(userHome + "/Zomboid");
                 break;
             default:
                 return Optional.empty();

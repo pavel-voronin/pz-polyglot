@@ -17,7 +17,7 @@ public class FolderValidationUtils {
     public static boolean hasValidFolders(AppConfig config) {
         return isValidFolder(config.getGamePath()) &&
                 isValidFolder(config.getSteamModsPath()) &&
-                isValidFolder(config.getUserModsPath());
+                isValidFolder(config.getCachePath());
     }
 
     private static boolean isValidFolder(String path) {

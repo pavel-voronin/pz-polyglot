@@ -12,12 +12,12 @@ public class TranslationProvider {
         ENGLISH_TRANSLATIONS.put("language-dialog.title", "Select Project Zomboid Folders");
         ENGLISH_TRANSLATIONS.put("language-dialog.game.label", "Project Zomboid game folder:");
         ENGLISH_TRANSLATIONS.put("language-dialog.steam.label", "Steam mods folder:");
-        ENGLISH_TRANSLATIONS.put("language-dialog.user.label", "User mods folder:");
+        ENGLISH_TRANSLATIONS.put("language-dialog.cache.label", "Cache folder:");
         ENGLISH_TRANSLATIONS.put("language-dialog.browse.button", "Browse...");
         ENGLISH_TRANSLATIONS.put("language-dialog.ok.button", "OK");
         ENGLISH_TRANSLATIONS.put("language-dialog.choose.game.title", "Select Project Zomboid game folder");
         ENGLISH_TRANSLATIONS.put("language-dialog.choose.steam.title", "Select Steam mods folder");
-        ENGLISH_TRANSLATIONS.put("language-dialog.choose.user.title", "Select user mods folder");
+        ENGLISH_TRANSLATIONS.put("language-dialog.choose.cache.title", "Select cache folder");
 
         ENGLISH_TRANSLATIONS.put("language-not-set-alert.exit.title", "Exit Confirmation");
         ENGLISH_TRANSLATIONS.put("language-not-set-alert.exit.header", "Folders not selected");

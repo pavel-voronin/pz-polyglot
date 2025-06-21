@@ -4,7 +4,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.DirectoryStream.Filter;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.logging.Logger;
 
 import org.pz.polyglot.config.AppConfig;
@@ -13,7 +13,7 @@ public final class PZLanguages {
     private static final Logger logger = Logger.getLogger(PZLanguages.class.getName());
 
     private static final String MEDIA_LUA_SHARED_TRANSLATE = "media/lua/shared/Translate";
-    private final ArrayList<PZLanguage> languages = new ArrayList<>();
+    private final HashMap<String, PZLanguage> languages = new HashMap<>();
     public static PZLanguages instance = new PZLanguages();
 
     public void load() {
@@ -33,7 +33,7 @@ public final class PZLanguages {
                 for (Path path1 : directoryStream) {
                     PZLanguage language = this.loadLanguage(path1.toAbsolutePath());
                     if (language != null) {
-                        this.languages.add(language);
+                        this.languages.put(language.getCode(), language);
                     }
                 }
             } catch (java.io.IOException | java.nio.file.DirectoryIteratorException exception) {
@@ -44,7 +44,7 @@ public final class PZLanguages {
     }
 
     private PZLanguage loadLanguage(Path path) {
-        String name = path.getFileName().toString();
+        String code = path.getFileName().toString();
         String body;
 
         try {
@@ -54,6 +54,6 @@ public final class PZLanguages {
             return null;
         }
 
-        return PZLanguageParser.parse(name, body);
+        return PZLanguageParser.parse(code, body);
     }
 }

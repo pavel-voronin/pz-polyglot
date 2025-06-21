@@ -11,7 +11,7 @@ public final class PZLanguageParser {
      * @param content the file content as a String
      * @return Language object if parsing is successful, otherwise null
      */
-    public static PZLanguage parse(String name, String content) {
+    public static PZLanguage parse(String code, String content) {
         if (content == null) {
             return null;
         }
@@ -63,7 +63,7 @@ public final class PZLanguageParser {
             return null;
         }
 
-        return new PZLanguage(name, text, charset);
+        return new PZLanguage(code, text, charset);
     }
 
     /**

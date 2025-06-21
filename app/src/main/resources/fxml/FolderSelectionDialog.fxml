@@ -21,11 +21,11 @@
                 <Button text="%language-dialog.browse.button" fx:id="steamBrowse" onAction="#onSteamBrowse" />
             </children>
         </HBox>
-        <Label text="%language-dialog.user.label" />
+        <Label text="%language-dialog.cache.label" />
         <HBox spacing="5">
             <children>
-                <TextField fx:id="userField" />
-                <Button text="%language-dialog.browse.button" fx:id="userBrowse" onAction="#onUserBrowse" />
+                <TextField fx:id="cacheField" />
+                <Button text="%language-dialog.browse.button" fx:id="cacheBrowse" onAction="#onCacheBrowse" />
             </children>
         </HBox>
         <Button text="%language-dialog.ok.button" fx:id="okButton" onAction="#onOk" />
