@@ -41,8 +41,8 @@ public class PZTranslationManager {
                                 .get();
 
                         PZTranslationFile translationFile = new PZTranslationFile(file, translationType, lang);
-                        try (PZTranslationReader reader = new PZTranslationReader(translationFile);
-                                Stream<PZTranslationReader.Pair> stream = reader.stream()) {
+                        try (PZTranslationParser reader = new PZTranslationParser(translationFile);
+                                Stream<PZTranslationParser.Pair> stream = reader.stream()) {
                             stream.forEach(s -> {
                                 PZTranslationEntry entry = PZTranslations.getInstance().getOrCreateTranslation(s.key());
 

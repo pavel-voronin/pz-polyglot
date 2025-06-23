@@ -3,6 +3,7 @@ package org.pz.polyglot.pz.translations;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Iterator;
 import java.util.Spliterator;
@@ -20,10 +21,11 @@ import java.util.stream.StreamSupport;
  * This class is not responsible for domain parsing, only for reading and
  * cleaning lines.
  */
-public class PZTranslationReader implements AutoCloseable, Iterable<PZTranslationReader.Pair> {
-    private static final Logger LOGGER = Logger.getLogger(PZTranslationReader.class.getName());
+public class PZTranslationParser implements AutoCloseable, Iterable<PZTranslationParser.Pair> {
+    private static final Logger LOGGER = Logger.getLogger(PZTranslationParser.class.getName());
 
-    public record Pair(String key, String value) {}
+    public record Pair(String key, String value) {
+    }
 
     private final PZTranslationFile file;
     private final Charset primaryCharset;
@@ -35,10 +37,10 @@ public class PZTranslationReader implements AutoCloseable, Iterable<PZTranslatio
     private String nextLine;
     private boolean hasNextCalled;
 
-    public PZTranslationReader(PZTranslationFile file) {
+    public PZTranslationParser(PZTranslationFile file) {
         this.file = file;
         this.primaryCharset = file.getLanguage().getCharset();
-        this.fallbackCharset = file.getLanguage().getFallbackCharset().orElse(java.nio.charset.StandardCharsets.UTF_8);
+        this.fallbackCharset = file.getLanguage().getFallbackCharset().orElse(StandardCharsets.UTF_8);
         this.usingFallback = false;
         this.closed = false;
         this.linesRead = 0;

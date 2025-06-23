@@ -21,6 +21,8 @@ dependencies {
     // This dependency is used by the application.
     implementation(libs.guava)
     implementation(libs.jackson)
+    testImplementation(libs.junit.jupiter)
+    testRuntimeOnly(libs.junit.platform.launcher)
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
@@ -38,4 +40,12 @@ application {
 javafx {
     version = "21"
     modules = listOf("javafx.controls", "javafx.fxml")
+}
+
+tasks.named<Test>("test") {
+    useJUnitPlatform()
+
+    testLogging {
+        events("passed")
+    }
 }
