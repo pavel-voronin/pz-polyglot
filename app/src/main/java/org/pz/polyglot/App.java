@@ -8,8 +8,9 @@ import java.util.logging.Logger;
 
 import org.pz.polyglot.config.AppConfig;
 import org.pz.polyglot.i18n.I18nManager;
-import org.pz.polyglot.pz.languages.PZLanguages;
+import org.pz.polyglot.pz.languages.PZLanguageManager;
 import org.pz.polyglot.pz.sources.PZSources;
+import org.pz.polyglot.pz.translations.PZTranslationManager;
 import org.pz.polyglot.ui.FolderDialogManager;
 import org.pz.polyglot.ui.MainWindowManager;
 import org.pz.polyglot.util.FolderValidationUtils;
@@ -34,8 +35,9 @@ public class App extends Application {
 
         // PZ related initialization
 
-        PZLanguages.instance.load(); // Reload languages after folder selection
+        PZLanguageManager.load();
         PZSources.getInstance();
+        PZTranslationManager.loadFilesFromSources();
     }
 
     public static void main(String[] args) {

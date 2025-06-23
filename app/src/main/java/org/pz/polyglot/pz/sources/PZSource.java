@@ -1,32 +1,40 @@
 package org.pz.polyglot.pz.sources;
 
-import java.io.File;
+import java.nio.file.Path;
+
+import org.pz.polyglot.pz.core.PZBuild;
 
 public class PZSource {
-    private String name;
-    private String version;
-    private File folder;
+    private final String name;
+    private final PZBuild build;
+    private final Path path;
+    private final boolean editable;
 
-    public PZSource(String name, String version, File folder) {
+    public PZSource(String name, PZBuild build, Path path, boolean editable) {
         this.name = name;
-        this.version = version;
-        this.folder = folder;
+        this.build = build;
+        this.path = path;
+        this.editable = editable;
     }
 
     public String getName() {
         return name;
     }
 
-    public String getVersion() {
-        return version;
+    public PZBuild getBuild() {
+        return build;
     }
 
-    public File getFolder() {
-        return folder;
+    public Path getPath() {
+        return path;
+    }
+
+    public boolean isEditable() {
+        return editable;
     }
 
     @Override
     public String toString() {
-        return name + " [" + version + "]";
+        return name + " [" + build.getMajor() + "]";
     }
 }

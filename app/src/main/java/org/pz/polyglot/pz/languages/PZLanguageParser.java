@@ -1,5 +1,7 @@
 package org.pz.polyglot.pz.languages;
 
+import java.nio.charset.Charset;
+
 public final class PZLanguageParser {
     /**
      * Parses the given file content and returns a Language object if all required
@@ -63,7 +65,7 @@ public final class PZLanguageParser {
             return null;
         }
 
-        return new PZLanguage(code, text, charset);
+        return new PZLanguage(code, text, Charset.forName(charset));
     }
 
     /**

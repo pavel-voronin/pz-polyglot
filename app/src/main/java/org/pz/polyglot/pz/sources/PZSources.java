@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
+import org.pz.polyglot.pz.core.PZBuild;
 import org.pz.polyglot.util.FolderUtils;
 
 public class PZSources {
@@ -29,6 +30,10 @@ public class PZSources {
         logger.info("Parsed sources: " + this.sources.size());
     }
 
+    public List<PZSource> getSources() {
+        return this.sources;
+    }
+
     public void parseSources() {
         this.sources.clear();
 
@@ -38,7 +43,7 @@ public class PZSources {
                 Path modsFolder = userFolder.resolve("mods");
                 if (Files.isDirectory(modsFolder)) {
                     for (Path mod : listDirectories(modsFolder)) {
-                        checkAndAddSource(mod);
+                        checkAndAddSource(mod, false);
                     }
                 }
             }
@@ -51,7 +56,7 @@ public class PZSources {
                 Path modsFolder = contentsFolder.resolve("mods");
                 if (Files.isDirectory(modsFolder)) {
                     for (Path mod : listDirectories(modsFolder)) {
-                        checkAndAddSource(mod);
+                        checkAndAddSource(mod, false);
                     }
                 }
             }
@@ -60,13 +65,13 @@ public class PZSources {
         // Local mods: [ModName]/
         FolderUtils.getModsPath().ifPresent(path -> {
             for (Path mod : listDirectories(path)) {
-                checkAndAddSource(mod);
+                checkAndAddSource(mod, true);
             }
         });
 
         // Game folder — check directly
         FolderUtils.getGamePath().ifPresent(path -> {
-            checkAndAddSource(path);
+            checkAndAddSource(path, true);
         });
     }
 
@@ -92,16 +97,16 @@ public class PZSources {
      * list if
      * found.
      */
-    private void checkAndAddSource(Path sourcePath) {
+    private void checkAndAddSource(Path sourcePath, boolean editable) {
         if (Files.exists(sourcePath.resolve("media/lua/shared/Translate"))) {
             this.sources.add(
-                    new PZSource(sourcePath.getFileName().toString(), "41",
-                            sourcePath.resolve("media/lua/shared/Translate").toFile()));
+                    new PZSource(sourcePath.getFileName().toString(), PZBuild.BUILD_41,
+                            sourcePath.resolve("media/lua/shared/Translate"), editable));
         }
 
         if (Files.exists(sourcePath.resolve("common/media/lua/shared/Translate"))) {
-            this.sources.add(new PZSource(sourcePath.getFileName().toString(), "42-common",
-                    sourcePath.resolve("common/media/lua/shared/Translate").toFile()));
+            this.sources.add(new PZSource(sourcePath.getFileName().toString(), PZBuild.BUILD_42,
+                    sourcePath.resolve("common/media/lua/shared/Translate"), editable));
         }
 
         try (DirectoryStream<Path> subdirs = Files.newDirectoryStream(sourcePath, Files::isDirectory)) {
@@ -115,7 +120,8 @@ public class PZSources {
 
                 if (Files.exists(versionTranslate)) {
                     this.sources
-                            .add(new PZSource(sourcePath.getFileName().toString(), name, versionTranslate.toFile()));
+                            .add(new PZSource(sourcePath.getFileName().toString(), PZBuild.BUILD_42, versionTranslate,
+                                    editable));
                 }
             }
         } catch (IOException ignored) {
