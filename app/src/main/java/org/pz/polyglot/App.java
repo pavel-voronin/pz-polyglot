@@ -38,6 +38,12 @@ public class App extends Application {
         PZLanguageManager.load();
         PZSources.getInstance();
         PZTranslationManager.loadFilesFromSources();
+        // Refresh translations table after loading
+        javafx.application.Platform.runLater(() -> {
+            if(org.pz.polyglot.ui.MainWindowManager.mainControllerInstance != null) {
+                org.pz.polyglot.ui.MainWindowManager.mainControllerInstance.refreshTranslationsTable();
+            }
+        });
     }
 
     public static void main(String[] args) {

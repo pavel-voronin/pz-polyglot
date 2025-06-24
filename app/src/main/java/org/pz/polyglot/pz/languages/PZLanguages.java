@@ -19,4 +19,8 @@ public final class PZLanguages {
     public int size() {
         return this.languages.size();
     }
+
+    public java.util.Set<String> getAllLanguageCodes() {
+        return new java.util.HashSet<>(languages.keySet());
+    }
 }

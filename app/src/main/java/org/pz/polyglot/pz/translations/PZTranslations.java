@@ -17,4 +17,8 @@ public class PZTranslations {
     public PZTranslationEntry getOrCreateTranslation(String key) {
         return this.translations.computeIfAbsent(key, k -> new PZTranslationEntry(k));
     }
+
+    public HashMap<String, PZTranslationEntry> getAllTranslations() {
+        return translations;
+    }
 }

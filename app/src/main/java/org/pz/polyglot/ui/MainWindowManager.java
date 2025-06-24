@@ -20,10 +20,13 @@ public class MainWindowManager {
     private static final int DEFAULT_WIDTH = 1200;
     private static final int DEFAULT_HEIGHT = 800;
 
+    public static MainController mainControllerInstance;
+
     public static void showMain(Stage stage) {
         try {
             FXMLLoader loader = new FXMLLoader(App.class.getResource("/fxml/Main.fxml"), i18n.getBundle());
             Parent root = loader.load();
+            mainControllerInstance = loader.getController();
             Scene scene = new Scene(root, DEFAULT_WIDTH, DEFAULT_HEIGHT);
             stage.setTitle(i18n.getString("app.title"));
             stage.setScene(scene);

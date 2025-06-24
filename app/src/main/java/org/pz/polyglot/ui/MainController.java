@@ -3,17 +3,19 @@ package org.pz.polyglot.ui;
 import javafx.fxml.FXML;
 import javafx.scene.control.TreeTableColumn;
 import javafx.scene.control.TreeTableView;
-import javafx.scene.control.TreeTableCell;
 import javafx.scene.control.TreeItem;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.layout.HBox;
-import javafx.scene.Cursor;
-import javafx.scene.control.Alert;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.scene.control.cell.TreeItemPropertyValueFactory;
+import javafx.util.Callback;
+import javafx.scene.control.cell.TextFieldTreeTableCell;
+import org.pz.polyglot.pz.translations.PZTranslations;
+import org.pz.polyglot.pz.translations.PZTranslationEntry;
+import org.pz.polyglot.pz.translations.PZTranslationVariant;
+import org.pz.polyglot.pz.languages.PZLanguages;
+import org.pz.polyglot.pz.languages.PZLanguage;
+import org.pz.polyglot.pz.core.PZBuild;
 
-import java.util.List;
-import java.util.stream.IntStream;
+import java.util.*;
 
 /**
  * Main controller for the Polyglot application.
@@ -21,26 +23,28 @@ import java.util.stream.IntStream;
  */
 public class MainController {
     /**
-     * Model class representing a row in the tree table.
+     * Model class representing a row in the tree table for translations.
      */
-    public static class ExampleRow {
-        private final String value;
+    public static class TranslationRow {
+        private final String key;
+        private final Map<String, Boolean> languagePresence;
 
-        public ExampleRow(String value) {
-            this.value = value;
+        public TranslationRow(String key, Map<String, Boolean> languagePresence) {
+            this.key = key;
+            this.languagePresence = languagePresence;
         }
 
-        public String getValue() {
-            return value;
+        public String getKey() {
+            return key;
+        }
+
+        public boolean hasTranslation(String langCode) {
+            return languagePresence.getOrDefault(langCode, false);
         }
     }
 
     @FXML
-    private TreeTableColumn<ExampleRow, String> keyColumn;
-    @FXML
-    private TreeTableColumn<ExampleRow, String> enColumn;
-    @FXML
-    private TreeTableView<ExampleRow> treeTableView;
+    private TreeTableView<TranslationRow> treeTableView;
     @FXML
     private javafx.scene.control.MenuBar menuBar;
     @FXML
@@ -57,106 +61,69 @@ public class MainController {
     private javafx.scene.control.MenuItem discordMenuItem;
 
     /**
-     * Represents an icon and its associated action for use in a tree table cell.
-     */
-    public static class IconAction {
-        private final String imagePath;
-        private final String alertMessage;
-        private final boolean clickable;
-
-        public IconAction(String imagePath, String alertMessage, boolean clickable) {
-            this.imagePath = imagePath;
-            this.alertMessage = alertMessage;
-            this.clickable = clickable;
-        }
-
-        public String getImagePath() {
-            return imagePath;
-        }
-
-        public String getAlertMessage() {
-            return alertMessage;
-        }
-
-        public boolean isClickable() {
-            return clickable;
-        }
-    }
-
-    /**
-     * Initializes the TreeTableView and its columns with example data and custom
-     * cell rendering.
+     * Initializes the TreeTableView and its columns with translation data.
      */
     @FXML
     private void initialize() {
-        // All text is now set via FXML resource bundle, so no manual setText here
-        // Set up columns
-        if (keyColumn != null) {
-            keyColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getValue().getValue()));
-            keyColumn.setCellFactory(col -> createIconTreeTableCell(List.of(
-                    new IconAction("/fxml/icon.png", "First icon clicked!", true),
-                    new IconAction("/fxml/icon.png", "Second icon clicked!", false))));
+        populateTranslationsTable();
+    }
+
+    private void populateTranslationsTable() {
+        // Remove all columns
+        treeTableView.getColumns().clear();
+
+        // Get all translations
+        PZTranslations translations = PZTranslations.getInstance();
+        Map<String, PZTranslationEntry> allTranslations = translations.getAllTranslations();
+
+        // Get all language codes from PZLanguages (from PZBuild 42)
+        PZLanguages pzLanguages = PZBuild.BUILD_42.getLanguages();
+        List<String> sortedLangCodes = new ArrayList<>(pzLanguages.getAllLanguageCodes());
+        Collections.sort(sortedLangCodes);
+
+        // Key column
+        TreeTableColumn<TranslationRow, String> keyColumn = new TreeTableColumn<>("Key");
+        keyColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getValue().getKey()));
+        keyColumn.setPrefWidth(150);
+        treeTableView.getColumns().add(keyColumn);
+
+        // Language columns
+        for (String lang : sortedLangCodes) {
+            TreeTableColumn<TranslationRow, String> langCol = new TreeTableColumn<>(lang);
+            langCol.setCellValueFactory(param -> {
+                boolean present = param.getValue().getValue().hasTranslation(lang);
+                return new SimpleStringProperty(present ? "✔" : "");
+            });
+            langCol.setPrefWidth(60);
+            treeTableView.getColumns().add(langCol);
         }
-        if (enColumn != null) {
-            enColumn.setCellValueFactory(
-                    param -> new SimpleStringProperty("EN: " + param.getValue().getValue().getValue()));
-        }
-        // Add 40 example rows
-        TreeItem<ExampleRow> root = new TreeItem<>(new ExampleRow("Root"));
+
+        // Build rows
+        TreeItem<TranslationRow> root = new TreeItem<>(new TranslationRow("Root", Collections.emptyMap()));
         root.setExpanded(true);
-        IntStream.rangeClosed(1, 40).forEach(i -> {
-            root.getChildren().add(new TreeItem<>(new ExampleRow("Item " + i)));
-        });
+        for (Map.Entry<String, PZTranslationEntry> entry : allTranslations.entrySet()) {
+            String key = entry.getKey();
+            PZTranslationEntry translationEntry = entry.getValue();
+            Map<String, Boolean> langPresence = new HashMap<>();
+            for (String lang : sortedLangCodes) {
+                boolean found = false;
+                for (PZTranslationVariant variant : translationEntry.getTranslations()) {
+                    if (variant.getFile() != null && variant.getFile().getLanguage() != null &&
+                        lang.equals(variant.getFile().getLanguage().getCode()) &&
+                        variant.getText() != null && !variant.getText().isEmpty()) {
+                        found = true;
+                        break;
+                    }
+                }
+                langPresence.put(lang, found);
+            }
+            root.getChildren().add(new TreeItem<>(new TranslationRow(key, langPresence)));
+        }
         treeTableView.setRoot(root);
         treeTableView.setShowRoot(false);
     }
 
-    /**
-     * Creates a TreeTableCell that displays a row's value and a set of icons, some
-     * clickable, some not.
-     * 
-     * @param icons List of IconAction objects to display in the cell.
-     * @return TreeTableCell for use in a TreeTableColumn.
-     */
-    private TreeTableCell<ExampleRow, String> createIconTreeTableCell(List<IconAction> icons) {
-        return new TreeTableCell<>() {
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                    setGraphic(null);
-                } else {
-                    setText(item);
-                    HBox hbox = new HBox(5);
-                    for (IconAction iconAction : icons) {
-                        Image image = new Image(getClass().getResourceAsStream(iconAction.getImagePath()));
-                        ImageView imageView = new ImageView(image);
-                        imageView.setFitWidth(16);
-                        imageView.setFitHeight(16);
-                        imageView.setPreserveRatio(true);
-                        if (iconAction.isClickable()) {
-                            imageView.setCursor(Cursor.HAND);
-                            imageView.setOnMouseClicked(event -> {
-                                Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                                alert.setTitle("Icon Clicked");
-                                alert.setHeaderText(null);
-                                alert.setContentText(iconAction.getAlertMessage());
-                                alert.showAndWait();
-                            });
-                            imageView.setOnMouseEntered(e -> imageView.setOpacity(0.7));
-                            imageView.setOnMouseExited(e -> imageView.setOpacity(1.0));
-                        } else {
-                            imageView.setCursor(Cursor.DEFAULT);
-                            imageView.setOnMouseClicked(null);
-                            imageView.setOnMouseEntered(null);
-                            imageView.setOnMouseExited(null);
-                        }
-                        hbox.getChildren().add(imageView);
-                    }
-                    setGraphic(hbox);
-                }
-            }
-        };
+    public void refreshTranslationsTable() {
+        populateTranslationsTable();
     }
 }
