@@ -5,14 +5,10 @@ import javafx.scene.control.TreeTableColumn;
 import javafx.scene.control.TreeTableView;
 import javafx.scene.control.TreeItem;
 import javafx.beans.property.SimpleStringProperty;
-import javafx.scene.control.cell.TreeItemPropertyValueFactory;
-import javafx.util.Callback;
-import javafx.scene.control.cell.TextFieldTreeTableCell;
 import org.pz.polyglot.pz.translations.PZTranslations;
 import org.pz.polyglot.pz.translations.PZTranslationEntry;
 import org.pz.polyglot.pz.translations.PZTranslationVariant;
 import org.pz.polyglot.pz.languages.PZLanguages;
-import org.pz.polyglot.pz.languages.PZLanguage;
 import org.pz.polyglot.pz.core.PZBuild;
 
 import java.util.*;
@@ -59,6 +55,8 @@ public class MainController {
     private javafx.scene.control.MenuItem documentationMenuItem;
     @FXML
     private javafx.scene.control.MenuItem discordMenuItem;
+    @FXML
+    private javafx.scene.control.Label memoryLabel;
 
     /**
      * Initializes the TreeTableView and its columns with translation data.
@@ -66,6 +64,26 @@ public class MainController {
     @FXML
     private void initialize() {
         populateTranslationsTable();
+        startMemoryMonitor();
+    }
+
+    /**
+     * Starts a timer to update the memory usage label in the status bar.
+     */
+    private void startMemoryMonitor() {
+        javafx.animation.Timeline timeline = new javafx.animation.Timeline(
+                new javafx.animation.KeyFrame(javafx.util.Duration.seconds(1), event -> updateMemoryLabel()));
+        timeline.setCycleCount(javafx.animation.Animation.INDEFINITE);
+        timeline.play();
+    }
+
+    /**
+     * Updates the memory usage label with the current memory usage.
+     */
+    private void updateMemoryLabel() {
+        long used = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+        long usedMB = used / (1024 * 1024);
+        memoryLabel.setText("Memory: " + usedMB + " MB");
     }
 
     private void populateTranslationsTable() {
@@ -109,8 +127,8 @@ public class MainController {
                 boolean found = false;
                 for (PZTranslationVariant variant : translationEntry.getTranslations()) {
                     if (variant.getFile() != null && variant.getFile().getLanguage() != null &&
-                        lang.equals(variant.getFile().getLanguage().getCode()) &&
-                        variant.getText() != null && !variant.getText().isEmpty()) {
+                            lang.equals(variant.getFile().getLanguage().getCode()) &&
+                            variant.getText() != null && !variant.getText().isEmpty()) {
                         found = true;
                         break;
                     }

@@ -6,10 +6,13 @@
 <?import javafx.scene.control.TreeTableColumn?>
 <?import javafx.scene.control.TreeTableView?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.control.Label?>
 
-<VBox prefHeight="600.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.pz.polyglot.ui.MainController">
-  <children>
-    <MenuBar fx:id="menuBar" VBox.vgrow="NEVER">
+<BorderPane prefHeight="600.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.pz.polyglot.ui.MainController">
+  <top>
+    <MenuBar fx:id="menuBar">
       <menus>
         <Menu fx:id="fileMenu" mnemonicParsing="false" text="%menu.file">
           <items>
@@ -25,11 +28,20 @@
         </Menu>
       </menus>
     </MenuBar>
-    <TreeTableView fx:id="treeTableView" editable="true" prefHeight="580.0" prefWidth="900.0">
+  </top>
+  <center>
+    <TreeTableView fx:id="treeTableView" editable="true">
       <columns>
         <TreeTableColumn fx:id="keyColumn" prefWidth="75.0" sortable="false" text="Key" />
         <TreeTableColumn fx:id="enColumn" editable="false" prefWidth="75.0" sortable="false" text="EN" />
       </columns>
     </TreeTableView>
-  </children>
-</VBox>
+  </center>
+  <bottom>
+    <HBox fx:id="statusBar" spacing="10" alignment="CENTER_LEFT" style="-fx-background-color: #e0e0e0; -fx-padding: 4 8;">
+      <children>
+        <Label fx:id="memoryLabel" text="Memory: 0 MB" />
+      </children>
+    </HBox>
+  </bottom>
+</BorderPane>
