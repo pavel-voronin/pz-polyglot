@@ -4,8 +4,14 @@ import javafx.fxml.FXML;
 import javafx.scene.control.TreeTableColumn;
 import javafx.scene.control.TreeTableView;
 import javafx.scene.control.TreeItem;
+import javafx.scene.control.Label;
+import javafx.scene.control.Button;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextArea;
+import javafx.scene.layout.VBox;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.ListChangeListener;
+import javafx.geometry.Insets;
 import org.pz.polyglot.pz.translations.PZTranslations;
 import org.pz.polyglot.pz.translations.PZTranslationEntry;
 import org.pz.polyglot.pz.translations.PZTranslationVariant;
@@ -61,6 +67,24 @@ public class MainController {
     @FXML
     private javafx.scene.control.Label memoryLabel;
 
+    // Right panel components
+    @FXML
+    private VBox rightPanel;
+    @FXML
+    private Label panelTitleLabel;
+    @FXML
+    private Button closePanelButton;
+    @FXML
+    private ScrollPane panelScrollPane;
+    @FXML
+    private VBox panelContent;
+    @FXML
+    private VBox languageFieldsContainer;
+
+    // Current translation data
+    private String currentTranslationKey;
+    private Map<String, TextArea> languageTextFields = new HashMap<>();
+
     /**
      * Initializes the TreeTableView and its columns with translation data.
      */
@@ -68,6 +92,112 @@ public class MainController {
     private void initialize() {
         populateTranslationsTable();
         startMemoryMonitor();
+        setupRowSelectionListener();
+    }
+
+    /**
+     * Sets up the row selection listener for the TreeTableView.
+     */
+    private void setupRowSelectionListener() {
+        treeTableView.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
+            if (newSelection != null && newSelection.getValue() != null) {
+                showTranslationPanel(newSelection.getValue().getKey());
+            }
+        });
+    }
+
+    /**
+     * Shows the right panel with translation details for the given key.
+     */
+    private void showTranslationPanel(String translationKey) {
+        currentTranslationKey = translationKey;
+
+        // Update panel title with just the key
+        panelTitleLabel.setText(translationKey);
+
+        // Clear previous fields
+        languageFieldsContainer.getChildren().clear();
+        languageTextFields.clear();
+
+        // Get translation entry
+        PZTranslations translations = PZTranslations.getInstance();
+        PZTranslationEntry entry = translations.getAllTranslations().get(translationKey);
+
+        // Get all language codes
+        PZLanguages pzLanguages = PZBuild.BUILD_42.getLanguages();
+        List<String> sortedLangCodes = new ArrayList<>(pzLanguages.getAllLanguageCodes());
+        Collections.sort(sortedLangCodes);
+        // Move EN to the first position if present
+        if (sortedLangCodes.remove("EN")) {
+            sortedLangCodes.add(0, "EN");
+        }
+
+        // Create fields for each language
+        for (String langCode : sortedLangCodes) {
+            VBox langContainer = new VBox(5);
+            langContainer.setPadding(new Insets(5));
+            langContainer.setStyle(
+                    "-fx-border-color: #e0e0e0; -fx-border-width: 1; -fx-border-radius: 3; -fx-background-color: #fafafa;");
+
+            Label langLabel = new Label(langCode);
+            langLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
+
+            TextArea textArea = new TextArea();
+            textArea.setPromptText("Enter translation for " + langCode);
+            textArea.setPrefWidth(350);
+            textArea.setPrefRowCount(2); // Start with 2 rows
+            textArea.setWrapText(true); // Enable text wrapping
+
+            // Make TextArea expand with content
+            textArea.textProperty().addListener((obs, oldText, newText) -> {
+                // Calculate approximate number of lines needed
+                if (newText != null) {
+                    int lines = Math.max(2, newText.split("\n").length);
+                    // Add extra line if text wraps
+                    if (newText.length() > 50 * lines) {
+                        lines++;
+                    }
+                    textArea.setPrefRowCount(Math.min(lines, 10)); // Limit to 10 rows max
+                }
+            });
+
+            // Find existing translation for this language
+            if (entry != null) {
+                for (PZTranslationVariant variant : entry.getTranslations()) {
+                    if (variant.getFile() != null && variant.getFile().getLanguage() != null &&
+                            langCode.equals(variant.getFile().getLanguage().getCode()) &&
+                            variant.getText() != null && !variant.getText().isEmpty()) {
+                        textArea.setText(variant.getText());
+                        break;
+                    }
+                }
+            }
+
+            languageTextFields.put(langCode, textArea);
+            langContainer.getChildren().addAll(langLabel, textArea);
+            languageFieldsContainer.getChildren().add(langContainer);
+        }
+
+        // Show the panel
+        rightPanel.setVisible(true);
+        rightPanel.setManaged(true);
+        // Set default size for translation input fields
+        languageTextFields.values().forEach(textArea -> {
+            textArea.setPrefRowCount(1);
+            textArea.setWrapText(true);
+        });
+    }
+
+    /**
+     * Closes the right panel.
+     */
+    @FXML
+    private void closePanelAction() {
+        rightPanel.setVisible(false);
+        rightPanel.setManaged(false);
+        currentTranslationKey = null;
+        languageTextFields.clear();
+        treeTableView.getSelectionModel().clearSelection();
     }
 
     /**
