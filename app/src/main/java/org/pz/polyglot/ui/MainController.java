@@ -5,6 +5,7 @@ import javafx.scene.control.TreeTableColumn;
 import javafx.scene.control.TreeTableView;
 import javafx.scene.control.TreeItem;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.ListChangeListener;
 import org.pz.polyglot.pz.translations.PZTranslations;
 import org.pz.polyglot.pz.translations.PZTranslationEntry;
 import org.pz.polyglot.pz.translations.PZTranslationVariant;
@@ -47,6 +48,8 @@ public class MainController {
     private javafx.scene.control.Menu fileMenu;
     @FXML
     private javafx.scene.control.Menu helpMenu;
+    @FXML
+    private TreeTableColumn<TranslationRow, String> keyColumn; // Reference to the key column
     @FXML
     private javafx.scene.control.MenuItem quitMenuItem;
     @FXML
@@ -98,11 +101,16 @@ public class MainController {
         PZLanguages pzLanguages = PZBuild.BUILD_42.getLanguages();
         List<String> sortedLangCodes = new ArrayList<>(pzLanguages.getAllLanguageCodes());
         Collections.sort(sortedLangCodes);
+        // Move EN to the first position if present
+        if (sortedLangCodes.remove("EN")) {
+            sortedLangCodes.add(0, "EN");
+        }
 
         // Key column
-        TreeTableColumn<TranslationRow, String> keyColumn = new TreeTableColumn<>("Key");
+        keyColumn = new TreeTableColumn<>("Key");
         keyColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getValue().getKey()));
         keyColumn.setPrefWidth(150);
+        keyColumn.setReorderable(false); // Prevent moving the key column
         treeTableView.getColumns().add(keyColumn);
 
         // Language columns
@@ -113,8 +121,33 @@ public class MainController {
                 return new SimpleStringProperty(present ? "✔" : "");
             });
             langCol.setPrefWidth(60);
+            // Allow reordering for language columns
+            langCol.setReorderable(true);
             treeTableView.getColumns().add(langCol);
         }
+
+        // Add listener to prevent any column from moving to position 0 except Key
+        // column
+        treeTableView.getColumns().addListener((ListChangeListener<TreeTableColumn<TranslationRow, ?>>) change -> {
+            while (change.next()) {
+                // Check for any type of change that might affect position 0
+                if (change.wasAdded() || change.wasRemoved() || change.wasPermutated()) {
+                    // Check if Key column is still at position 0
+                    if (!treeTableView.getColumns().isEmpty() &&
+                            treeTableView.getColumns().get(0) != keyColumn) {
+
+                        // Find where the Key column is now
+                        int keyColumnIndex = treeTableView.getColumns().indexOf(keyColumn);
+
+                        if (keyColumnIndex > 0) {
+                            // Remove Key column from its current position and put it at position 0
+                            treeTableView.getColumns().remove(keyColumn);
+                            treeTableView.getColumns().add(0, keyColumn);
+                        }
+                    }
+                }
+            }
+        });
 
         // Build rows
         TreeItem<TranslationRow> root = new TreeItem<>(new TranslationRow("Root", Collections.emptyMap()));

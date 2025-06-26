@@ -30,12 +30,7 @@
     </MenuBar>
   </top>
   <center>
-    <TreeTableView fx:id="treeTableView" editable="true">
-      <columns>
-        <TreeTableColumn fx:id="keyColumn" prefWidth="75.0" sortable="false" text="Key" />
-        <TreeTableColumn fx:id="enColumn" editable="false" prefWidth="75.0" sortable="false" text="EN" />
-      </columns>
-    </TreeTableView>
+    <TreeTableView fx:id="treeTableView" editable="true" />
   </center>
   <bottom>
     <HBox fx:id="statusBar" spacing="10" alignment="CENTER_LEFT" style="-fx-background-color: #e0e0e0; -fx-padding: 4 8;">
