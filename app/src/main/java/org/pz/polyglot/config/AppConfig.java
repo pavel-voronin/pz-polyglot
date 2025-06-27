@@ -27,6 +27,8 @@ public class AppConfig {
     private String steamModsPath;
     @JsonProperty("cachePath")
     private String cachePath;
+    @JsonProperty("pzLanguages")
+    private String[] pzLanguages = new String[0];
 
     public static AppConfig getInstance() {
         if (instance == null) {
@@ -44,6 +46,30 @@ public class AppConfig {
             logger.log(Level.SEVERE, "Failed to save config file", e);
         }
     }
+
+    private static AppConfig loadOrCreate() {
+        Path configPath = getConfigFilePath();
+        File configFile = configPath.toFile();
+        if (configFile.exists()) {
+            try {
+                AppConfig loaded = objectMapper.readValue(configFile, AppConfig.class);
+                logger.info("Config loaded successfully");
+                return loaded;
+            } catch (IOException e) {
+                logger.log(Level.SEVERE, "Failed to load config, creating new one", e);
+            }
+        }
+        logger.info("Creating new config file");
+        AppConfig config = new AppConfig();
+        config.save();
+        return config;
+    }
+
+    private static Path getConfigFilePath() {
+        return Path.of(System.getProperty("user.dir"), CONFIG_FILE_NAME);
+    }
+
+    // Config values related methods
 
     public String getLanguage() {
         return language;
@@ -85,25 +111,11 @@ public class AppConfig {
         this.cachePath = path;
     }
 
-    private static AppConfig loadOrCreate() {
-        Path configPath = getConfigFilePath();
-        File configFile = configPath.toFile();
-        if (configFile.exists()) {
-            try {
-                AppConfig loaded = objectMapper.readValue(configFile, AppConfig.class);
-                logger.info("Config loaded successfully");
-                return loaded;
-            } catch (IOException e) {
-                logger.log(Level.SEVERE, "Failed to load config, creating new one", e);
-            }
-        }
-        logger.info("Creating new config file");
-        AppConfig config = new AppConfig();
-        config.save();
-        return config;
+    public String[] getPzLanguages() {
+        return pzLanguages;
     }
 
-    private static Path getConfigFilePath() {
-        return Path.of(System.getProperty("user.dir"), CONFIG_FILE_NAME);
+    public void setPzLanguages(String[] pzLanguages) {
+        this.pzLanguages = pzLanguages;
     }
 }

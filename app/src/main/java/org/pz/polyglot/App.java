@@ -35,12 +35,12 @@ public class App extends Application {
 
         // PZ related initialization
 
-        PZLanguageManager.load();
         PZSources.getInstance();
+        PZLanguageManager.load();
         PZTranslationManager.loadFilesFromSources();
         // Refresh translations table after loading
         javafx.application.Platform.runLater(() -> {
-            if(org.pz.polyglot.ui.MainWindowManager.mainControllerInstance != null) {
+            if (org.pz.polyglot.ui.MainWindowManager.mainControllerInstance != null) {
                 org.pz.polyglot.ui.MainWindowManager.mainControllerInstance.refreshTranslationsTable();
             }
         });
