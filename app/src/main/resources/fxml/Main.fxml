@@ -42,13 +42,15 @@
             style="-fx-background-color: white; -fx-border-color: #cccccc; -fx-border-width: 1; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0, 2, 2);"
             StackPane.alignment="CENTER_RIGHT">
         <children>
-          <HBox style="-fx-padding: 8; -fx-background-color: #f5f5f5; -fx-border-color: #cccccc; -fx-border-width: 0 0 1 0;">
-            <children>
-              <Label fx:id="panelTitleLabel" text="" style="-fx-font-weight: bold; -fx-font-size: 13px;" HBox.hgrow="ALWAYS"/>
+          <BorderPane style="-fx-padding: 8; -fx-background-color: #f5f5f5; -fx-border-color: #cccccc; -fx-border-width: 0 0 1 0;">
+            <left>
+              <Label fx:id="panelTitleLabel" text="" style="-fx-font-weight: bold; -fx-font-size: 16px; -fx-text-overrun: ELLIPSIS; -fx-padding: 0 0 0 9;" maxWidth="340"/>
+            </left>
+            <right>
               <Button fx:id="closePanelButton" text="✕" style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-font-size: 14px; -fx-text-fill: #666666; -fx-font-family: monospace;" 
                       onAction="#closePanelAction" prefWidth="25" prefHeight="25"/>
-            </children>
-          </HBox>
+            </right>
+          </BorderPane>
           <ScrollPane fx:id="panelScrollPane" fitToWidth="true" VBox.vgrow="ALWAYS">
             <content>
               <VBox fx:id="panelContent" spacing="10" style="-fx-padding: 15;">

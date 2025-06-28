@@ -8,6 +8,8 @@ import java.nio.file.Path;
 import java.util.List;
 
 import org.pz.polyglot.pz.languages.PZLanguage;
+import org.pz.polyglot.pz.sources.PZSource;
+import org.pz.polyglot.pz.core.PZBuild;
 
 class PZTranslationParserTest {
     @Test
@@ -18,7 +20,8 @@ class PZTranslationParserTest {
 
         // Prepare minimal language and file objects
         PZLanguage lang = new PZLanguage("en", "English", StandardCharsets.UTF_8);
-        PZTranslationFile file = new PZTranslationFile(tempFile, PZTranslationType.UI, lang);
+        PZSource source = new PZSource("Test", PZBuild.BUILD_42, tempFile.getParent(), true);
+        PZTranslationFile file = new PZTranslationFile(tempFile, PZTranslationType.UI, lang, source);
 
         // Parse
         try (PZTranslationParser parser = new PZTranslationParser(file)) {
@@ -43,7 +46,8 @@ class PZTranslationParserTest {
                 "-- Another comment"));
 
         PZLanguage lang = new PZLanguage("en", "English", StandardCharsets.UTF_8);
-        PZTranslationFile file = new PZTranslationFile(tempFile, PZTranslationType.UI, lang);
+        PZSource source = new PZSource("Test", PZBuild.BUILD_42, tempFile.getParent(), true);
+        PZTranslationFile file = new PZTranslationFile(tempFile, PZTranslationType.UI, lang, source);
 
         try (PZTranslationParser parser = new PZTranslationParser(file)) {
             var it = parser.iterator();
@@ -64,7 +68,8 @@ class PZTranslationParserTest {
                 "keyB = \"B value\""));
 
         PZLanguage lang = new PZLanguage("en", "English", StandardCharsets.UTF_8);
-        PZTranslationFile file = new PZTranslationFile(tempFile, PZTranslationType.UI, lang);
+        PZSource source = new PZSource("Test", PZBuild.BUILD_42, tempFile.getParent(), true);
+        PZTranslationFile file = new PZTranslationFile(tempFile, PZTranslationType.UI, lang, source);
 
         try (PZTranslationParser parser = new PZTranslationParser(file)) {
             var it = parser.iterator();
@@ -90,7 +95,8 @@ class PZTranslationParserTest {
                 "keyD = \"validValue\""));
 
         PZLanguage lang = new PZLanguage("en", "English", StandardCharsets.UTF_8);
-        PZTranslationFile file = new PZTranslationFile(tempFile, PZTranslationType.UI, lang);
+        PZSource source = new PZSource("Test", PZBuild.BUILD_42, tempFile.getParent(), true);
+        PZTranslationFile file = new PZTranslationFile(tempFile, PZTranslationType.UI, lang, source);
 
         try (PZTranslationParser parser = new PZTranslationParser(file)) {
             var it = parser.iterator();
@@ -112,7 +118,8 @@ class PZTranslationParserTest {
                 "\"and this is the last line\""));
 
         PZLanguage lang = new PZLanguage("en", "English", StandardCharsets.UTF_8);
-        PZTranslationFile file = new PZTranslationFile(tempFile, PZTranslationType.UI, lang);
+        PZSource source = new PZSource("Test", PZBuild.BUILD_42, tempFile.getParent(), true);
+        PZTranslationFile file = new PZTranslationFile(tempFile, PZTranslationType.UI, lang, source);
 
         try (PZTranslationParser parser = new PZTranslationParser(file)) {
             var it = parser.iterator();
@@ -131,7 +138,8 @@ class PZTranslationParserTest {
         Files.write(tempFile, List.of("key1 = \"value1\""));
 
         PZLanguage lang = new PZLanguage("en", "English", StandardCharsets.UTF_8);
-        PZTranslationFile file = new PZTranslationFile(tempFile, PZTranslationType.UI, lang);
+        PZSource source = new PZSource("Test", PZBuild.BUILD_42, tempFile.getParent(), true);
+        PZTranslationFile file = new PZTranslationFile(tempFile, PZTranslationType.UI, lang, source);
 
         try (PZTranslationParser parser = new PZTranslationParser(file)) {
             var it = parser.iterator();

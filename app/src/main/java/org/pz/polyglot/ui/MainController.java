@@ -10,9 +10,14 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.ListChangeListener;
 import javafx.geometry.Insets;
+import javafx.scene.shape.Polygon;
+import javafx.scene.paint.Color;
+import javafx.scene.Cursor;
 import org.pz.polyglot.pz.translations.PZTranslations;
 import org.pz.polyglot.pz.translations.PZTranslationEntry;
 import org.pz.polyglot.pz.translations.PZTranslationVariant;
@@ -22,6 +27,7 @@ import org.pz.polyglot.config.AppConfig;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.List;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.CheckMenuItem;
 
@@ -88,6 +94,8 @@ public class MainController {
 
     // Current translation data
     private Map<String, TextArea> languageTextFields = new HashMap<>();
+    // Track which text areas have been manually resized
+    private Set<TextArea> manuallyResizedTextAreas = new HashSet<>();
 
     /**
      * Initializes the TreeTableView and its columns with translation data.
@@ -95,11 +103,23 @@ public class MainController {
     @FXML
     private void initialize() {
         startMemoryMonitor();
-        // Enable column visibility menu button
-        treeTableView.setTableMenuButtonVisible(true);
         // Handle Quit menu action
         quitMenuItem.setOnAction(event -> Platform.exit());
         setupRowSelectionListener();
+        loadCssStyles();
+    }
+
+    /**
+     * Loads CSS styles for the application.
+     */
+    private void loadCssStyles() {
+        // Load CSS when the scene is available
+        Platform.runLater(() -> {
+            if (treeTableView.getScene() != null) {
+                String cssPath = getClass().getResource("/css/custom-textarea.css").toExternalForm();
+                treeTableView.getScene().getStylesheets().add(cssPath);
+            }
+        });
     }
 
     /**
@@ -136,58 +156,57 @@ public class MainController {
 
         // Create fields for each language
         for (String langCode : sortedLangCodes) {
-            VBox langContainer = new VBox(5);
-            langContainer.setPadding(new Insets(5));
-            langContainer.setStyle(
-                    "-fx-border-color: #e0e0e0; -fx-border-width: 1; -fx-border-radius: 3; -fx-background-color: #fafafa;");
-
-            Label langLabel = new Label(langCode);
-            langLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
-
-            TextArea textArea = new TextArea();
-            textArea.setPromptText("Enter translation for " + langCode);
-            textArea.setPrefWidth(350);
-            textArea.setPrefRowCount(2); // Start with 2 rows
-            textArea.setWrapText(true); // Enable text wrapping
-
-            // Make TextArea expand with content
-            textArea.textProperty().addListener((obs, oldText, newText) -> {
-                // Calculate approximate number of lines needed
-                if (newText != null) {
-                    int lines = Math.max(2, newText.split("\n").length);
-                    // Add extra line if text wraps
-                    if (newText.length() > 50 * lines) {
-                        lines++;
-                    }
-                    textArea.setPrefRowCount(Math.min(lines, 10)); // Limit to 10 rows max
-                }
-            });
-
-            // Find existing translation for this language
+            // Find all translation variants for this language
+            List<PZTranslationVariant> languageVariants = new ArrayList<>();
             if (entry != null) {
                 for (PZTranslationVariant variant : entry.getTranslations()) {
                     if (variant.getFile() != null && variant.getFile().getLanguage() != null &&
                             langCode.equals(variant.getFile().getLanguage().getCode()) &&
                             variant.getText() != null && !variant.getText().isEmpty()) {
-                        textArea.setText(variant.getText());
-                        break;
+                        languageVariants.add(variant);
                     }
                 }
             }
 
-            languageTextFields.put(langCode, textArea);
-            langContainer.getChildren().addAll(langLabel, textArea);
-            languageFieldsContainer.getChildren().add(langContainer);
+            // If no variants found, create empty field
+            if (languageVariants.isEmpty()) {
+                Label langLabel = new Label(langCode);
+                langLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
+                langLabel.setPadding(new Insets(10, 0, 0, 0));
+
+                StackPane textAreaContainer = createResizableTextArea(langCode);
+                TextArea textArea = (TextArea) textAreaContainer.getChildren().get(0);
+
+                languageTextFields.put(langCode, textArea);
+                languageFieldsContainer.getChildren().addAll(langLabel, textAreaContainer);
+            } else {
+                // Create fields for each variant of this language
+                for (int i = 0; i < languageVariants.size(); i++) {
+                    PZTranslationVariant variant = languageVariants.get(i);
+                    String sourceName = variant.getFile().getSource().getName();
+                    String buildInfo = String.valueOf(variant.getFile().getSource().getBuild().getMajor());
+
+                    // Create label with language code, source name and build info
+                    String labelText = langCode + " (" + sourceName + " [" + buildInfo + "])";
+                    Label langLabel = new Label(labelText);
+                    langLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
+                    langLabel.setPadding(new Insets(10, 0, 0, 0));
+
+                    StackPane textAreaContainer = createResizableTextArea(langCode + "_" + i);
+                    TextArea textArea = (TextArea) textAreaContainer.getChildren().get(0);
+                    textArea.setText(variant.getText());
+
+                    // Store with unique key for multiple variants
+                    String fieldKey = languageVariants.size() == 1 ? langCode : langCode + "_" + i;
+                    languageTextFields.put(fieldKey, textArea);
+                    languageFieldsContainer.getChildren().addAll(langLabel, textAreaContainer);
+                }
+            }
         }
 
         // Show the panel
         rightPanel.setVisible(true);
         rightPanel.setManaged(true);
-        // Set default size for translation input fields
-        languageTextFields.values().forEach(textArea -> {
-            textArea.setPrefRowCount(1);
-            textArea.setWrapText(true);
-        });
     }
 
     /**
@@ -198,6 +217,7 @@ public class MainController {
         rightPanel.setVisible(false);
         rightPanel.setManaged(false);
         languageTextFields.clear();
+        manuallyResizedTextAreas.clear();
         treeTableView.getSelectionModel().clearSelection();
     }
 
@@ -220,7 +240,125 @@ public class MainController {
         memoryLabel.setText("Memory: " + usedMB + " MB");
     }
 
-    private void populateTranslationsTable() {
+    /**
+     * Creates a resizable TextArea with manual resize handle.
+     */
+    private StackPane createResizableTextArea(String langCode) {
+        TextArea textArea = new TextArea();
+        textArea.setPromptText("Enter translation for " + langCode);
+        textArea.setPrefWidth(420);
+        textArea.setWrapText(true);
+
+        // Set precise initial height - exactly one line
+        textArea.setPrefHeight(28); // Fixed pixel height for single line
+        textArea.setMinHeight(28);
+        textArea.setMaxHeight(Region.USE_PREF_SIZE);
+        textArea.setMinWidth(200);
+
+        // Apply CSS class instead of inline styles
+        textArea.getStyleClass().add("custom-textarea");
+
+        // Smart auto-resize using pixel-based calculation
+        textArea.textProperty().addListener((obs, oldText, newText) -> {
+            // Only auto-resize if not manually resized
+            if (!manuallyResizedTextAreas.contains(textArea)) {
+                Platform.runLater(() -> {
+                    if (newText == null || newText.isEmpty()) {
+                        textArea.setPrefHeight(28);
+                        textArea.setMaxHeight(28);
+                    } else {
+                        // Calculate height based on text content
+                        int lineBreaks = newText.split("\n", -1).length;
+
+                        // Estimate wrapped lines based on character count and width
+                        double charWidth = 7.5; // Average character width in pixels
+                        double availableWidth = 410; // Text area width minus padding
+                        int charsPerLine = (int) (availableWidth / charWidth);
+
+                        int wrappedLines = 0;
+                        String[] textLines = newText.split("\n", -1);
+                        for (String line : textLines) {
+                            if (line.length() > charsPerLine) {
+                                wrappedLines += (line.length() / charsPerLine);
+                            }
+                        }
+
+                        int totalLines = Math.max(1, lineBreaks + wrappedLines);
+                        int newHeight = Math.max(24, totalLines * 17 + 10);
+                        textArea.setPrefHeight(newHeight);
+                        textArea.setMaxHeight(newHeight);
+                    }
+                });
+            }
+        });
+
+        // Create resize handle (small triangle in bottom-right corner)
+        Polygon resizeHandle = new Polygon();
+        resizeHandle.getPoints().addAll(
+                0.0, 10.0, // top-left
+                10.0, 0.0, // top-right
+                10.0, 10.0 // bottom-right
+        );
+        resizeHandle.setFill(Color.LIGHTGRAY);
+        resizeHandle.setCursor(Cursor.SE_RESIZE);
+
+        // Create larger invisible hit area for better usability
+        javafx.scene.shape.Rectangle hitArea = new javafx.scene.shape.Rectangle(15, 15);
+        hitArea.setFill(Color.TRANSPARENT);
+        hitArea.setCursor(Cursor.SE_RESIZE);
+
+        // Container to hold both TextArea and resize elements
+        StackPane container = new StackPane();
+        container.getChildren().addAll(textArea, resizeHandle, hitArea);
+
+        // Position resize handle and hit area in bottom-right corner
+        StackPane.setAlignment(resizeHandle, javafx.geometry.Pos.BOTTOM_RIGHT);
+        StackPane.setAlignment(hitArea, javafx.geometry.Pos.BOTTOM_RIGHT);
+        resizeHandle.setTranslateX(-2);
+        resizeHandle.setTranslateY(-2);
+        hitArea.setTranslateX(-2);
+        hitArea.setTranslateY(-2);
+
+        // Add resize functionality
+        setupResizeHandlers(textArea, hitArea);
+
+        return container;
+    }
+
+    /**
+     * Sets up mouse handlers for resizing the TextArea.
+     */
+    private void setupResizeHandlers(TextArea textArea, javafx.scene.Node resizeElement) {
+        final double[] dragAnchor = new double[2];
+
+        resizeElement.setOnMousePressed(event -> {
+            dragAnchor[0] = event.getSceneX();
+            dragAnchor[1] = event.getSceneY();
+            event.consume();
+        });
+
+        resizeElement.setOnMouseDragged(event -> {
+            double deltaX = event.getSceneX() - dragAnchor[0];
+            double deltaY = event.getSceneY() - dragAnchor[1];
+
+            double newWidth = Math.max(textArea.getMinWidth(), textArea.getPrefWidth() + deltaX);
+            double newHeight = Math.max(textArea.getMinHeight(), textArea.getPrefHeight() + deltaY);
+
+            // Only resize the TextArea, let container adjust automatically
+            textArea.setPrefWidth(newWidth);
+            textArea.setPrefHeight(newHeight);
+            textArea.setMaxHeight(newHeight); // Allow manual resize to override auto-resize max height
+
+            // Mark this text area as manually resized
+            manuallyResizedTextAreas.add(textArea);
+
+            dragAnchor[0] = event.getSceneX();
+            dragAnchor[1] = event.getSceneY();
+            event.consume();
+        });
+    }
+
+    public void populateTranslationsTable() {
         // Refresh columns based on config and all available languages
         treeTableView.getColumns().clear();
         PZTranslations translations = PZTranslations.getInstance();
@@ -342,10 +480,6 @@ public class MainController {
         }
         treeTableView.setRoot(root);
         treeTableView.setShowRoot(false);
-    }
-
-    public void refreshTranslationsTable() {
-        populateTranslationsTable();
     }
 
     /**

@@ -40,7 +40,7 @@ public class PZTranslationManager {
                                 .fromString(file.getFileName().toString().split("_")[0])
                                 .get();
 
-                        PZTranslationFile translationFile = new PZTranslationFile(file, translationType, lang);
+                        PZTranslationFile translationFile = new PZTranslationFile(file, translationType, lang, source);
                         try (PZTranslationParser reader = new PZTranslationParser(translationFile);
                                 Stream<PZTranslationParser.Pair> stream = reader.stream()) {
                             stream.forEach(s -> {

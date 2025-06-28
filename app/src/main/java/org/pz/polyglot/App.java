@@ -41,7 +41,7 @@ public class App extends Application {
         // Refresh translations table after loading
         javafx.application.Platform.runLater(() -> {
             if (org.pz.polyglot.ui.MainWindowManager.mainControllerInstance != null) {
-                org.pz.polyglot.ui.MainWindowManager.mainControllerInstance.refreshTranslationsTable();
+                org.pz.polyglot.ui.MainWindowManager.mainControllerInstance.populateTranslationsTable();
             }
         });
     }
