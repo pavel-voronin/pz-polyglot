@@ -9,7 +9,9 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Button;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.Hyperlink;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.beans.property.SimpleStringProperty;
@@ -94,6 +96,7 @@ public class MainController {
 
     // Current translation data
     private Map<String, TextArea> languageTextFields = new HashMap<>();
+    private Map<TextArea, PZTranslationVariant> textAreaToVariant = new HashMap<>(); // Track which variant each text area represents
     // Track which text areas have been manually resized
     private Set<TextArea> manuallyResizedTextAreas = new HashSet<>();
 
@@ -143,6 +146,7 @@ public class MainController {
         // Clear previous fields
         languageFieldsContainer.getChildren().clear();
         languageTextFields.clear();
+        textAreaToVariant.clear();
 
         // Get translation entry
         PZTranslations translations = PZTranslations.getInstance();
@@ -170,15 +174,20 @@ public class MainController {
 
             // If no variants found, create empty field
             if (languageVariants.isEmpty()) {
+                // Create horizontal container for label and reset button
+                HBox labelContainer = new HBox(5);
+                labelContainer.setPadding(new Insets(10, 0, 0, 0));
+                
                 Label langLabel = new Label(langCode);
                 langLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
-                langLabel.setPadding(new Insets(10, 0, 0, 0));
+                
+                labelContainer.getChildren().add(langLabel);
 
                 StackPane textAreaContainer = createResizableTextArea(langCode);
                 TextArea textArea = (TextArea) textAreaContainer.getChildren().get(0);
 
                 languageTextFields.put(langCode, textArea);
-                languageFieldsContainer.getChildren().addAll(langLabel, textAreaContainer);
+                languageFieldsContainer.getChildren().addAll(labelContainer, textAreaContainer);
             } else {
                 // Create fields for each variant of this language
                 for (int i = 0; i < languageVariants.size(); i++) {
@@ -186,20 +195,54 @@ public class MainController {
                     String sourceName = variant.getFile().getSource().getName();
                     String buildInfo = String.valueOf(variant.getFile().getSource().getBuild().getMajor());
 
+                    // Create horizontal container for label and reset button
+                    HBox labelContainer = new HBox();
+                    labelContainer.setPadding(new Insets(10, 0, 0, 0));
+                    
                     // Create label with language code, source name and build info
                     String labelText = langCode + " (" + sourceName + " [" + buildInfo + "])";
                     Label langLabel = new Label(labelText);
                     langLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
-                    langLabel.setPadding(new Insets(10, 0, 0, 0));
+
+                    // Create reset link (styled as hyperlink)
+                    Hyperlink resetLink = new Hyperlink("reset");
+                    resetLink.setStyle("-fx-font-size: 10px; -fx-padding: 0; -fx-text-fill: #007acc;");
+                    resetLink.setVisible(variant.isEdited()); // Initially visible only if already edited
+
+                    // Add label and spacer, then reset button to push it to the right
+                    javafx.scene.layout.Region spacer = new javafx.scene.layout.Region();
+                    HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
+                    labelContainer.getChildren().addAll(langLabel, spacer, resetLink);
 
                     StackPane textAreaContainer = createResizableTextArea(langCode + "_" + i);
                     TextArea textArea = (TextArea) textAreaContainer.getChildren().get(0);
-                    textArea.setText(variant.getText());
+                    textArea.setText(variant.getCurrentText()); // Use current text (edited or original)
+
+                    // Track the variant for this text area
+                    textAreaToVariant.put(textArea, variant);
+
+                    // Set up reset functionality
+                    resetLink.setOnAction(e -> {
+                        variant.resetToOriginal();
+                        textArea.setText(variant.getCurrentText());
+                        resetLink.setVisible(false);
+                    });
+
+                    // Track text changes and show/hide reset button
+                    textArea.textProperty().addListener((obs, oldText, newText) -> {
+                        if (newText != null && !newText.equals(variant.getOriginalText())) {
+                            variant.setEditedText(newText);
+                            resetLink.setVisible(true);
+                        } else if (newText != null && newText.equals(variant.getOriginalText())) {
+                            variant.resetToOriginal();
+                            resetLink.setVisible(false);
+                        }
+                    });
 
                     // Store with unique key for multiple variants
                     String fieldKey = languageVariants.size() == 1 ? langCode : langCode + "_" + i;
                     languageTextFields.put(fieldKey, textArea);
-                    languageFieldsContainer.getChildren().addAll(langLabel, textAreaContainer);
+                    languageFieldsContainer.getChildren().addAll(labelContainer, textAreaContainer);
                 }
             }
         }
@@ -217,6 +260,7 @@ public class MainController {
         rightPanel.setVisible(false);
         rightPanel.setManaged(false);
         languageTextFields.clear();
+        textAreaToVariant.clear();
         manuallyResizedTextAreas.clear();
         treeTableView.getSelectionModel().clearSelection();
     }
