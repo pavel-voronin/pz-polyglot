@@ -6,6 +6,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.TextField;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
@@ -28,6 +29,12 @@ public class FolderSelectionDialogController {
     @FXML
     private TextField cacheField;
     @FXML
+    private CheckBox gameEditableCheckBox;
+    @FXML
+    private CheckBox steamEditableCheckBox;
+    @FXML
+    private CheckBox cacheEditableCheckBox;
+    @FXML
     private Button gameBrowse;
     @FXML
     private Button steamBrowse;
@@ -48,6 +55,11 @@ public class FolderSelectionDialogController {
             steamField.setText(config.getSteamModsPath());
         if (config.getCachePath() != null)
             cacheField.setText(config.getCachePath());
+        
+        // Set checkbox values
+        gameEditableCheckBox.setSelected(config.isGamePathEditable());
+        steamEditableCheckBox.setSelected(config.isSteamModsPathEditable());
+        cacheEditableCheckBox.setSelected(config.isCachePathEditable());
     }
 
     public void setDialogStage(Stage stage) {
@@ -123,6 +135,12 @@ public class FolderSelectionDialogController {
         config.setGamePath(gameField.getText());
         config.setSteamModsPath(steamField.getText());
         config.setCachePath(cacheField.getText());
+        
+        // Save checkbox values
+        config.setGamePathEditable(gameEditableCheckBox.isSelected());
+        config.setSteamModsPathEditable(steamEditableCheckBox.isSelected());
+        config.setCachePathEditable(cacheEditableCheckBox.isSelected());
+        
         config.save();
         foldersSelected = true;
         dialogStage.close();

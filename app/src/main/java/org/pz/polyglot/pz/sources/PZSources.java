@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
+import org.pz.polyglot.config.AppConfig;
 import org.pz.polyglot.pz.core.PZBuild;
 import org.pz.polyglot.util.FolderUtils;
 
@@ -34,8 +35,15 @@ public class PZSources {
         return this.sources;
     }
 
+    public void refreshSources() {
+        parseSources();
+        logger.info("Refreshed sources: " + this.sources.size());
+    }
+
     public void parseSources() {
         this.sources.clear();
+        
+        AppConfig config = AppConfig.getInstance();
 
         // Steam mods: [SteamItemId]/<mods>/[ModName]/
         FolderUtils.getSteamModsPath().ifPresent(path -> {
@@ -43,7 +51,7 @@ public class PZSources {
                 Path modsFolder = userFolder.resolve("mods");
                 if (Files.isDirectory(modsFolder)) {
                     for (Path mod : listDirectories(modsFolder)) {
-                        checkAndAddSource(mod, false);
+                        checkAndAddSource(mod, config.isSteamModsPathEditable());
                     }
                 }
             }
@@ -56,7 +64,7 @@ public class PZSources {
                 Path modsFolder = contentsFolder.resolve("mods");
                 if (Files.isDirectory(modsFolder)) {
                     for (Path mod : listDirectories(modsFolder)) {
-                        checkAndAddSource(mod, false);
+                        checkAndAddSource(mod, config.isCachePathEditable());
                     }
                 }
             }
@@ -65,13 +73,13 @@ public class PZSources {
         // Local mods: [ModName]/
         FolderUtils.getModsPath().ifPresent(path -> {
             for (Path mod : listDirectories(path)) {
-                checkAndAddSource(mod, true);
+                checkAndAddSource(mod, config.isCachePathEditable());
             }
         });
 
         // Game folder — check directly
         FolderUtils.getGamePath().ifPresent(path -> {
-            checkAndAddSource(path, true);
+            checkAndAddSource(path, config.isGamePathEditable());
         });
     }
 

@@ -18,6 +18,7 @@ public class TranslationProvider {
         ENGLISH_TRANSLATIONS.put("language-dialog.choose.game.title", "Select Project Zomboid game folder");
         ENGLISH_TRANSLATIONS.put("language-dialog.choose.steam.title", "Select Steam mods folder");
         ENGLISH_TRANSLATIONS.put("language-dialog.choose.cache.title", "Select cache folder");
+        ENGLISH_TRANSLATIONS.put("language-dialog.editable.checkbox", "Enable editing");
 
         ENGLISH_TRANSLATIONS.put("language-not-set-alert.exit.title", "Exit Confirmation");
         ENGLISH_TRANSLATIONS.put("language-not-set-alert.exit.header", "Folders not selected");

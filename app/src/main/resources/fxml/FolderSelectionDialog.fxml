@@ -14,6 +14,7 @@
                 <Button text="%language-dialog.browse.button" fx:id="gameBrowse" onAction="#onGameBrowse" />
             </children>
         </HBox>
+        <CheckBox text="%language-dialog.editable.checkbox" fx:id="gameEditableCheckBox" />
         <Label text="%language-dialog.steam.label" />
         <HBox spacing="5">
             <children>
@@ -21,6 +22,7 @@
                 <Button text="%language-dialog.browse.button" fx:id="steamBrowse" onAction="#onSteamBrowse" />
             </children>
         </HBox>
+        <CheckBox text="%language-dialog.editable.checkbox" fx:id="steamEditableCheckBox" />
         <Label text="%language-dialog.cache.label" />
         <HBox spacing="5">
             <children>
@@ -28,6 +30,7 @@
                 <Button text="%language-dialog.browse.button" fx:id="cacheBrowse" onAction="#onCacheBrowse" />
             </children>
         </HBox>
+        <CheckBox text="%language-dialog.editable.checkbox" fx:id="cacheEditableCheckBox" />
         <Button text="%language-dialog.ok.button" fx:id="okButton" onAction="#onOk" />
     </children>
 </VBox>

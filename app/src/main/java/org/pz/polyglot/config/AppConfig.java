@@ -29,6 +29,12 @@ public class AppConfig {
     private String cachePath;
     @JsonProperty("pzLanguages")
     private String[] pzLanguages = new String[0];
+    @JsonProperty("gamePathEditable")
+    private boolean gamePathEditable = false;
+    @JsonProperty("steamModsPathEditable")
+    private boolean steamModsPathEditable = false;
+    @JsonProperty("cachePathEditable")
+    private boolean cachePathEditable = true;
 
     public static AppConfig getInstance() {
         if (instance == null) {
@@ -117,5 +123,29 @@ public class AppConfig {
 
     public void setPzLanguages(String[] pzLanguages) {
         this.pzLanguages = pzLanguages;
+    }
+
+    public boolean isGamePathEditable() {
+        return gamePathEditable;
+    }
+
+    public void setGamePathEditable(boolean gamePathEditable) {
+        this.gamePathEditable = gamePathEditable;
+    }
+
+    public boolean isSteamModsPathEditable() {
+        return steamModsPathEditable;
+    }
+
+    public void setSteamModsPathEditable(boolean steamModsPathEditable) {
+        this.steamModsPathEditable = steamModsPathEditable;
+    }
+
+    public boolean isCachePathEditable() {
+        return cachePathEditable;
+    }
+
+    public void setCachePathEditable(boolean cachePathEditable) {
+        this.cachePathEditable = cachePathEditable;
     }
 }
