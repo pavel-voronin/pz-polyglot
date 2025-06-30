@@ -96,7 +96,8 @@ public class MainController {
 
     // Current translation data
     private Map<String, TextArea> languageTextFields = new HashMap<>();
-    private Map<TextArea, PZTranslationVariant> textAreaToVariant = new HashMap<>(); // Track which variant each text area represents
+    private Map<TextArea, PZTranslationVariant> textAreaToVariant = new HashMap<>(); // Track which variant each text
+                                                                                     // area represents
     // Track which text areas have been manually resized
     private Set<TextArea> manuallyResizedTextAreas = new HashSet<>();
 
@@ -177,10 +178,10 @@ public class MainController {
                 // Create horizontal container for label and reset button
                 HBox labelContainer = new HBox(5);
                 labelContainer.setPadding(new Insets(10, 0, 0, 0));
-                
+
                 Label langLabel = new Label(langCode);
                 langLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
-                
+
                 labelContainer.getChildren().add(langLabel);
 
                 StackPane textAreaContainer = createResizableTextArea(langCode);
@@ -198,7 +199,7 @@ public class MainController {
                     // Create horizontal container for label and reset button
                     HBox labelContainer = new HBox();
                     labelContainer.setPadding(new Insets(10, 0, 0, 0));
-                    
+
                     // Create label with language code, source name and build info
                     String labelText = langCode + " (" + sourceName + " [" + buildInfo + "])";
                     Label langLabel = new Label(labelText);
@@ -420,27 +421,15 @@ public class MainController {
         Collections.sort(allList);
         if (allList.remove("EN"))
             allList.add(0, "EN");
-        // Determine creation order: config first, then missing
-        List<String> order = new ArrayList<>();
-        if (cfgList != null) {
-            for (String code : cfgList)
-                if (avail.contains(code))
-                    order.add(code);
-        } else {
-            order.addAll(allList);
-        }
-        for (String code : allList) {
-            if (cfgList == null || !cfgList.contains(code))
-                order.add(code);
-        }
         // Key column
         keyColumn = new TreeTableColumn<>("Key");
         keyColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getValue().getKey()));
         keyColumn.setPrefWidth(150);
         keyColumn.setReorderable(false);
         treeTableView.getColumns().add(keyColumn);
-        // Language columns with visibility per config
-        for (String lang : order) {
+        // Language columns with visibility per config - create ALL available languages
+        // in alphabetical order
+        for (String lang : allList) {
             TreeTableColumn<TranslationRow, String> col = new TreeTableColumn<>(lang);
             col.setCellValueFactory(param -> {
                 boolean present = param.getValue().getValue().hasTranslation(lang);
@@ -459,15 +448,25 @@ public class MainController {
 
         // Create header context menu for toggling column visibility
         ContextMenu headerMenu = new ContextMenu();
-        // Only include language columns in the menu
-        for (TreeTableColumn<TranslationRow, ?> col : treeTableView.getColumns()) {
-            if (col == keyColumn)
-                continue;
-            CheckMenuItem item = new CheckMenuItem(col.getText());
-            item.setSelected(col.isVisible());
-            // Sync column visibility with menu item
-            col.visibleProperty().addListener((obs, oldV, newV) -> item.setSelected(newV));
-            item.selectedProperty().addListener((obs, oldV, newV) -> col.setVisible(newV));
+        // Include ALL available languages in fixed alphabetical order (EN first)
+        for (String lang : allList) {
+            CheckMenuItem item = new CheckMenuItem(lang);
+            // Find corresponding column for this language
+            TreeTableColumn<TranslationRow, ?> langColumn = null;
+            for (TreeTableColumn<TranslationRow, ?> col : treeTableView.getColumns()) {
+                if (col != keyColumn && col.getText().equals(lang)) {
+                    langColumn = col;
+                    break;
+                }
+            }
+
+            if (langColumn != null) {
+                item.setSelected(langColumn.isVisible());
+                // Sync column visibility with menu item
+                final TreeTableColumn<TranslationRow, ?> finalLangColumn = langColumn;
+                langColumn.visibleProperty().addListener((obs, oldV, newV) -> item.setSelected(newV));
+                item.selectedProperty().addListener((obs, oldV, newV) -> finalLangColumn.setVisible(newV));
+            }
             headerMenu.getItems().add(item);
         }
         // Attach context menu only to language column headers
@@ -508,7 +507,7 @@ public class MainController {
             String key = entry.getKey();
             PZTranslationEntry translationEntry = entry.getValue();
             Map<String, Boolean> langPresence = new HashMap<>();
-            for (String lang : order) {
+            for (String lang : allList) {
                 boolean found = false;
                 for (PZTranslationVariant variant : translationEntry.getTranslations()) {
                     if (variant.getFile() != null && variant.getFile().getLanguage() != null &&
@@ -530,15 +529,27 @@ public class MainController {
      * Saves the current language column order to config.
      */
     private void saveLanguageOrderToConfig() {
-        // Save only visible language columns in current order
-        List<String> current = new ArrayList<>();
-        for (TreeTableColumn<TranslationRow, ?> column : treeTableView.getColumns()) {
-            if (column != keyColumn && column.isVisible()) {
-                current.add(column.getText());
+        // Get all available languages in their fixed alphabetical order (EN first)
+        PZLanguages pzLang = PZBuild.BUILD_42.getLanguages();
+        Set<String> avail = pzLang.getAllLanguageCodes();
+        List<String> allList = new ArrayList<>(avail);
+        Collections.sort(allList);
+        if (allList.remove("EN"))
+            allList.add(0, "EN");
+
+        // Save only visible languages in their fixed alphabetical order
+        List<String> visibleLanguages = new ArrayList<>();
+        for (String lang : allList) {
+            for (TreeTableColumn<TranslationRow, ?> column : treeTableView.getColumns()) {
+                if (column != keyColumn && column.getText().equals(lang) && column.isVisible()) {
+                    visibleLanguages.add(lang);
+                    break;
+                }
             }
         }
+
         AppConfig cfg = AppConfig.getInstance();
-        cfg.setPzLanguages(current.toArray(new String[0]));
+        cfg.setPzLanguages(visibleLanguages.toArray(new String[0]));
         cfg.save();
     }
 }

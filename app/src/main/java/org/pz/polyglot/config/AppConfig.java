@@ -7,6 +7,8 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -122,7 +124,13 @@ public class AppConfig {
     }
 
     public void setPzLanguages(String[] pzLanguages) {
-        this.pzLanguages = pzLanguages;
+        if (pzLanguages == null) {
+            this.pzLanguages = new String[0];
+            return;
+        }
+
+        this.pzLanguages = new LinkedHashSet<>(Arrays.asList(pzLanguages))
+                .toArray(new String[0]);
     }
 
     public boolean isGamePathEditable() {
