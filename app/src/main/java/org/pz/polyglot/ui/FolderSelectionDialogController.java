@@ -8,6 +8,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 
@@ -55,7 +56,7 @@ public class FolderSelectionDialogController {
             steamField.setText(config.getSteamModsPath());
         if (config.getCachePath() != null)
             cacheField.setText(config.getCachePath());
-        
+
         // Set checkbox values
         gameEditableCheckBox.setSelected(config.isGamePathEditable());
         steamEditableCheckBox.setSelected(config.isSteamModsPathEditable());
@@ -82,6 +83,12 @@ public class FolderSelectionDialogController {
 
     @FXML
     private void initialize() {
+        // Set tooltips for better user experience
+        gameField.setTooltip(new Tooltip(i18n.getString("language-dialog.choose.game.title")));
+        steamField.setTooltip(new Tooltip(i18n.getString("language-dialog.choose.steam.title")));
+        cacheField.setTooltip(new Tooltip(i18n.getString("language-dialog.choose.cache.title")));
+
+        // Set initial path guesses
         if (gameField.getText().isEmpty()) {
             Optional<File> guess = OsUtils.guessGameFolder();
             guess.ifPresent(f -> gameField.setText(f.getAbsolutePath()));
@@ -94,6 +101,7 @@ public class FolderSelectionDialogController {
             Optional<File> guess = OsUtils.guessCacheFolder();
             guess.ifPresent(f -> cacheField.setText(f.getAbsolutePath()));
         }
+
         okButton.setDisable(true); // Set initial state in code, not FXML
         validateFields();
         gameField.textProperty().addListener((obs, o, n) -> validateFields());
@@ -135,12 +143,12 @@ public class FolderSelectionDialogController {
         config.setGamePath(gameField.getText());
         config.setSteamModsPath(steamField.getText());
         config.setCachePath(cacheField.getText());
-        
+
         // Save checkbox values
         config.setGamePathEditable(gameEditableCheckBox.isSelected());
         config.setSteamModsPathEditable(steamEditableCheckBox.isSelected());
         config.setCachePathEditable(cacheEditableCheckBox.isSelected());
-        
+
         config.save();
         foldersSelected = true;
         dialogStage.close();

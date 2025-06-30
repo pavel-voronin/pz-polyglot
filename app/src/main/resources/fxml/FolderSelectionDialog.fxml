@@ -2,35 +2,65 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.geometry.Insets?>
-<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.pz.polyglot.ui.FolderSelectionDialogController" spacing="10">
-    <padding>
-        <Insets top="15.0" right="15.0" bottom="15.0" left="15.0"/>
-    </padding>
+<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" 
+      fx:controller="org.pz.polyglot.ui.FolderSelectionDialogController" 
+      styleClass="folder-dialog" 
+      stylesheets="@/css/folder-dialog.css">
     <children>
-        <Label text="%language-dialog.game.label" />
-        <HBox spacing="5">
+        <!-- Game Folder Section -->
+        <VBox styleClass="folder-section">
             <children>
-                <TextField fx:id="gameField" />
-                <Button text="%language-dialog.browse.button" fx:id="gameBrowse" onAction="#onGameBrowse" />
+                <Label text="%language-dialog.game.label" styleClass="section-label" />
+                <HBox styleClass="path-container">
+                    <children>
+                        <TextField fx:id="gameField" styleClass="path-field" />
+                        <Button text="%language-dialog.browse.button" fx:id="gameBrowse" 
+                                onAction="#onGameBrowse" styleClass="browse-button" />
+                    </children>
+                </HBox>
+                <CheckBox text="%language-dialog.editable.checkbox" fx:id="gameEditableCheckBox" 
+                          styleClass="editable-checkbox" />
+            </children>
+        </VBox>
+        
+        <!-- Steam Mods Folder Section -->
+        <VBox styleClass="folder-section">
+            <children>
+                <Label text="%language-dialog.steam.label" styleClass="section-label" />
+                <HBox styleClass="path-container">
+                    <children>
+                        <TextField fx:id="steamField" styleClass="path-field" />
+                        <Button text="%language-dialog.browse.button" fx:id="steamBrowse" 
+                                onAction="#onSteamBrowse" styleClass="browse-button" />
+                    </children>
+                </HBox>
+                <CheckBox text="%language-dialog.editable.checkbox" fx:id="steamEditableCheckBox" 
+                          styleClass="editable-checkbox" />
+            </children>
+        </VBox>
+        
+        <!-- Cache Folder Section -->
+        <VBox styleClass="folder-section">
+            <children>
+                <Label text="%language-dialog.cache.label" styleClass="section-label" />
+                <HBox styleClass="path-container">
+                    <children>
+                        <TextField fx:id="cacheField" styleClass="path-field" />
+                        <Button text="%language-dialog.browse.button" fx:id="cacheBrowse" 
+                                onAction="#onCacheBrowse" styleClass="browse-button" />
+                    </children>
+                </HBox>
+                <CheckBox text="%language-dialog.editable.checkbox" fx:id="cacheEditableCheckBox" 
+                          styleClass="editable-checkbox" />
+            </children>
+        </VBox>
+        
+        <!-- OK Button -->
+        <HBox styleClass="button-container">
+            <children>
+                <Button text="%language-dialog.ok.button" fx:id="okButton" 
+                        onAction="#onOk" styleClass="ok-button" />
             </children>
         </HBox>
-        <CheckBox text="%language-dialog.editable.checkbox" fx:id="gameEditableCheckBox" />
-        <Label text="%language-dialog.steam.label" />
-        <HBox spacing="5">
-            <children>
-                <TextField fx:id="steamField" />
-                <Button text="%language-dialog.browse.button" fx:id="steamBrowse" onAction="#onSteamBrowse" />
-            </children>
-        </HBox>
-        <CheckBox text="%language-dialog.editable.checkbox" fx:id="steamEditableCheckBox" />
-        <Label text="%language-dialog.cache.label" />
-        <HBox spacing="5">
-            <children>
-                <TextField fx:id="cacheField" />
-                <Button text="%language-dialog.browse.button" fx:id="cacheBrowse" onAction="#onCacheBrowse" />
-            </children>
-        </HBox>
-        <CheckBox text="%language-dialog.editable.checkbox" fx:id="cacheEditableCheckBox" />
-        <Button text="%language-dialog.ok.button" fx:id="okButton" onAction="#onOk" />
     </children>
 </VBox>

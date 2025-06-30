@@ -1,0 +1,123 @@
+/* Folder Selection Dialog Styles */
+
+.folder-dialog {
+    -fx-background-color: #f4f4f4;
+    -fx-font-family: "Segoe UI", Arial, sans-serif;
+    -fx-spacing: 12;
+    -fx-padding: 20;
+}
+
+.folder-dialog .section-label {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+    -fx-padding: 4 0 4 0;
+}
+
+.folder-dialog .path-field {
+    -fx-pref-width: 400;
+    -fx-max-width: 400;
+    -fx-min-width: 400;
+    -fx-padding: 6 8 6 8;
+    -fx-background-color: white;
+    -fx-border-color: #cccccc;
+    -fx-border-width: 1px;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-font-size: 12px;
+}
+
+.folder-dialog .path-field:focused {
+    -fx-border-color: #0078d4;
+    -fx-effect: dropshadow(gaussian, rgba(0, 120, 212, 0.3), 3, 0, 0, 0);
+}
+
+.folder-dialog .browse-button {
+    -fx-pref-width: 90;
+    -fx-min-width: 90;
+    -fx-padding: 6 12 6 12;
+    -fx-background-color: #0078d4;
+    -fx-text-fill: white;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-font-size: 12px;
+    -fx-cursor: hand;
+}
+
+.folder-dialog .browse-button:hover {
+    -fx-background-color: #106ebe;
+}
+
+.folder-dialog .browse-button:pressed {
+    -fx-background-color: #005a9e;
+}
+
+.folder-dialog .editable-checkbox {
+    -fx-font-size: 11px;
+    -fx-text-fill: #666666;
+    -fx-padding: 0 0 4 0;
+}
+
+.folder-dialog .editable-checkbox .box {
+    -fx-background-color: white;
+    -fx-border-color: #cccccc;
+    -fx-border-width: 1px;
+    -fx-border-radius: 3px;
+    -fx-background-radius: 3px;
+}
+
+.folder-dialog .editable-checkbox:selected .box {
+    -fx-background-color: #0078d4;
+    -fx-border-color: #0078d4;
+}
+
+.folder-dialog .editable-checkbox:selected .mark {
+    -fx-background-color: white;
+}
+
+.folder-dialog .ok-button {
+    -fx-pref-width: 100;
+    -fx-padding: 10 20 10 20;
+    -fx-background-color: #0078d4;
+    -fx-text-fill: white;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+
+.folder-dialog .ok-button:hover {
+    -fx-background-color: #106ebe;
+}
+
+.folder-dialog .ok-button:pressed {
+    -fx-background-color: #005a9e;
+}
+
+.folder-dialog .ok-button:disabled {
+    -fx-background-color: #cccccc;
+    -fx-text-fill: #999999;
+    -fx-cursor: default;
+}
+
+.folder-dialog .folder-section {
+    -fx-background-color: white;
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 1px;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-padding: 10;
+    -fx-spacing: 6;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 2, 0, 0, 1);
+}
+
+.folder-dialog .button-container {
+    -fx-alignment: center;
+    -fx-padding: 10 0 0 0;
+}
+
+.folder-dialog .path-container {
+    -fx-alignment: center-left;
+    -fx-spacing: 8;
+}
