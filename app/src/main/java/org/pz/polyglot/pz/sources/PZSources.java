@@ -35,52 +35,73 @@ public class PZSources {
         return this.sources;
     }
 
-    public void refreshSources() {
-        parseSources();
-        logger.info("Refreshed sources: " + this.sources.size());
-    }
-
     public void parseSources() {
         this.sources.clear();
-        
-        AppConfig config = AppConfig.getInstance();
 
         // Steam mods: [SteamItemId]/<mods>/[ModName]/
-        FolderUtils.getSteamModsPath().ifPresent(path -> {
-            for (Path userFolder : listDirectories(path)) {
-                Path modsFolder = userFolder.resolve("mods");
-                if (Files.isDirectory(modsFolder)) {
-                    for (Path mod : listDirectories(modsFolder)) {
-                        checkAndAddSource(mod, config.isSteamModsPathEditable());
-                    }
-                }
-            }
-        });
+        FolderUtils.getSteamModsPath().ifPresent(this::processSteamMods);
 
         // Workshop mods: [WorkshopProject]/<Contents>/<mods>/[ModName]/
-        FolderUtils.getWorkshopPath().ifPresent(path -> {
-            for (Path workshopFolder : listDirectories(path)) {
-                Path contentsFolder = workshopFolder.resolve("Contents");
-                Path modsFolder = contentsFolder.resolve("mods");
-                if (Files.isDirectory(modsFolder)) {
-                    for (Path mod : listDirectories(modsFolder)) {
-                        checkAndAddSource(mod, config.isCachePathEditable());
-                    }
-                }
-            }
-        });
+        FolderUtils.getWorkshopPath().ifPresent(this::processWorkshopMods);
 
         // Local mods: [ModName]/
-        FolderUtils.getModsPath().ifPresent(path -> {
-            for (Path mod : listDirectories(path)) {
-                checkAndAddSource(mod, config.isCachePathEditable());
-            }
-        });
+        FolderUtils.getModsPath().ifPresent(this::processLocalMods);
 
-        // Game folder — check directly
-        FolderUtils.getGamePath().ifPresent(path -> {
-            checkAndAddSource(path, config.isGamePathEditable());
-        });
+        // Game files
+        FolderUtils.getGamePath().ifPresent(this::processGameFiles);
+    }
+
+    private void processSteamMods(Path steamPath) {
+        boolean editable = AppConfig.getInstance().isSteamModsPathEditable();
+        for (Path userFolder : listDirectories(steamPath)) {
+            Path modsFolder = userFolder.resolve("mods");
+            if (Files.isDirectory(modsFolder)) {
+                for (Path modFolder : listDirectories(modsFolder)) {
+                    String modName = modFolder.getFileName().toString();
+                    addSourcesFromFolder(modName, modFolder, editable);
+                }
+            }
+        }
+    }
+
+    private void processWorkshopMods(Path workshopPath) {
+        boolean editable = AppConfig.getInstance().isCachePathEditable();
+        for (Path workshopFolder : listDirectories(workshopPath)) {
+            Path modsFolder = workshopFolder.resolve("Contents").resolve("mods");
+            if (Files.isDirectory(modsFolder)) {
+                for (Path modFolder : listDirectories(modsFolder)) {
+                    String modName = modFolder.getFileName().toString();
+                    addSourcesFromFolder(modName, modFolder, editable);
+                }
+            }
+        }
+    }
+
+    private void processLocalMods(Path modsPath) {
+        boolean editable = AppConfig.getInstance().isCachePathEditable();
+        for (Path modFolder : listDirectories(modsPath)) {
+            String modName = modFolder.getFileName().toString();
+            addSourcesFromFolder(modName, modFolder, editable);
+        }
+    }
+
+    private void processGameFiles(Path gamePath) {
+        boolean editable = AppConfig.getInstance().isGamePathEditable();
+        // Game files always use BUILD_42, regardless of detected structure
+        for (Path translationPath : findTranslationPaths(gamePath)) {
+            this.sources.add(createSource("Game Files", translationPath, PZBuild.BUILD_42, editable));
+        }
+    }
+
+    private void addSourcesFromFolder(String sourceName, Path sourceFolder, boolean editable) {
+        for (Path translationPath : findTranslationPaths(sourceFolder)) {
+            PZBuild buildType = detectBuildType(translationPath);
+            // todo: 42-common, 42.9, etc.
+            // So current BUILD implementation is not enough
+            // Easy to fix but Languages management will need to be reworked
+            this.sources.add(
+                    createSource(sourceName + " [" + buildType.getMajor() + "]", translationPath, buildType, editable));
+        }
     }
 
     /**
@@ -91,6 +112,7 @@ public class PZSources {
         List<Path> result = new ArrayList<>();
         if (!Files.isDirectory(path))
             return result;
+
         try (DirectoryStream<Path> dirs = Files.newDirectoryStream(path, Files::isDirectory)) {
             for (Path dir : dirs) {
                 result.add(dir);
@@ -101,38 +123,75 @@ public class PZSources {
     }
 
     /**
-     * Checks a source folder for known translation structures and adds to sources
-     * list if
-     * found.
+     * Finds all translation paths within a source folder.
+     * Looks for both BUILD_41 and BUILD_42 structures.
      */
-    private void checkAndAddSource(Path sourcePath, boolean editable) {
-        if (Files.exists(sourcePath.resolve("media/lua/shared/Translate"))) {
-            this.sources.add(
-                    new PZSource(sourcePath.getFileName().toString(), PZBuild.BUILD_41,
-                            sourcePath.resolve("media/lua/shared/Translate"), editable));
+    private List<Path> findTranslationPaths(Path sourcePath) {
+        List<Path> translationPaths = new ArrayList<>();
+
+        // Check for BUILD_41 structure: media/lua/shared/Translate
+        Path build41Path = sourcePath.resolve("media/lua/shared/Translate");
+        if (Files.exists(build41Path)) {
+            translationPaths.add(build41Path);
         }
 
-        if (Files.exists(sourcePath.resolve("common/media/lua/shared/Translate"))) {
-            this.sources.add(new PZSource(sourcePath.getFileName().toString(), PZBuild.BUILD_42,
-                    sourcePath.resolve("common/media/lua/shared/Translate"), editable));
+        // Check for BUILD_42 structure: common/media/lua/shared/Translate
+        Path build42Path = sourcePath.resolve("common/media/lua/shared/Translate");
+        if (Files.exists(build42Path)) {
+            translationPaths.add(build42Path);
         }
 
+        // Check subdirectories for version-specific structures (e.g., "41", "42", etc.)
         try (DirectoryStream<Path> subdirs = Files.newDirectoryStream(sourcePath, Files::isDirectory)) {
             for (Path subdir : subdirs) {
-                String name = subdir.getFileName().toString();
-
-                if (name.equals("common"))
-                    continue;
+                String subdirName = subdir.getFileName().toString();
+                if ("common".equals(subdirName))
+                    continue; // Already checked above
 
                 Path versionTranslate = subdir.resolve("media/lua/shared/Translate");
-
                 if (Files.exists(versionTranslate)) {
-                    this.sources
-                            .add(new PZSource(sourcePath.getFileName().toString(), PZBuild.BUILD_42, versionTranslate,
-                                    editable));
+                    translationPaths.add(versionTranslate);
                 }
             }
         } catch (IOException ignored) {
         }
+
+        return translationPaths;
+    }
+
+    /**
+     * Detects the build type based on the translation path structure.
+     * BUILD_41: .../media/lua/shared/Translate (without common/ and without version
+     * 42)
+     * BUILD_42: .../common/media/lua/shared/Translate or
+     * .../42[.x.x]/media/lua/shared/Translate
+     * 
+     * <p>
+     * Note: This method should NOT be used for game files directory -
+     * game files always use BUILD_42 regardless of structure.
+     */
+    PZBuild detectBuildType(Path translationPath) {
+        String pathString = translationPath.toString().replace('\\', '/');
+
+        // Check if path contains common folder - always BUILD_42
+        if (pathString.contains("/common/media/lua/shared/Translate")) {
+            return PZBuild.BUILD_42;
+        }
+
+        // Check for version 42 (simple or semver: 42, 42.x, 42.x.x, etc.)
+        if (pathString.matches(".*/42(?:\\.\\d+)*+/media/lua/shared/Translate$")) {
+            return PZBuild.BUILD_42;
+        }
+
+        // Everything else (including direct media/lua/shared/Translate or other
+        // versions) is BUILD_41
+        return PZBuild.BUILD_41;
+    }
+
+    /**
+     * Creates a new PZSource with the given parameters.
+     */
+    private PZSource createSource(String name, Path translationPath, PZBuild buildType, boolean editable) {
+        return new PZSource(name, buildType, translationPath, editable);
     }
 }

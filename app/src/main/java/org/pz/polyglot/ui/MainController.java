@@ -194,14 +194,13 @@ public class MainController {
                 for (int i = 0; i < languageVariants.size(); i++) {
                     PZTranslationVariant variant = languageVariants.get(i);
                     String sourceName = variant.getFile().getSource().getName();
-                    String buildInfo = String.valueOf(variant.getFile().getSource().getBuild().getMajor());
 
                     // Create horizontal container for label and reset button
                     HBox labelContainer = new HBox();
                     labelContainer.setPadding(new Insets(10, 0, 0, 0));
 
                     // Create label with language code, source name and build info
-                    String labelText = langCode + " (" + sourceName + " [" + buildInfo + "])";
+                    String labelText = langCode + " (" + sourceName + ")";
                     Label langLabel = new Label(labelText);
                     langLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
 
