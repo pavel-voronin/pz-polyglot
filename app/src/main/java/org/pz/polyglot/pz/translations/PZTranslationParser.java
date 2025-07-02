@@ -1,11 +1,11 @@
 package org.pz.polyglot.pz.translations;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.logging.Level;
@@ -27,86 +27,62 @@ public class PZTranslationParser implements AutoCloseable, Iterable<PZTranslatio
     public record Pair(String key, String value) {
     }
 
+    private record ReadResult(List<String> lines, Charset charset) {
+    }
+
     private final PZTranslationFile file;
-    private final Charset primaryCharset;
-    private final Charset fallbackCharset;
-    private BufferedReader reader;
-    private boolean usingFallback;
+    private final LinkedHashSet<Charset> availableCharsets;
+    private final List<String> allLines;
+    private final Charset usedCharset;
     private boolean closed;
-    private int linesRead;
-    private String nextLine;
-    private boolean hasNextCalled;
 
     public PZTranslationParser(PZTranslationFile file) {
         this.file = file;
-        this.primaryCharset = file.getLanguage().getCharset();
-        this.fallbackCharset = file.getLanguage().getFallbackCharset().orElse(StandardCharsets.UTF_8);
-        this.usingFallback = false;
+        this.availableCharsets = file.getLanguage().getCharsetsDownFrom(file.getSource().getVersion());
         this.closed = false;
-        this.linesRead = 0;
-        this.nextLine = null;
-        this.hasNextCalled = false;
-        if (!openReader(primaryCharset)) {
-            if (!openReader(fallbackCharset)) {
-                LOGGER.log(Level.WARNING, "Failed to read file: " + file.getPath());
-            } else {
-                usingFallback = true;
-            }
-        }
+        var result = readAllLinesWithCorrectCharset();
+        this.allLines = result.lines();
+        this.usedCharset = result.charset();
     }
 
-    private boolean openReader(Charset charset) {
-        try {
-            this.reader = Files.newBufferedReader(file.getPath(), charset);
-            return true;
-        } catch (IOException e) {
-            return false;
+    /**
+     * Reads all lines from the file using the first available charset that works
+     */
+    private ReadResult readAllLinesWithCorrectCharset() {
+        for (Charset charset : availableCharsets) {
+            try {
+                List<String> lines = Files.readAllLines(file.getPath(), charset);
+                return new ReadResult(lines, charset);
+            } catch (IOException e) {
+                // Try next charset
+                continue;
+            }
         }
+        LOGGER.log(Level.WARNING, "Failed to read file with any available charset: " + file.getPath());
+        return new ReadResult(List.of(), null); // Return empty list if no charset works
     }
 
     @Override
     public Iterator<Pair> iterator() {
         return new Iterator<Pair>() {
+            private int currentLineIndex = 0;
             private boolean multiline = false;
             private String currentKey = "";
             private StringBuilder currentValue = new StringBuilder();
+            private Pair nextPair = null;
+            private boolean hasNextCalled = false;
 
             @Override
             public boolean hasNext() {
-                if (closed || reader == null)
+                if (closed)
                     return false;
                 if (hasNextCalled)
-                    return nextLine != null;
-                while (true) {
-                    String line = null;
-                    try {
-                        if (!reader.ready())
-                            break;
-                        line = reader.readLine();
-                        linesRead++;
-                    } catch (IOException e) {
-                        if (!usingFallback && openReader(fallbackCharset)) {
-                            usingFallback = true;
-                            for (int i = 0; i < linesRead; i++) {
-                                try {
-                                    reader.readLine();
-                                } catch (IOException ex) {
-                                    close();
-                                    break;
-                                }
-                            }
-                            continue;
-                        } else {
-                            LOGGER.log(Level.WARNING, "Failed to read file: " + file.getPath());
-                            close();
-                            nextLine = null;
-                            hasNextCalled = true;
-                            return false;
-                        }
-                    }
-                    if (line == null)
-                        break;
+                    return nextPair != null;
+
+                while (currentLineIndex < allLines.size()) {
+                    String line = allLines.get(currentLineIndex++);
                     String trimmed = line.trim();
+
                     if (trimmed.isEmpty() || trimmed.startsWith("--")) {
                         multiline = false;
                         continue;
@@ -144,7 +120,7 @@ public class PZTranslationParser implements AutoCloseable, Iterable<PZTranslatio
                             }
                             currentValue.setLength(0);
                             currentValue.append(valuePart.substring(firstQuote + 1, lastQuote));
-                            nextLine = currentKey + "=" + '"' + currentValue.toString() + '"';
+                            nextPair = new Pair(currentKey, currentValue.toString());
                             hasNextCalled = true;
                             return true;
                         }
@@ -171,14 +147,14 @@ public class PZTranslationParser implements AutoCloseable, Iterable<PZTranslatio
                                 continue;
                             }
                             currentValue.append(valuePart.substring(firstQuote + 1, lastQuote));
-                            nextLine = currentKey + "=" + '"' + currentValue.toString() + '"';
+                            nextPair = new Pair(currentKey, currentValue.toString());
                             hasNextCalled = true;
                             multiline = false;
                             return true;
                         }
                     }
                 }
-                nextLine = null;
+                nextPair = null;
                 hasNextCalled = true;
                 return false;
             }
@@ -188,18 +164,7 @@ public class PZTranslationParser implements AutoCloseable, Iterable<PZTranslatio
                 if (!hasNextCalled)
                     hasNext();
                 hasNextCalled = false;
-                if (nextLine == null || currentKey == null) {
-                    return null;
-                }
-                String value = nextLine;
-                int eq = value.indexOf('=');
-                if (eq != -1) {
-                    value = value.substring(eq + 1).trim();
-                }
-                if (value.startsWith("\"") && value.endsWith("\"")) {
-                    value = value.substring(1, value.length() - 1);
-                }
-                return new Pair(currentKey, value);
+                return nextPair;
             }
         };
     }
@@ -212,19 +177,15 @@ public class PZTranslationParser implements AutoCloseable, Iterable<PZTranslatio
                 .onClose(this::close);
     }
 
-    @Override
-    public void close() {
-        if (!closed) {
-            closeQuietly(reader);
-            closed = true;
-        }
+    /**
+     * Returns the charset that was successfully used to read the file
+     */
+    public Charset getUsedCharset() {
+        return usedCharset;
     }
 
-    private static void closeQuietly(BufferedReader reader) {
-        try {
-            if (reader != null)
-                reader.close();
-        } catch (IOException ignored) {
-        }
+    @Override
+    public void close() {
+        closed = true;
     }
 }

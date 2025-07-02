@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.util.stream.Stream;
 
 import org.pz.polyglot.pz.languages.PZLanguage;
+import org.pz.polyglot.pz.languages.PZLanguages;
 import org.pz.polyglot.pz.sources.PZSource;
 import org.pz.polyglot.pz.sources.PZSources;
 
@@ -28,9 +29,9 @@ public class PZTranslationManager {
     // nothing left
     private static void loadFilesFromSource(PZSource source) {
         try (DirectoryStream<Path> langDirs = Files.newDirectoryStream(source.getPath(), p -> Files.isDirectory(p)
-                && source.getBuild().getLanguages().getLanguage(p.getFileName().toString()).isPresent())) {
+                && PZLanguages.getInstance().getLanguage(p.getFileName().toString()).isPresent())) {
             for (Path langDir : langDirs) {
-                PZLanguage lang = source.getBuild().getLanguages().getLanguage(langDir.getFileName().toString()).get();
+                PZLanguage lang = PZLanguages.getInstance().getLanguage(langDir.getFileName().toString()).get();
 
                 try (DirectoryStream<Path> files = Files.newDirectoryStream(langDir, p -> Files.isRegularFile(p)
                         && p.getFileName().toString().endsWith("_" + lang.getCode() + ".txt")
@@ -46,7 +47,7 @@ public class PZTranslationManager {
                             stream.forEach(s -> {
                                 PZTranslationEntry entry = PZTranslations.getInstance().getOrCreateTranslation(s.key());
 
-                                entry.addVariant(translationFile, s.value());
+                                entry.addVariant(translationFile, s.value(), reader.getUsedCharset());
                             });
                         }
                     }

@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import org.pz.polyglot.config.AppConfig;
-import org.pz.polyglot.pz.core.PZBuild;
+import org.pz.polyglot.structs.SemanticVersion;
 import org.pz.polyglot.util.FolderUtils;
 
 public class PZSources {
@@ -89,18 +89,18 @@ public class PZSources {
         boolean editable = AppConfig.getInstance().isGamePathEditable();
         // Game files always use BUILD_42, regardless of detected structure
         for (Path translationPath : findTranslationPaths(gamePath)) {
-            this.sources.add(createSource("Game Files", translationPath, PZBuild.BUILD_42, editable));
+            this.sources.add(createSource("Game Files", translationPath, new SemanticVersion("42"), editable));
         }
     }
 
     private void addSourcesFromFolder(String sourceName, Path sourceFolder, boolean editable) {
         for (Path translationPath : findTranslationPaths(sourceFolder)) {
-            PZBuild buildType = detectBuildType(translationPath);
+            SemanticVersion version = detectBuildType(translationPath);
             // todo: 42-common, 42.9, etc.
             // So current BUILD implementation is not enough
             // Easy to fix but Languages management will need to be reworked
             this.sources.add(
-                    createSource(sourceName + " [" + buildType.getMajor() + "]", translationPath, buildType, editable));
+                    createSource(sourceName + " [" + version.getMajor() + "]", translationPath, version, editable));
         }
     }
 
@@ -170,28 +170,28 @@ public class PZSources {
      * Note: This method should NOT be used for game files directory -
      * game files always use BUILD_42 regardless of structure.
      */
-    PZBuild detectBuildType(Path translationPath) {
+    SemanticVersion detectBuildType(Path translationPath) {
         String pathString = translationPath.toString().replace('\\', '/');
 
         // Check if path contains common folder - always BUILD_42
         if (pathString.contains("/common/media/lua/shared/Translate")) {
-            return PZBuild.BUILD_42;
+            return new SemanticVersion("42");
         }
 
         // Check for version 42 (simple or semver: 42, 42.x, 42.x.x, etc.)
         if (pathString.matches(".*/42(?:\\.\\d+)*+/media/lua/shared/Translate$")) {
-            return PZBuild.BUILD_42;
+            return new SemanticVersion("42");
         }
 
         // Everything else (including direct media/lua/shared/Translate or other
         // versions) is BUILD_41
-        return PZBuild.BUILD_41;
+        return new SemanticVersion("41");
     }
 
     /**
      * Creates a new PZSource with the given parameters.
      */
-    private PZSource createSource(String name, Path translationPath, PZBuild buildType, boolean editable) {
-        return new PZSource(name, buildType, translationPath, editable);
+    private PZSource createSource(String name, Path translationPath, SemanticVersion version, boolean editable) {
+        return new PZSource(name, version, translationPath, editable);
     }
 }

@@ -24,7 +24,6 @@ import org.pz.polyglot.pz.translations.PZTranslations;
 import org.pz.polyglot.pz.translations.PZTranslationEntry;
 import org.pz.polyglot.pz.translations.PZTranslationVariant;
 import org.pz.polyglot.pz.languages.PZLanguages;
-import org.pz.polyglot.pz.core.PZBuild;
 import org.pz.polyglot.config.AppConfig;
 
 import java.util.*;
@@ -199,8 +198,9 @@ public class MainController {
                     HBox labelContainer = new HBox();
                     labelContainer.setPadding(new Insets(10, 0, 0, 0));
 
-                    // Create label with language code, source name and build info
-                    String labelText = langCode + " (" + sourceName + ")";
+                    // Create label with language code, source name and charset info
+                    String charsetName = variant.getCharset() != null ? variant.getCharset().name() : "Unknown";
+                    String labelText = langCode + " (" + sourceName + ", " + charsetName + ")";
                     Label langLabel = new Label(labelText);
                     langLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
 
@@ -414,7 +414,7 @@ public class MainController {
                 ? new ArrayList<>(Arrays.asList(cfgLangs))
                 : null;
         // All available languages sorted with EN first
-        PZLanguages pzLang = PZBuild.BUILD_42.getLanguages();
+        PZLanguages pzLang = PZLanguages.getInstance();
         Set<String> avail = pzLang.getAllLanguageCodes();
         List<String> allList = new ArrayList<>(avail);
         Collections.sort(allList);
@@ -529,7 +529,7 @@ public class MainController {
      */
     private void saveLanguageOrderToConfig() {
         // Get all available languages in their fixed alphabetical order (EN first)
-        PZLanguages pzLang = PZBuild.BUILD_42.getLanguages();
+        PZLanguages pzLang = PZLanguages.getInstance();
         Set<String> avail = pzLang.getAllLanguageCodes();
         List<String> allList = new ArrayList<>(avail);
         Collections.sort(allList);

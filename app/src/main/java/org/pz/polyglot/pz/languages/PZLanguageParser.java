@@ -1,8 +1,12 @@
 package org.pz.polyglot.pz.languages;
 
 import java.nio.charset.Charset;
+import java.util.Optional;
 
 public final class PZLanguageParser {
+    public record PZLanguageDescriptor(String text, Charset charset) {
+    }
+
     /**
      * Parses the given file content and returns a Language object if all required
      * fields are present and all lines are valid (key=value, ending with a comma).
@@ -13,15 +17,14 @@ public final class PZLanguageParser {
      * @param content the file content as a String
      * @return Language object if parsing is successful, otherwise null
      */
-    public static PZLanguage parse(String code, String content) {
+    public static Optional<PZLanguageDescriptor> parse(String code, String content) {
         if (content == null) {
-            return null;
+            return Optional.empty();
         }
 
         // Remove block comments (/* ... */) and line comments (# ...)
         content = stripComments(content);
 
-        String version = null;
         String text = null;
         String charset = null;
 
@@ -47,9 +50,6 @@ public final class PZLanguageParser {
             String value = line.substring(eq + 1).trim();
 
             switch (key) {
-                case "VERSION":
-                    version = value;
-                    break;
                 case "text":
                     text = value;
                     break;
@@ -61,11 +61,11 @@ public final class PZLanguageParser {
             }
         }
 
-        if (version == null || text == null || charset == null) {
+        if (text == null || charset == null) {
             return null;
         }
 
-        return new PZLanguage(code, text, Charset.forName(charset));
+        return Optional.of(new PZLanguageDescriptor(text, Charset.forName(charset)));
     }
 
     /**

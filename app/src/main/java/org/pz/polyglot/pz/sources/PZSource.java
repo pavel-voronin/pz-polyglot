@@ -2,17 +2,17 @@ package org.pz.polyglot.pz.sources;
 
 import java.nio.file.Path;
 
-import org.pz.polyglot.pz.core.PZBuild;
+import org.pz.polyglot.structs.SemanticVersion;
 
 public class PZSource {
     private final String name;
-    private final PZBuild build;
+    private final SemanticVersion version;
     private final Path path;
     private final boolean editable;
 
-    public PZSource(String name, PZBuild build, Path path, boolean editable) {
+    public PZSource(String name, SemanticVersion version, Path path, boolean editable) {
         this.name = name;
-        this.build = build;
+        this.version = version;
         this.path = path;
         this.editable = editable;
     }
@@ -21,8 +21,8 @@ public class PZSource {
         return name;
     }
 
-    public PZBuild getBuild() {
-        return build;
+    public SemanticVersion getVersion() {
+        return version;
     }
 
     public Path getPath() {
@@ -35,6 +35,6 @@ public class PZSource {
 
     @Override
     public String toString() {
-        return name + " [" + build.getMajor() + "]";
+        return name + " [" + version.getMajor() + "]";
     }
 }

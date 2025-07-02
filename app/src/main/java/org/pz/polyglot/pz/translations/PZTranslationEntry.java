@@ -1,5 +1,6 @@
 package org.pz.polyglot.pz.translations;
 
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 
 public class PZTranslationEntry {
@@ -18,8 +19,8 @@ public class PZTranslationEntry {
         return translations;
     }
 
-    public PZTranslationVariant addVariant(PZTranslationFile file, String text) {
-        PZTranslationVariant variant = new PZTranslationVariant(this, file, text);
+    public PZTranslationVariant addVariant(PZTranslationFile file, String text, Charset charset) {
+        PZTranslationVariant variant = new PZTranslationVariant(this, file, text, charset);
         translations.add(variant);
         return variant;
     }

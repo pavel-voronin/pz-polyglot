@@ -1,16 +1,20 @@
 package org.pz.polyglot.pz.translations;
 
+import java.nio.charset.Charset;
+
 public class PZTranslationVariant {
     private final PZTranslationEntry key;
     private String text; // Original text
     private String editedText; // Store edited text
     private boolean isEdited; // Track if this variant has been edited
     private PZTranslationFile file;
+    private final Charset charset; // Charset used to read this variant
 
-    public PZTranslationVariant(PZTranslationEntry key, PZTranslationFile file, String text) {
+    public PZTranslationVariant(PZTranslationEntry key, PZTranslationFile file, String text, Charset charset) {
         this.key = key;
         this.file = file;
         this.text = text;
+        this.charset = charset;
         this.editedText = null;
         this.isEdited = false;
     }
@@ -31,8 +35,13 @@ public class PZTranslationVariant {
         return file;
     }
 
+    public Charset getCharset() {
+        return charset;
+    }
+
     /**
-     * Gets the current display text - returns edited text if available, otherwise original text
+     * Gets the current display text - returns edited text if available, otherwise
+     * original text
      */
     public String getCurrentText() {
         return isEdited ? editedText : text;
