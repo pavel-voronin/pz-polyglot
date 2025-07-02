@@ -58,7 +58,8 @@ public class PZTranslationParser implements AutoCloseable, Iterable<PZTranslatio
                 continue;
             }
         }
-        LOGGER.log(Level.WARNING, "Failed to read file with any available charset: " + file.getPath());
+        LOGGER.log(Level.WARNING, "Failed to read file with any available charset: " + file.getPath()
+            + ". Tried charsets: " + availableCharsets);
         return new ReadResult(List.of(), null); // Return empty list if no charset works
     }
 

@@ -17,8 +17,9 @@ public final class PZLanguage {
         this.name = name;
 
         this.charsets = new SemanticVersionMap<>();
-        this.charsets.put(new SemanticVersion("41"), java.nio.charset.StandardCharsets.UTF_8);
-        this.charsets.put(new SemanticVersion("42"), java.nio.charset.StandardCharsets.UTF_8);
+        // Default charset for all languages. Should be revised in future when 43+
+        // released
+        this.charsets.put(new SemanticVersion("0"), java.nio.charset.StandardCharsets.UTF_8);
     }
 
     public String getCode() {
