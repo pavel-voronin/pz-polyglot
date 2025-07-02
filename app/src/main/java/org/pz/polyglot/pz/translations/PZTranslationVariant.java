@@ -8,13 +8,15 @@ public class PZTranslationVariant {
     private String editedText; // Store edited text
     private boolean isEdited; // Track if this variant has been edited
     private PZTranslationFile file;
-    private final Charset charset; // Charset used to read this variant
+    private final Charset supposedCharset;
+    private final Charset detectedCharset; // Charset used to read this variant
 
-    public PZTranslationVariant(PZTranslationEntry key, PZTranslationFile file, String text, Charset charset) {
+    public PZTranslationVariant(PZTranslationEntry key, PZTranslationFile file, String text, Charset supposedCharset, Charset detectedCharset) {
         this.key = key;
         this.file = file;
         this.text = text;
-        this.charset = charset;
+        this.supposedCharset = supposedCharset;
+        this.detectedCharset = detectedCharset;
         this.editedText = null;
         this.isEdited = false;
     }
@@ -35,8 +37,12 @@ public class PZTranslationVariant {
         return file;
     }
 
-    public Charset getCharset() {
-        return charset;
+    public Charset getSupposedCharset() {
+        return supposedCharset;
+    }
+
+    public Charset getDetectedCharset() {
+        return detectedCharset;
     }
 
     /**

@@ -199,8 +199,14 @@ public class MainController {
                     labelContainer.setPadding(new Insets(10, 0, 0, 0));
 
                     // Create label with language code, source name and charset info
-                    String charsetName = variant.getCharset() != null ? variant.getCharset().name() : "Unknown";
-                    String labelText = langCode + " (" + sourceName + ", " + charsetName + ")";
+                    String detectedCharsetName = variant.getDetectedCharset() != null
+                            ? variant.getDetectedCharset().name()
+                            : "Unknown";
+                    String supposedCharsetName = variant.getSupposedCharset() != null
+                            ? variant.getSupposedCharset().name()
+                            : "Unknown";
+                    String labelText = langCode + " (" + sourceName + ", " + detectedCharsetName
+                            + (detectedCharsetName.equals(supposedCharsetName) ? "" : " *") + ")";
                     Label langLabel = new Label(labelText);
                     langLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
 

@@ -20,7 +20,8 @@ public class PZTranslationEntry {
     }
 
     public PZTranslationVariant addVariant(PZTranslationFile file, String text, Charset charset) {
-        PZTranslationVariant variant = new PZTranslationVariant(this, file, text, charset);
+        Charset supposedCharset = file.getLanguage().getCharset(file.getSource().getVersion()).orElse(null);
+        PZTranslationVariant variant = new PZTranslationVariant(this, file, text, supposedCharset, charset);
         translations.add(variant);
         return variant;
     }

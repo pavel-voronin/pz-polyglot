@@ -2,6 +2,7 @@ package org.pz.polyglot.pz.languages;
 
 import java.nio.charset.Charset;
 import java.util.LinkedHashSet;
+import java.util.Optional;
 
 import org.pz.polyglot.structs.SemanticVersion;
 import org.pz.polyglot.structs.SemanticVersionMap;
@@ -31,6 +32,10 @@ public final class PZLanguage {
     // Add charset for specific version
     public void setCharset(SemanticVersion version, Charset charset) {
         this.charsets.put(version, charset);
+    }
+
+    public Optional<Charset> getCharset(SemanticVersion fromVersion) {
+        return this.charsets.get(fromVersion);
     }
 
     /**
