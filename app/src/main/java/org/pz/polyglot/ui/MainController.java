@@ -224,11 +224,16 @@ public class MainController {
                     resetLink.setStyle("-fx-font-size: 12px; -fx-padding: 0; -fx-text-fill: #007acc;");
                     resetLink.setVisible(variant.isEdited()); // Initially visible only if already edited
 
-                    // Add language tag, source info and spacer, then reset button to push it to the
+                    // Create save link (styled as hyperlink)
+                    Hyperlink saveLink = new Hyperlink("save");
+                    saveLink.setStyle("-fx-font-size: 12px; -fx-padding: 0; -fx-text-fill: #007acc;");
+                    saveLink.setVisible(variant.isEdited()); // Initially visible only if already edited
+
+                    // Add language tag, source info and spacer, then buttons to push them to the
                     // right
                     javafx.scene.layout.Region spacer = new javafx.scene.layout.Region();
                     HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
-                    labelContainer.getChildren().addAll(langTag, sourceLabel, spacer, resetLink);
+                    labelContainer.getChildren().addAll(langTag, sourceLabel, spacer, saveLink, resetLink);
 
                     StackPane textAreaContainer = createResizableTextArea(langCode + "_" + i);
                     TextArea textArea = (TextArea) textAreaContainer.getChildren().get(0);
@@ -242,16 +247,24 @@ public class MainController {
                         variant.resetToOriginal();
                         textArea.setText(variant.getCurrentText());
                         resetLink.setVisible(false);
+                        saveLink.setVisible(false);
                     });
 
-                    // Track text changes and show/hide reset button
+                    // Set up save functionality (placeholder for now)
+                    saveLink.setOnAction(e -> {
+                        // TODO: Implement save functionality
+                    });
+
+                    // Track text changes and show/hide reset and save buttons
                     textArea.textProperty().addListener((obs, oldText, newText) -> {
                         if (newText != null && !newText.equals(variant.getOriginalText())) {
                             variant.setEditedText(newText);
                             resetLink.setVisible(true);
+                            saveLink.setVisible(true);
                         } else if (newText != null && newText.equals(variant.getOriginalText())) {
                             variant.resetToOriginal();
                             resetLink.setVisible(false);
+                            saveLink.setVisible(false);
                         }
                     });
 
