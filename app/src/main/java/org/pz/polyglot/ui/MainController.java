@@ -23,8 +23,10 @@ import javafx.scene.Cursor;
 import org.pz.polyglot.pz.translations.PZTranslations;
 import org.pz.polyglot.pz.translations.PZTranslationEntry;
 import org.pz.polyglot.pz.translations.PZTranslationVariant;
+import org.pz.polyglot.pz.languages.PZLanguage;
 import org.pz.polyglot.pz.languages.PZLanguages;
 import org.pz.polyglot.config.AppConfig;
+import org.pz.polyglot.ui.components.LanguageTag;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -120,7 +122,8 @@ public class MainController {
         Platform.runLater(() -> {
             if (treeTableView.getScene() != null) {
                 String cssPath = getClass().getResource("/css/custom-textarea.css").toExternalForm();
-                treeTableView.getScene().getStylesheets().add(cssPath);
+                String languageTagCssPath = getClass().getResource("/css/language-tag.css").toExternalForm();
+                treeTableView.getScene().getStylesheets().addAll(cssPath, languageTagCssPath);
             }
         });
     }
@@ -160,6 +163,7 @@ public class MainController {
 
         // Create fields for each language
         for (String langCode : sortedLangCodes) {
+            PZLanguage lang = PZLanguages.getInstance().getLanguage(langCode).orElse(null);
             // Find all translation variants for this language
             List<PZTranslationVariant> languageVariants = new ArrayList<>();
             if (entry != null) {
@@ -174,14 +178,14 @@ public class MainController {
 
             // If no variants found, create empty field
             if (languageVariants.isEmpty()) {
-                // Create horizontal container for label and reset button
-                HBox labelContainer = new HBox(5);
+                // Create horizontal container for language tag and other elements
+                HBox labelContainer = new HBox(10);
                 labelContainer.setPadding(new Insets(10, 0, 0, 0));
+                labelContainer.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
 
-                Label langLabel = new Label(langCode);
-                langLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
+                LanguageTag langTag = new LanguageTag(lang);
 
-                labelContainer.getChildren().add(langLabel);
+                labelContainer.getChildren().add(langTag);
 
                 StackPane textAreaContainer = createResizableTextArea(langCode);
                 TextArea textArea = (TextArea) textAreaContainer.getChildren().get(0);
@@ -194,31 +198,37 @@ public class MainController {
                     PZTranslationVariant variant = languageVariants.get(i);
                     String sourceName = variant.getFile().getSource().getName();
 
-                    // Create horizontal container for label and reset button
-                    HBox labelContainer = new HBox();
+                    // Create horizontal container for language tag and reset button
+                    HBox labelContainer = new HBox(10);
                     labelContainer.setPadding(new Insets(10, 0, 0, 0));
+                    labelContainer.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
 
-                    // Create label with language code, source name and charset info
+                    // Create language tag
+                    LanguageTag langTag = new LanguageTag(lang);
+
+                    // Get charset info for source label
                     String detectedCharsetName = variant.getDetectedCharset() != null
                             ? variant.getDetectedCharset().name()
                             : "Unknown";
                     String supposedCharsetName = variant.getSupposedCharset() != null
                             ? variant.getSupposedCharset().name()
                             : "Unknown";
-                    String labelText = langCode + " (" + sourceName + ", " + detectedCharsetName
-                            + (detectedCharsetName.equals(supposedCharsetName) ? "" : " *") + ")";
-                    Label langLabel = new Label(labelText);
-                    langLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
+
+                    // Add source name and charset info as text (like before)
+                    Label sourceLabel = new Label("(" + sourceName + ", " + detectedCharsetName
+                            + (detectedCharsetName.equals(supposedCharsetName) ? "" : " *") + ")");
+                    sourceLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #666666;");
 
                     // Create reset link (styled as hyperlink)
                     Hyperlink resetLink = new Hyperlink("reset");
-                    resetLink.setStyle("-fx-font-size: 10px; -fx-padding: 0; -fx-text-fill: #007acc;");
+                    resetLink.setStyle("-fx-font-size: 12px; -fx-padding: 0; -fx-text-fill: #007acc;");
                     resetLink.setVisible(variant.isEdited()); // Initially visible only if already edited
 
-                    // Add label and spacer, then reset button to push it to the right
+                    // Add language tag, source info and spacer, then reset button to push it to the
+                    // right
                     javafx.scene.layout.Region spacer = new javafx.scene.layout.Region();
                     HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
-                    labelContainer.getChildren().addAll(langLabel, spacer, resetLink);
+                    labelContainer.getChildren().addAll(langTag, sourceLabel, spacer, resetLink);
 
                     StackPane textAreaContainer = createResizableTextArea(langCode + "_" + i);
                     TextArea textArea = (TextArea) textAreaContainer.getChildren().get(0);

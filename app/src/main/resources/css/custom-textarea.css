@@ -37,3 +37,6 @@
     -fx-padding: 0;
     -fx-background-color: transparent;
 }
+
+/* Import language tag styles */
+@import url("language-tag.css");

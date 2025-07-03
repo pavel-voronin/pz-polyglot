@@ -1,0 +1,30 @@
+/* Simple Language Tag Component */
+
+.language-tag {
+    -fx-border-radius: 3px;
+    -fx-border-width: 1px;
+    -fx-border-style: solid;
+    -fx-border-color: #87ceeb;
+    -fx-padding: 2px 6px;
+    -fx-alignment: center;
+    -fx-cursor: hand;
+}
+
+.language-tag:hover {
+    -fx-border-color: #b0e0e6;
+}
+
+.language-tag-label {
+    -fx-font-size: 12px;
+    -fx-font-weight: normal;
+    -fx-text-fill: #333333;
+    -fx-font-family: inherit;
+}
+
+.language-tag-tooltip {
+    -fx-background-color: rgba(0, 0, 0, 0.8);
+    -fx-text-fill: white;
+    -fx-background-radius: 3px;
+    -fx-font-size: 14px;
+    -fx-padding: 3px 6px;
+}
