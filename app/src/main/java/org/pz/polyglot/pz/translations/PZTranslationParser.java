@@ -24,7 +24,7 @@ import java.util.stream.StreamSupport;
 public class PZTranslationParser implements AutoCloseable, Iterable<PZTranslationParser.Pair> {
     private static final Logger LOGGER = Logger.getLogger(PZTranslationParser.class.getName());
 
-    public record Pair(String key, String value) {
+    public record Pair(String key, String value, int startLine, int endLine) {
     }
 
     private record ReadResult(List<String> lines, Charset charset) {
@@ -59,7 +59,7 @@ public class PZTranslationParser implements AutoCloseable, Iterable<PZTranslatio
             }
         }
         LOGGER.log(Level.WARNING, "Failed to read file with any available charset: " + file.getPath()
-            + ". Tried charsets: " + availableCharsets);
+                + ". Tried charsets: " + availableCharsets);
         return new ReadResult(List.of(), null); // Return empty list if no charset works
     }
 
@@ -72,6 +72,8 @@ public class PZTranslationParser implements AutoCloseable, Iterable<PZTranslatio
             private StringBuilder currentValue = new StringBuilder();
             private Pair nextPair = null;
             private boolean hasNextCalled = false;
+            private int currentStartLine = 0; // Track start line of current translation
+            private int currentEndLine = 0; // Track end line of current translation
 
             @Override
             public boolean hasNext() {
@@ -93,6 +95,7 @@ public class PZTranslationParser implements AutoCloseable, Iterable<PZTranslatio
                         continue;
                     }
                     if (!multiline) {
+                        currentStartLine = currentLineIndex; // Mark start of new translation
                         String[] parts = trimmed.split("=", 2);
                         currentKey = parts[0].trim();
                         String valuePart = parts[1].trim();
@@ -121,7 +124,8 @@ public class PZTranslationParser implements AutoCloseable, Iterable<PZTranslatio
                             }
                             currentValue.setLength(0);
                             currentValue.append(valuePart.substring(firstQuote + 1, lastQuote));
-                            nextPair = new Pair(currentKey, currentValue.toString());
+                            currentEndLine = currentLineIndex; // Mark end of single-line translation
+                            nextPair = new Pair(currentKey, currentValue.toString(), currentStartLine, currentEndLine);
                             hasNextCalled = true;
                             return true;
                         }
@@ -148,7 +152,8 @@ public class PZTranslationParser implements AutoCloseable, Iterable<PZTranslatio
                                 continue;
                             }
                             currentValue.append(valuePart.substring(firstQuote + 1, lastQuote));
-                            nextPair = new Pair(currentKey, currentValue.toString());
+                            currentEndLine = currentLineIndex; // Mark end of multiline translation
+                            nextPair = new Pair(currentKey, currentValue.toString(), currentStartLine, currentEndLine);
                             hasNextCalled = true;
                             multiline = false;
                             return true;

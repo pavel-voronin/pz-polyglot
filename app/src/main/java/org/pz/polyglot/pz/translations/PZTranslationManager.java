@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-// import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 import org.pz.polyglot.pz.languages.PZLanguage;
@@ -13,9 +12,6 @@ import org.pz.polyglot.pz.sources.PZSource;
 import org.pz.polyglot.pz.sources.PZSources;
 
 public class PZTranslationManager {
-    // private static final Logger logger =
-    // Logger.getLogger(PZTranslationManager.class.getName());
-
     public static void loadFilesFromSources() {
         for (PZSource source : PZSources.getInstance().getSources()) {
             loadFilesFromSource(source);
@@ -47,7 +43,8 @@ public class PZTranslationManager {
                             stream.forEach(s -> {
                                 PZTranslationEntry entry = PZTranslations.getInstance().getOrCreateTranslation(s.key());
 
-                                entry.addVariant(translationFile, s.value(), reader.getUsedCharset());
+                                entry.addVariant(translationFile, s.value(), reader.getUsedCharset(), s.startLine(),
+                                        s.endLine());
                             });
                         }
                     }

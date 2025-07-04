@@ -10,13 +10,18 @@ public class PZTranslationVariant {
     private PZTranslationFile file;
     private final Charset supposedCharset;
     private final Charset detectedCharset; // Charset used to read this variant
+    private final int startLine; // Line number where this translation starts (1-based)
+    private final int endLine; // Line number where this translation ends (1-based)
 
-    public PZTranslationVariant(PZTranslationEntry key, PZTranslationFile file, String text, Charset supposedCharset, Charset detectedCharset) {
+    public PZTranslationVariant(PZTranslationEntry key, PZTranslationFile file, String text, Charset supposedCharset,
+            Charset detectedCharset, int startLine, int endLine) {
         this.key = key;
         this.file = file;
         this.text = text;
         this.supposedCharset = supposedCharset;
         this.detectedCharset = detectedCharset;
+        this.startLine = startLine;
+        this.endLine = endLine;
         this.editedText = null;
         this.isEdited = false;
     }
@@ -43,6 +48,14 @@ public class PZTranslationVariant {
 
     public Charset getDetectedCharset() {
         return detectedCharset;
+    }
+
+    public int getStartLine() {
+        return startLine;
+    }
+
+    public int getEndLine() {
+        return endLine;
     }
 
     /**

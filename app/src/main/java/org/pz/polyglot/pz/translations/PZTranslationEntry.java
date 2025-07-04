@@ -19,9 +19,11 @@ public class PZTranslationEntry {
         return translations;
     }
 
-    public PZTranslationVariant addVariant(PZTranslationFile file, String text, Charset charset) {
+    public PZTranslationVariant addVariant(PZTranslationFile file, String text, Charset charset, int startLine,
+            int endLine) {
         Charset supposedCharset = file.getLanguage().getCharset(file.getSource().getVersion()).orElse(null);
-        PZTranslationVariant variant = new PZTranslationVariant(this, file, text, supposedCharset, charset);
+        PZTranslationVariant variant = new PZTranslationVariant(this, file, text, supposedCharset, charset, startLine,
+                endLine);
         translations.add(variant);
         return variant;
     }
