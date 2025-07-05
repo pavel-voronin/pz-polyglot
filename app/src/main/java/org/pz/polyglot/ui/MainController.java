@@ -207,8 +207,8 @@ public class MainController {
                     LanguageTag langTag = new LanguageTag(lang);
 
                     // Get charset info for source label
-                    String detectedCharsetName = variant.getDetectedCharset() != null
-                            ? variant.getDetectedCharset().name()
+                    String detectedCharsetName = variant.getUsedCharset() != null
+                            ? variant.getUsedCharset().name()
                             : "Unknown";
                     String supposedCharsetName = variant.getSupposedCharset() != null
                             ? variant.getSupposedCharset().name()

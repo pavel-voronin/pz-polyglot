@@ -43,8 +43,10 @@ public class PZTranslationManager {
                             stream.forEach(s -> {
                                 PZTranslationEntry entry = PZTranslations.getInstance().getOrCreateTranslation(s.key());
 
-                                entry.addVariant(translationFile, s.value(), reader.getUsedCharset(), s.startLine(),
+                                PZTranslationVariant variant = entry.addVariant(translationFile, s.value(),
+                                        reader.getUsedCharset(), s.startLine(),
                                         s.endLine());
+                                translationFile.addVariant(variant);
                             });
                         }
                     }
@@ -54,5 +56,13 @@ public class PZTranslationManager {
             }
         } catch (IOException e) {
         }
+    }
+
+    public static void saveVariant(PZTranslationVariant variant) {
+        // Implement the save logic here
+    }
+
+    public static void saveFile(PZTranslationFile file) {
+        // Implement the logic to save all variants in the file
     }
 }

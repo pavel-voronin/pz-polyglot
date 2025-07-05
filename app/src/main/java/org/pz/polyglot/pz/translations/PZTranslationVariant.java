@@ -9,21 +9,33 @@ public class PZTranslationVariant {
     private boolean isEdited; // Track if this variant has been edited
     private PZTranslationFile file;
     private final Charset supposedCharset;
-    private final Charset detectedCharset; // Charset used to read this variant
+    private final Charset usedCharset; // Charset used to read this variant
     private final int startLine; // Line number where this translation starts (1-based)
     private final int endLine; // Line number where this translation ends (1-based)
+    private final boolean isNew;
+
+    public PZTranslationVariant(PZTranslationEntry key, PZTranslationFile file, String text, Charset supposedCharset,
+            Charset detectedCharset) {
+        this(key, file, text, supposedCharset, detectedCharset, -1, -1, true);
+    }
 
     public PZTranslationVariant(PZTranslationEntry key, PZTranslationFile file, String text, Charset supposedCharset,
             Charset detectedCharset, int startLine, int endLine) {
+        this(key, file, text, supposedCharset, detectedCharset, startLine, endLine, false);
+    }
+
+    public PZTranslationVariant(PZTranslationEntry key, PZTranslationFile file, String text, Charset supposedCharset,
+            Charset detectedCharset, int startLine, int endLine, boolean isNew) {
         this.key = key;
         this.file = file;
         this.text = text;
         this.supposedCharset = supposedCharset;
-        this.detectedCharset = detectedCharset;
+        this.usedCharset = detectedCharset;
         this.startLine = startLine;
         this.endLine = endLine;
         this.editedText = null;
         this.isEdited = false;
+        this.isNew = isNew;
     }
 
     public PZTranslationEntry getKey() {
@@ -46,8 +58,8 @@ public class PZTranslationVariant {
         return supposedCharset;
     }
 
-    public Charset getDetectedCharset() {
-        return detectedCharset;
+    public Charset getUsedCharset() {
+        return usedCharset;
     }
 
     public int getStartLine() {
@@ -56,6 +68,10 @@ public class PZTranslationVariant {
 
     public int getEndLine() {
         return endLine;
+    }
+
+    public boolean isNew() {
+        return isNew;
     }
 
     /**
