@@ -222,15 +222,22 @@ public class MainController {
                             + (detectedCharsetName.equals(supposedCharsetName) ? "" : " *") + ")");
                     sourceLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #666666;");
 
+                    // Make source label truncate text with ellipsis when too long
+                    sourceLabel.setMaxWidth(240); // Set maximum width
+                    sourceLabel.setMinWidth(0); // Allow shrinking
+                    sourceLabel.setTextOverrun(javafx.scene.control.OverrunStyle.ELLIPSIS);
+
                     // Create reset link (styled as hyperlink)
                     Hyperlink resetLink = new Hyperlink("reset");
                     resetLink.setStyle("-fx-font-size: 12px; -fx-padding: 0; -fx-text-fill: #007acc;");
                     resetLink.setVisible(variant.isChanged()); // Initially visible only if already edited
+                    resetLink.setMinWidth(Region.USE_PREF_SIZE); // Prevent shrinking
 
                     // Create save link (styled as hyperlink)
                     Hyperlink saveLink = new Hyperlink("save");
                     saveLink.setStyle("-fx-font-size: 12px; -fx-padding: 0; -fx-text-fill: #007acc;");
                     saveLink.setVisible(variant.isChanged()); // Initially visible only if already edited
+                    saveLink.setMinWidth(Region.USE_PREF_SIZE); // Prevent shrinking
 
                     // Add language tag, source info and spacer, then buttons to push them to the
                     // right
