@@ -131,7 +131,7 @@ public class PZTranslationManager {
         }
     }
 
-    public static void saveFile(PZTranslationFile file) {
-        // Implement the logic to save all variants in the file
+    public static void saveEntry(PZTranslationEntry entry) {
+        entry.getChangedVariants().forEach(PZTranslationManager::saveVariant);
     }
 }

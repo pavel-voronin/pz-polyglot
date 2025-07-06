@@ -102,6 +102,8 @@ public class MainController {
                                                                                      // area represents
     // Track which text areas have been manually resized
     private Set<TextArea> manuallyResizedTextAreas = new HashSet<>();
+    // Save All button
+    private Button saveAllButton;
 
     /**
      * Initializes the TreeTableView and its columns with translation data.
@@ -168,7 +170,7 @@ public class MainController {
             // Find all translation variants for this language
             List<PZTranslationVariant> languageVariants = new ArrayList<>();
             if (entry != null) {
-                for (PZTranslationVariant variant : entry.getTranslations()) {
+                for (PZTranslationVariant variant : entry.getVariants()) {
                     if (variant.getFile() != null && variant.getFile().getLanguage() != null &&
                             langCode.equals(variant.getFile().getLanguage().getCode()) &&
                             variant.getText() != null && !variant.getText().isEmpty()) {
@@ -223,12 +225,12 @@ public class MainController {
                     // Create reset link (styled as hyperlink)
                     Hyperlink resetLink = new Hyperlink("reset");
                     resetLink.setStyle("-fx-font-size: 12px; -fx-padding: 0; -fx-text-fill: #007acc;");
-                    resetLink.setVisible(variant.isEdited()); // Initially visible only if already edited
+                    resetLink.setVisible(variant.isChanged()); // Initially visible only if already edited
 
                     // Create save link (styled as hyperlink)
                     Hyperlink saveLink = new Hyperlink("save");
                     saveLink.setStyle("-fx-font-size: 12px; -fx-padding: 0; -fx-text-fill: #007acc;");
-                    saveLink.setVisible(variant.isEdited()); // Initially visible only if already edited
+                    saveLink.setVisible(variant.isChanged()); // Initially visible only if already edited
 
                     // Add language tag, source info and spacer, then buttons to push them to the
                     // right
@@ -249,6 +251,8 @@ public class MainController {
                         textArea.setText(variant.getCurrentText());
                         resetLink.setVisible(false);
                         saveLink.setVisible(false);
+                        // Update "Save All" button state
+                        updateSaveAllButtonState(entry);
                     });
 
                     // Set up save functionality
@@ -263,6 +267,8 @@ public class MainController {
                         saveLink.setVisible(false);
                         // Reset button should still be visible if text differs from original
                         resetLink.setVisible(!currentText.equals(variant.getOriginalText()));
+                        // Update "Save All" button state
+                        updateSaveAllButtonState(entry);
                     });
 
                     // Track text changes and show/hide reset and save buttons
@@ -276,6 +282,8 @@ public class MainController {
                             resetLink.setVisible(false);
                             saveLink.setVisible(false);
                         }
+                        // Update "Save All" button state
+                        updateSaveAllButtonState(entry);
                     });
 
                     // Store with unique key for multiple variants
@@ -285,6 +293,28 @@ public class MainController {
                 }
             }
         }
+
+        // Create "Save All" button
+        saveAllButton = new Button("Save All");
+        saveAllButton.setStyle("-fx-padding: 10 20; -fx-font-size: 14px; -fx-pref-width: 150px;");
+        saveAllButton.setOnAction(e -> {
+            // Save all changes for this entry
+            PZTranslationManager.saveEntry(entry);
+            // Update button states after saving
+            updateSaveAllButtonState(entry);
+            // Update individual save/reset buttons
+            updateVariantButtons();
+        });
+
+        // Add some spacing before the button
+        javafx.scene.layout.Region spacer = new javafx.scene.layout.Region();
+        spacer.setPrefHeight(20);
+
+        // Add button to the container
+        languageFieldsContainer.getChildren().addAll(spacer, saveAllButton);
+
+        // Initial state update
+        updateSaveAllButtonState(entry);
 
         // Show the panel
         rightPanel.setVisible(true);
@@ -301,6 +331,7 @@ public class MainController {
         languageTextFields.clear();
         textAreaToVariant.clear();
         manuallyResizedTextAreas.clear();
+        saveAllButton = null;
         treeTableView.getSelectionModel().clearSelection();
     }
 
@@ -547,7 +578,7 @@ public class MainController {
             Map<String, Boolean> langPresence = new HashMap<>();
             for (String lang : allList) {
                 boolean found = false;
-                for (PZTranslationVariant variant : translationEntry.getTranslations()) {
+                for (PZTranslationVariant variant : translationEntry.getVariants()) {
                     if (variant.getFile() != null && variant.getFile().getLanguage() != null &&
                             lang.equals(variant.getFile().getLanguage().getCode()) &&
                             variant.getText() != null && !variant.getText().isEmpty()) {
@@ -589,5 +620,34 @@ public class MainController {
         AppConfig cfg = AppConfig.getInstance();
         cfg.setPzLanguages(visibleLanguages.toArray(new String[0]));
         cfg.save();
+    }
+
+    /**
+     * Updates the state of the "Save All" button based on whether there are changes
+     * to save.
+     */
+    private void updateSaveAllButtonState(PZTranslationEntry entry) {
+        if (saveAllButton != null && entry != null) {
+            boolean hasChanges = entry.getChangedVariants().size() > 0;
+            saveAllButton.setDisable(!hasChanges);
+        }
+    }
+
+    /**
+     * Updates the state of individual variant save/reset buttons.
+     */
+    private void updateVariantButtons() {
+        for (Map.Entry<TextArea, PZTranslationVariant> entry : textAreaToVariant.entrySet()) {
+            TextArea textArea = entry.getKey();
+
+            // Find the corresponding reset and save links for this text area
+            // This is a bit tricky since we need to find the parent container
+            // For now, we'll trigger a refresh by simulating text property change
+            Platform.runLater(() -> {
+                String currentText = textArea.getText();
+                textArea.setText(currentText + " ");
+                textArea.setText(currentText);
+            });
+        }
     }
 }

@@ -6,7 +6,7 @@ public class PZTranslationVariant {
     private final PZTranslationEntry key;
     private String text; // Original text
     private String editedText; // Store edited text
-    private boolean isEdited; // Track if this variant has been edited
+    private boolean isChanged; // Track if this variant has been edited
     private PZTranslationFile file;
     private final Charset supposedCharset;
     private final Charset usedCharset; // Charset used to read this variant
@@ -34,7 +34,7 @@ public class PZTranslationVariant {
         this.startLine = startLine;
         this.endLine = endLine;
         this.editedText = null;
-        this.isEdited = false;
+        this.isChanged = false;
         this.isNew = isNew;
     }
 
@@ -79,7 +79,7 @@ public class PZTranslationVariant {
      * original text
      */
     public String getCurrentText() {
-        return isEdited ? editedText : text;
+        return isChanged ? editedText : text;
     }
 
     /**
@@ -94,14 +94,14 @@ public class PZTranslationVariant {
      */
     public void setEditedText(String editedText) {
         this.editedText = editedText;
-        this.isEdited = true;
+        this.isChanged = true;
     }
 
     /**
      * Checks if this variant has been edited
      */
-    public boolean isEdited() {
-        return isEdited;
+    public boolean isChanged() {
+        return isChanged;
     }
 
     /**
@@ -109,11 +109,11 @@ public class PZTranslationVariant {
      */
     public void resetToOriginal() {
         this.editedText = null;
-        this.isEdited = false;
+        this.isChanged = false;
     }
 
     public void markSaved() {
         this.text = editedText; // Update original text to the edited version
-        this.isEdited = false; // Mark as not edited anymore
+        this.isChanged = false; // Mark as not edited anymore
     }
 }
