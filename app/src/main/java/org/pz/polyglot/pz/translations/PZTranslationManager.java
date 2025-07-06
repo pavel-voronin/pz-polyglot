@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.stream.Stream;
 
 import org.pz.polyglot.pz.languages.PZLanguage;
@@ -37,7 +38,8 @@ public class PZTranslationManager {
                                 .fromString(file.getFileName().toString().split("_")[0])
                                 .get();
 
-                        PZTranslationFile translationFile = new PZTranslationFile(file, translationType, lang, source);
+                        PZTranslationFile translationFile = new PZTranslationFile(file, translationType, lang, source,
+                                false);
                         try (PZTranslationParser reader = new PZTranslationParser(translationFile);
                                 Stream<PZTranslationParser.Pair> stream = reader.stream()) {
                             stream.forEach(s -> {
@@ -47,6 +49,11 @@ public class PZTranslationManager {
                                         reader.getUsedCharset(), s.startLine(),
                                         s.endLine());
                                 translationFile.addVariant(variant);
+
+                                if (s.startLine() != s.endLine()) {
+                                    System.out.println("Variant with multiple lines detected: "
+                                            + s.key() + " in file " + file.toString());
+                                }
                             });
                         }
                     }
@@ -59,7 +66,69 @@ public class PZTranslationManager {
     }
 
     public static void saveVariant(PZTranslationVariant variant) {
-        // Implement the save logic here
+        if (variant.isNew()) {
+            return; // Do not save new variants for now
+        }
+
+        PZTranslationFile file = variant.getFile();
+
+        if (file.isNew()) {
+            return; // Do not save new files for now
+        }
+
+        Path path = file.getPath();
+
+        try {
+            // Get the text to save - either edited or original
+            String textToSave = variant.getCurrentText();
+            String key = variant.getKey().getKey();
+
+            // Read all lines from the file
+            List<String> lines = Files.readAllLines(path, variant.getUsedCharset());
+
+            // Replace the specified lines with the new translation
+            replaceLines(lines, variant.getStartLine(), variant.getEndLine(),
+                    key, textToSave);
+
+            // Write the modified lines back to the file
+            Files.write(path, lines, variant.getUsedCharset());
+
+            variant.markSaved();
+        } catch (IOException e) {
+            System.err.println("Failed to save variant: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Replaces lines from startLine to endLine (inclusive, 1-based) with a single
+     * line containing the translation in the format: key = "value"
+     */
+    private static void replaceLines(List<String> lines, int startLine, int endLine,
+            String key, String value) {
+        if (startLine < 1 || endLine < 1 || startLine > lines.size() || endLine > lines.size()) {
+            return; // Invalid line numbers
+        }
+
+        // Convert to 0-based indexing
+        int startIndex = startLine - 1;
+        int endIndex = endLine - 1;
+
+        // Create the new translation line
+        String newLine = "    " + key + " = \"" + value + "\",";
+
+        // Remove the old lines
+        for (int i = endIndex; i >= startIndex; i--) {
+            lines.remove(i);
+        }
+
+        // Add the new line at the start position
+        lines.add(startIndex, newLine);
+
+        // If there were multiple lines before, add empty lines to maintain structure
+        int originalLineCount = endIndex - startIndex + 1;
+        for (int i = 1; i < originalLineCount; i++) {
+            lines.add(startIndex + i, "");
+        }
     }
 
     public static void saveFile(PZTranslationFile file) {

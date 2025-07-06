@@ -12,12 +12,18 @@ public class PZTranslationFile {
     private final PZLanguage language;
     private final PZSource source;
     private ArrayList<PZTranslationVariant> variants = new ArrayList<>();
+    private final boolean isNew;
 
-    public PZTranslationFile(Path path, PZTranslationType type, PZLanguage language, PZSource source) {
+    public PZTranslationFile(Path path, PZTranslationType type, PZLanguage language, PZSource source, boolean isNew) {
         this.path = path;
         this.type = type;
         this.language = language;
         this.source = source;
+        this.isNew = isNew;
+    }
+
+    public boolean isNew() {
+        return isNew;
     }
 
     public Path getPath() {

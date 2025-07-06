@@ -23,6 +23,7 @@ import javafx.scene.Cursor;
 import org.pz.polyglot.pz.translations.PZTranslations;
 import org.pz.polyglot.pz.translations.PZTranslationEntry;
 import org.pz.polyglot.pz.translations.PZTranslationVariant;
+import org.pz.polyglot.pz.translations.PZTranslationManager;
 import org.pz.polyglot.pz.languages.PZLanguage;
 import org.pz.polyglot.pz.languages.PZLanguages;
 import org.pz.polyglot.config.AppConfig;
@@ -250,9 +251,18 @@ public class MainController {
                         saveLink.setVisible(false);
                     });
 
-                    // Set up save functionality (placeholder for now)
+                    // Set up save functionality
                     saveLink.setOnAction(e -> {
-                        // TODO: Implement save functionality
+                        // Get the current text from the text area
+                        String currentText = textArea.getText();
+                        // Update the variant with the current text
+                        variant.setEditedText(currentText);
+                        // Save the variant to file
+                        PZTranslationManager.saveVariant(variant);
+                        // Hide the save link after successful save
+                        saveLink.setVisible(false);
+                        // Reset button should still be visible if text differs from original
+                        resetLink.setVisible(!currentText.equals(variant.getOriginalText()));
                     });
 
                     // Track text changes and show/hide reset and save buttons

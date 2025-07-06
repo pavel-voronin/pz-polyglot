@@ -111,4 +111,9 @@ public class PZTranslationVariant {
         this.editedText = null;
         this.isEdited = false;
     }
+
+    public void markSaved() {
+        this.text = editedText; // Update original text to the edited version
+        this.isEdited = false; // Mark as not edited anymore
+    }
 }
