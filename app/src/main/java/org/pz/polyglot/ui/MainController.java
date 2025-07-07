@@ -9,17 +9,9 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Button;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextArea;
-import javafx.scene.control.Hyperlink;
 import javafx.scene.layout.VBox;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.ListChangeListener;
-import javafx.geometry.Insets;
-import javafx.scene.shape.Polygon;
-import javafx.scene.paint.Color;
-import javafx.scene.Cursor;
 import org.pz.polyglot.pz.translations.PZTranslations;
 import org.pz.polyglot.pz.translations.PZTranslationEntry;
 import org.pz.polyglot.pz.translations.PZTranslationVariant;
@@ -28,7 +20,7 @@ import org.pz.polyglot.pz.translations.PZTranslationUpdatedVariants;
 import org.pz.polyglot.pz.languages.PZLanguage;
 import org.pz.polyglot.pz.languages.PZLanguages;
 import org.pz.polyglot.config.AppConfig;
-import org.pz.polyglot.ui.components.LanguageTag;
+import org.pz.polyglot.ui.components.TranslationVariantField;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -114,6 +106,8 @@ public class MainController {
                                                                                      // area represents
     // Track which text areas have been manually resized
     private Set<TextArea> manuallyResizedTextAreas = new HashSet<>();
+    // Track variant field components
+    private List<TranslationVariantField> variantFields = new ArrayList<>();
     // Save All button
     private Button saveAllButton;
     // Store root item for filtering
@@ -200,6 +194,7 @@ public class MainController {
         languageFieldsContainer.getChildren().clear();
         languageTextFields.clear();
         textAreaToVariant.clear();
+        variantFields.clear();
 
         // Get translation entry
         PZTranslations translations = PZTranslations.getInstance();
@@ -230,113 +225,31 @@ public class MainController {
                 // Create fields for each variant of this language
                 for (int i = 0; i < languageVariants.size(); i++) {
                     PZTranslationVariant variant = languageVariants.get(i);
-                    String sourceName = variant.getFile().getSource().getName();
 
-                    // Create horizontal container for language tag and reset button
-                    HBox labelContainer = new HBox(10);
-                    labelContainer.setPadding(new Insets(10, 0, 0, 0));
-                    labelContainer.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
-
-                    // Create language tag
-                    LanguageTag langTag = new LanguageTag(lang);
-
-                    // Get charset info for source label
-                    String detectedCharsetName = variant.getUsedCharset() != null
-                            ? variant.getUsedCharset().name()
-                            : "Unknown";
-                    String supposedCharsetName = variant.getSupposedCharset() != null
-                            ? variant.getSupposedCharset().name()
-                            : "Unknown";
-
-                    // Add source name and charset info as text (like before)
-                    Label sourceLabel = new Label("(" + sourceName + ", " + detectedCharsetName
-                            + (detectedCharsetName.equals(supposedCharsetName) ? "" : " *") + ")");
-                    sourceLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #666666;");
-
-                    // Make source label truncate text with ellipsis when too long
-                    sourceLabel.setMaxWidth(240); // Set maximum width
-                    sourceLabel.setMinWidth(0); // Allow shrinking
-                    sourceLabel.setTextOverrun(javafx.scene.control.OverrunStyle.ELLIPSIS);
-
-                    // Create reset link (styled as hyperlink)
-                    Hyperlink resetLink = new Hyperlink("reset");
-                    resetLink.setStyle("-fx-font-size: 12px; -fx-padding: 0; -fx-text-fill: #007acc;");
-                    resetLink.setVisible(variant.isChanged()); // Initially visible only if already edited
-                    resetLink.setMinWidth(Region.USE_PREF_SIZE); // Prevent shrinking
-
-                    // Create save link (styled as hyperlink)
-                    Hyperlink saveLink = new Hyperlink("save");
-                    saveLink.setStyle("-fx-font-size: 12px; -fx-padding: 0; -fx-text-fill: #007acc;");
-                    saveLink.setVisible(variant.isChanged()); // Initially visible only if already edited
-                    saveLink.setMinWidth(Region.USE_PREF_SIZE); // Prevent shrinking
-
-                    // Add language tag, source info and spacer, then buttons to push them to the
-                    // right
-                    javafx.scene.layout.Region spacer = new javafx.scene.layout.Region();
-                    HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
-                    labelContainer.getChildren().addAll(langTag, sourceLabel, spacer, saveLink, resetLink);
-
-                    StackPane textAreaContainer = createResizableTextArea(langCode + "_" + i);
-                    TextArea textArea = (TextArea) textAreaContainer.getChildren().get(0);
-                    textArea.setText(variant.getEditedText());
-
-                    // Track the variant for this text area
-                    textAreaToVariant.put(textArea, variant);
-
-                    // Set up reset functionality
-                    resetLink.setOnAction(e -> {
-                        variant.reset();
-                        textArea.setText(variant.getEditedText());
-                        resetLink.setVisible(false);
-                        saveLink.setVisible(false);
-                        // Update "Save All" button state
-                        updateSaveAllButtonState(entry);
-                        updateToolbarSaveAllButtonState();
-                        // Refresh table indicators for this specific key
-                        refreshTableIndicatorsForKey(translationKey);
-                    });
-
-                    // Set up save functionality
-                    saveLink.setOnAction(e -> {
-                        // Get the current text from the text area
-                        String currentText = textArea.getText();
-                        // Update the variant with the current text
-                        variant.setEditedText(currentText);
-                        // Save the variant to file
-                        PZTranslationManager.saveVariant(variant);
-                        // Hide the save link after successful save
-                        saveLink.setVisible(false);
-                        // Reset button should still be visible if text differs from original
-                        resetLink.setVisible(false);
-                        // Update "Save All" button state
-                        updateSaveAllButtonState(entry);
-                        updateToolbarSaveAllButtonState();
-                        // Refresh table indicators for this specific key
-                        refreshTableIndicatorsForKey(translationKey);
-                    });
-
-                    // Track text changes and show/hide reset and save buttons
-                    textArea.textProperty().addListener((obs, oldText, newText) -> {
-                        if (newText != null && !newText.equals(variant.getOriginalText())) {
-                            variant.setEditedText(newText);
-                            resetLink.setVisible(true);
-                            saveLink.setVisible(true);
-                        } else if (newText != null && newText.equals(variant.getOriginalText())) {
-                            variant.reset();
-                            resetLink.setVisible(false);
-                            saveLink.setVisible(false);
-                        }
-                        // Update "Save All" button state
-                        updateSaveAllButtonState(entry);
-                        updateToolbarSaveAllButtonState();
-                        // Schedule table refresh with delay for better performance
-                        scheduleTableRefresh(translationKey);
-                    });
-
-                    // Store with unique key for multiple variants
+                    // Create field key
                     String fieldKey = languageVariants.size() == 1 ? langCode : langCode + "_" + i;
-                    languageTextFields.put(fieldKey, textArea);
-                    languageFieldsContainer.getChildren().addAll(labelContainer, textAreaContainer);
+
+                    // Create variant field component
+                    TranslationVariantField variantField = new TranslationVariantField(
+                            variant, entry, lang, translationKey, fieldKey);
+
+                    // Set up callbacks
+                    variantField.setOnStateChanged(() -> {
+                        updateSaveAllButtonState(entry);
+                        updateToolbarSaveAllButtonState();
+                    });
+
+                    variantField.setOnVariantChanged(key -> {
+                        scheduleTableRefresh(key);
+                    });
+
+                    // Store references
+                    variantFields.add(variantField);
+                    languageTextFields.put(fieldKey, variantField.getTextArea());
+                    textAreaToVariant.put(variantField.getTextArea(), variant);
+
+                    // Add to container
+                    languageFieldsContainer.getChildren().add(variantField);
                 }
             }
         }
@@ -387,126 +300,9 @@ public class MainController {
         languageTextFields.clear();
         textAreaToVariant.clear();
         manuallyResizedTextAreas.clear();
+        variantFields.clear();
         saveAllButton = null;
         treeTableView.getSelectionModel().clearSelection();
-    }
-
-    /**
-     * Creates a resizable TextArea with manual resize handle.
-     */
-    private StackPane createResizableTextArea(String langCode) {
-        TextArea textArea = new TextArea();
-        textArea.setPromptText("Enter translation for " + langCode);
-        textArea.setPrefWidth(420);
-        textArea.setWrapText(true);
-
-        // Set precise initial height - exactly one line
-        textArea.setPrefHeight(28); // Fixed pixel height for single line
-        textArea.setMinHeight(28);
-        textArea.setMaxHeight(Region.USE_PREF_SIZE);
-        textArea.setMinWidth(200);
-
-        // Apply CSS class instead of inline styles
-        textArea.getStyleClass().add("custom-textarea");
-
-        // Smart auto-resize using pixel-based calculation
-        textArea.textProperty().addListener((obs, oldText, newText) -> {
-            // Only auto-resize if not manually resized
-            if (!manuallyResizedTextAreas.contains(textArea)) {
-                Platform.runLater(() -> {
-                    if (newText == null || newText.isEmpty()) {
-                        textArea.setPrefHeight(28);
-                        textArea.setMaxHeight(28);
-                    } else {
-                        // Calculate height based on text content
-                        int lineBreaks = newText.split("\n", -1).length;
-
-                        // Estimate wrapped lines based on character count and width
-                        double charWidth = 7.5; // Average character width in pixels
-                        double availableWidth = 410; // Text area width minus padding
-                        int charsPerLine = (int) (availableWidth / charWidth);
-
-                        int wrappedLines = 0;
-                        String[] textLines = newText.split("\n", -1);
-                        for (String line : textLines) {
-                            if (line.length() > charsPerLine) {
-                                wrappedLines += (line.length() / charsPerLine);
-                            }
-                        }
-
-                        int totalLines = Math.max(1, lineBreaks + wrappedLines);
-                        int newHeight = Math.max(24, totalLines * 17 + 10);
-                        textArea.setPrefHeight(newHeight);
-                        textArea.setMaxHeight(newHeight);
-                    }
-                });
-            }
-        });
-
-        // Create resize handle (small triangle in bottom-right corner)
-        Polygon resizeHandle = new Polygon();
-        resizeHandle.getPoints().addAll(
-                0.0, 10.0, // top-left
-                10.0, 0.0, // top-right
-                10.0, 10.0 // bottom-right
-        );
-        resizeHandle.setFill(Color.LIGHTGRAY);
-        resizeHandle.setCursor(Cursor.SE_RESIZE);
-
-        // Create larger invisible hit area for better usability
-        javafx.scene.shape.Rectangle hitArea = new javafx.scene.shape.Rectangle(15, 15);
-        hitArea.setFill(Color.TRANSPARENT);
-        hitArea.setCursor(Cursor.SE_RESIZE);
-
-        // Container to hold both TextArea and resize elements
-        StackPane container = new StackPane();
-        container.getChildren().addAll(textArea, resizeHandle, hitArea);
-
-        // Position resize handle and hit area in bottom-right corner
-        StackPane.setAlignment(resizeHandle, javafx.geometry.Pos.BOTTOM_RIGHT);
-        StackPane.setAlignment(hitArea, javafx.geometry.Pos.BOTTOM_RIGHT);
-        resizeHandle.setTranslateX(-2);
-        resizeHandle.setTranslateY(-2);
-        hitArea.setTranslateX(-2);
-        hitArea.setTranslateY(-2);
-
-        // Add resize functionality
-        setupResizeHandlers(textArea, hitArea);
-
-        return container;
-    }
-
-    /**
-     * Sets up mouse handlers for resizing the TextArea.
-     */
-    private void setupResizeHandlers(TextArea textArea, javafx.scene.Node resizeElement) {
-        final double[] dragAnchor = new double[2];
-
-        resizeElement.setOnMousePressed(event -> {
-            dragAnchor[0] = event.getSceneX();
-            dragAnchor[1] = event.getSceneY();
-            event.consume();
-        });
-
-        resizeElement.setOnMouseDragged(event -> {
-            double deltaX = event.getSceneX() - dragAnchor[0];
-            double deltaY = event.getSceneY() - dragAnchor[1];
-
-            double newWidth = Math.max(textArea.getMinWidth(), textArea.getPrefWidth() + deltaX);
-            double newHeight = Math.max(textArea.getMinHeight(), textArea.getPrefHeight() + deltaY);
-
-            // Only resize the TextArea, let container adjust automatically
-            textArea.setPrefWidth(newWidth);
-            textArea.setPrefHeight(newHeight);
-            textArea.setMaxHeight(newHeight); // Allow manual resize to override auto-resize max height
-
-            // Mark this text area as manually resized
-            manuallyResizedTextAreas.add(textArea);
-
-            dragAnchor[0] = event.getSceneX();
-            dragAnchor[1] = event.getSceneY();
-            event.consume();
-        });
     }
 
     public void populateTranslationsTable() {
@@ -703,17 +499,8 @@ public class MainController {
      * Updates the state of individual variant save/reset buttons.
      */
     private void updateVariantButtons() {
-        for (Map.Entry<TextArea, PZTranslationVariant> entry : textAreaToVariant.entrySet()) {
-            TextArea textArea = entry.getKey();
-
-            // Find the corresponding reset and save links for this text area
-            // This is a bit tricky since we need to find the parent container
-            // For now, we'll trigger a refresh by simulating text property change
-            Platform.runLater(() -> {
-                String currentText = textArea.getText();
-                textArea.setText(currentText + " ");
-                textArea.setText(currentText);
-            });
+        for (TranslationVariantField variantField : variantFields) {
+            variantField.updateVariantButtons();
         }
     }
 

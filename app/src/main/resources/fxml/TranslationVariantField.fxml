@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.Double?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Hyperlink?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Polygon?>
+<?import javafx.scene.shape.Rectangle?>
+
+<VBox fx:id="root" spacing="5" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <HBox fx:id="labelContainer" alignment="CENTER_LEFT" spacing="10">
+         <padding>
+            <Insets top="10.0" />
+         </padding>
+         <children>
+            <VBox fx:id="languageTagContainer" />
+            <Label fx:id="sourceLabel" maxWidth="240.0" minWidth="0.0" styleClass="source-label" textOverrun="ELLIPSIS" />
+            <Region fx:id="spacer" HBox.hgrow="ALWAYS" />
+            <Hyperlink fx:id="saveLink" styleClass="action-link" text="save" visible="false" />
+            <Hyperlink fx:id="resetLink" styleClass="action-link" text="reset" visible="false" />
+         </children>
+      </HBox>
+      <StackPane fx:id="textAreaContainer">
+         <children>
+            <TextArea fx:id="textArea" minHeight="28.0" minWidth="200.0" prefHeight="28.0" prefWidth="420.0" styleClass="custom-textarea" wrapText="true" />
+            <Polygon fx:id="resizeHandle" fill="LIGHTGRAY" styleClass="resize-handle" StackPane.alignment="BOTTOM_RIGHT" translateX="-2.0" translateY="-2.0">
+               <points>
+                  <Double fx:value="0.0" />
+                  <Double fx:value="10.0" />
+                  <Double fx:value="10.0" />
+                  <Double fx:value="0.0" />
+                  <Double fx:value="10.0" />
+                  <Double fx:value="10.0" />
+               </points>
+            </Polygon>
+            <Rectangle fx:id="hitArea" fill="TRANSPARENT" height="15.0" styleClass="resize-hit-area" width="15.0" StackPane.alignment="BOTTOM_RIGHT" translateX="-2.0" translateY="-2.0" />
+         </children>
+      </StackPane>
+   </children>
+</VBox>

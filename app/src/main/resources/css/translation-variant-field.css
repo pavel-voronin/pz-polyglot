@@ -1,0 +1,61 @@
+/* TranslationVariantField CSS Styles */
+
+.translation-variant-field {
+    -fx-spacing: 5;
+}
+
+.source-label {
+    -fx-font-size: 12px;
+    -fx-text-fill: #666666;
+}
+
+.action-link {
+    -fx-font-size: 12px;
+    -fx-padding: 0;
+    -fx-text-fill: #007acc;
+}
+
+.action-link:hover {
+    -fx-underline: true;
+}
+
+.resize-handle {
+    -fx-cursor: se-resize;
+}
+
+.resize-hit-area {
+    -fx-cursor: se-resize;
+}
+
+/* Custom TextArea styles - inheriting from existing custom-textarea */
+.custom-textarea {
+    -fx-font-family: "Consolas", "Monaco", "Lucida Console", "Liberation Mono", "DejaVu Sans Mono", "Bitstream Vera Sans Mono", "Courier New", monospace;
+    -fx-font-size: 12px;
+    -fx-background-color: #f8f8f8;
+    -fx-border-color: #cccccc;
+    -fx-border-width: 1px;
+    -fx-border-radius: 3px;
+    -fx-background-radius: 3px;
+    -fx-padding: 5px;
+}
+
+.custom-textarea:focused {
+    -fx-border-color: #007acc;
+    -fx-background-color: #ffffff;
+}
+
+.custom-textarea .content {
+    -fx-background-color: transparent;
+}
+
+.custom-textarea .scroll-pane {
+    -fx-background-color: transparent;
+}
+
+.custom-textarea .scroll-pane .viewport {
+    -fx-background-color: transparent;
+}
+
+.custom-textarea .scroll-pane .corner {
+    -fx-background-color: transparent;
+}
