@@ -16,7 +16,14 @@ public class LanguageTag extends StackPane {
      * @param language the language to display
      */
     public LanguageTag(PZLanguage language) {
+        this.getStylesheets().add(getClass().getResource("/css/language-tag.css").toExternalForm());
+
         this.getStyleClass().add("language-tag");
+
+        // Set size constraints to prevent compression
+
+        this.setMinWidth(javafx.scene.layout.Region.USE_PREF_SIZE);
+        this.setMaxWidth(javafx.scene.layout.Region.USE_PREF_SIZE);
 
         // label
 

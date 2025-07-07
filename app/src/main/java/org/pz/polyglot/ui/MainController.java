@@ -157,8 +157,7 @@ public class MainController {
         Platform.runLater(() -> {
             if (treeTableView.getScene() != null) {
                 String cssPath = getClass().getResource("/css/custom-textarea.css").toExternalForm();
-                String languageTagCssPath = getClass().getResource("/css/language-tag.css").toExternalForm();
-                treeTableView.getScene().getStylesheets().addAll(cssPath, languageTagCssPath);
+                treeTableView.getScene().getStylesheets().addAll(cssPath);
             }
         });
     }
@@ -218,7 +217,6 @@ public class MainController {
                 labelContainer.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
 
                 LanguageTag langTag = new LanguageTag(lang);
-
                 labelContainer.getChildren().add(langTag);
 
                 StackPane textAreaContainer = createResizableTextArea(langCode);
