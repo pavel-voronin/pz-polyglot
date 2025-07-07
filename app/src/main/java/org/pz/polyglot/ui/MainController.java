@@ -216,22 +216,8 @@ public class MainController {
                 }
             }
 
-            // If no variants found, create empty field
-            if (languageVariants.isEmpty()) {
-                // Create horizontal container for language tag and other elements
-                HBox labelContainer = new HBox(10);
-                labelContainer.setPadding(new Insets(10, 0, 0, 0));
-                labelContainer.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
-
-                LanguageTag langTag = new LanguageTag(lang);
-                labelContainer.getChildren().add(langTag);
-
-                StackPane textAreaContainer = createResizableTextArea(langCode);
-                TextArea textArea = (TextArea) textAreaContainer.getChildren().get(0);
-
-                languageTextFields.put(langCode, textArea);
-                languageFieldsContainer.getChildren().addAll(labelContainer, textAreaContainer);
-            } else {
+            // Only create fields if variants exist
+            if (!languageVariants.isEmpty()) {
                 // Create fields for each variant of this language
                 for (int i = 0; i < languageVariants.size(); i++) {
                     PZTranslationVariant variant = languageVariants.get(i);
@@ -621,7 +607,7 @@ public class MainController {
         root.setExpanded(true);
         rootItem = root; // Store reference for filtering
         allTableItems.clear(); // Clear previous items
-        
+
         for (Map.Entry<String, PZTranslationEntry> entry : allTranslations.entrySet()) {
             String key = entry.getKey();
             PZTranslationEntry translationEntry = entry.getValue();
@@ -642,10 +628,10 @@ public class MainController {
             allTableItems.add(item); // Store all items for filtering
             root.getChildren().add(item);
         }
-        
+
         treeTableView.setRoot(root);
         treeTableView.setShowRoot(false);
-        
+
         // Apply current filter if any
         if (filterField != null && filterField.getText() != null && !filterField.getText().trim().isEmpty()) {
             filterTable(filterField.getText());
@@ -725,8 +711,9 @@ public class MainController {
      * Filters the table rows based on the filter text.
      */
     private void filterTable(String filterText) {
-        if (rootItem == null || allTableItems.isEmpty()) return;
-        
+        if (rootItem == null || allTableItems.isEmpty())
+            return;
+
         // Store current sort order
         TreeTableColumn<TranslationRow, ?> sortColumn = null;
         TreeTableColumn.SortType sortType = null;
@@ -734,13 +721,13 @@ public class MainController {
             sortColumn = treeTableView.getSortOrder().get(0);
             sortType = sortColumn.getSortType();
         }
-        
+
         // Clear current selection when filtering
         treeTableView.getSelectionModel().clearSelection();
-        
+
         // Clear all children from root
         rootItem.getChildren().clear();
-        
+
         // Add back only matching items
         for (TreeItem<TranslationRow> item : allTableItems) {
             if (filterText == null || filterText.trim().isEmpty()) {
@@ -754,7 +741,7 @@ public class MainController {
                 }
             }
         }
-        
+
         // Restore sort order if it was set
         if (sortColumn != null && sortType != null) {
             sortColumn.setSortType(sortType);
