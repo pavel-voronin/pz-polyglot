@@ -35,8 +35,14 @@
     </MenuBar>
   </top>
   <center>
-    <StackPane>
-      <TreeTableView fx:id="treeTableView" editable="true" />
+    <VBox>
+      <HBox fx:id="toolbar" spacing="10" alignment="CENTER_LEFT" style="-fx-background-color: #f5f5f5; -fx-padding: 8 10; -fx-border-color: #cccccc; -fx-border-width: 0 0 1 0;">
+        <children>
+          <Button fx:id="saveAllToolbarButton" text="Save all" style="-fx-padding: 5 15; -fx-font-size: 12px;" disable="true" />
+        </children>
+      </HBox>
+      <StackPane VBox.vgrow="ALWAYS">
+        <TreeTableView fx:id="treeTableView" editable="true" />
       <VBox fx:id="rightPanel" visible="false" managed="false" 
             maxWidth="400" prefWidth="400" 
             style="-fx-background-color: white; -fx-border-color: #cccccc; -fx-border-width: 1; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0, 2, 2);"
@@ -62,7 +68,8 @@
           </ScrollPane>
         </children>
       </VBox>
-    </StackPane>
+      </StackPane>
+    </VBox>
   </center>
   <bottom>
     <HBox fx:id="statusBar" spacing="10" alignment="CENTER_LEFT" style="-fx-background-color: #e0e0e0; -fx-padding: 4 8;">

@@ -49,11 +49,6 @@ public class PZTranslationManager {
                                         reader.getUsedCharset(), s.startLine(),
                                         s.endLine());
                                 translationFile.addVariant(variant);
-
-                                if (s.startLine() != s.endLine()) {
-                                    System.out.println("Variant with multiple lines detected: "
-                                            + s.key() + " in file " + file.toString());
-                                }
                             });
                         }
                     }
@@ -80,7 +75,7 @@ public class PZTranslationManager {
 
         try {
             // Get the text to save - either edited or original
-            String textToSave = variant.getCurrentText();
+            String textToSave = variant.getEditedText();
             String key = variant.getKey().getKey();
 
             // Read all lines from the file
@@ -133,5 +128,9 @@ public class PZTranslationManager {
 
     public static void saveEntry(PZTranslationEntry entry) {
         entry.getChangedVariants().forEach(PZTranslationManager::saveVariant);
+    }
+
+    public static void saveAll() {
+        PZTranslationUpdatedVariants.getInstance().getVariants().forEach(PZTranslationManager::saveVariant);
     }
 }

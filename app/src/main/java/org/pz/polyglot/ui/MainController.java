@@ -24,6 +24,7 @@ import org.pz.polyglot.pz.translations.PZTranslations;
 import org.pz.polyglot.pz.translations.PZTranslationEntry;
 import org.pz.polyglot.pz.translations.PZTranslationVariant;
 import org.pz.polyglot.pz.translations.PZTranslationManager;
+import org.pz.polyglot.pz.translations.PZTranslationUpdatedVariants;
 import org.pz.polyglot.pz.languages.PZLanguage;
 import org.pz.polyglot.pz.languages.PZLanguages;
 import org.pz.polyglot.config.AppConfig;
@@ -82,6 +83,10 @@ public class MainController {
     @FXML
     private javafx.scene.control.Label memoryLabel;
 
+    // Toolbar components
+    @FXML
+    private Button saveAllToolbarButton;
+
     // Right panel components
     @FXML
     private VBox rightPanel;
@@ -114,7 +119,34 @@ public class MainController {
         // Handle Quit menu action
         quitMenuItem.setOnAction(event -> Platform.exit());
         setupRowSelectionListener();
+        setupToolbarButtons();
         loadCssStyles();
+    }
+
+    /**
+     * Sets up the toolbar buttons and their actions.
+     */
+    private void setupToolbarButtons() {
+        // Set up Save All toolbar button
+        saveAllToolbarButton.setOnAction(e -> {
+            PZTranslationManager.saveAll();
+            // Update button state
+            updateToolbarSaveAllButtonState();
+            // Update individual variant buttons
+            updateVariantButtons();
+        });
+
+        // Initial state update
+        updateToolbarSaveAllButtonState();
+    }
+
+    /**
+     * Updates the state of the toolbar "Save All" button based on updated variants.
+     */
+    private void updateToolbarSaveAllButtonState() {
+        PZTranslationUpdatedVariants updatedVariants = PZTranslationUpdatedVariants.getInstance();
+        boolean hasUpdatedVariants = !updatedVariants.getVariants().isEmpty();
+        saveAllToolbarButton.setDisable(!hasUpdatedVariants);
     }
 
     /**
@@ -172,8 +204,7 @@ public class MainController {
             if (entry != null) {
                 for (PZTranslationVariant variant : entry.getVariants()) {
                     if (variant.getFile() != null && variant.getFile().getLanguage() != null &&
-                            langCode.equals(variant.getFile().getLanguage().getCode()) &&
-                            variant.getText() != null && !variant.getText().isEmpty()) {
+                            langCode.equals(variant.getFile().getLanguage().getCode())) {
                         languageVariants.add(variant);
                     }
                 }
@@ -247,19 +278,20 @@ public class MainController {
 
                     StackPane textAreaContainer = createResizableTextArea(langCode + "_" + i);
                     TextArea textArea = (TextArea) textAreaContainer.getChildren().get(0);
-                    textArea.setText(variant.getCurrentText()); // Use current text (edited or original)
+                    textArea.setText(variant.getEditedText());
 
                     // Track the variant for this text area
                     textAreaToVariant.put(textArea, variant);
 
                     // Set up reset functionality
                     resetLink.setOnAction(e -> {
-                        variant.resetToOriginal();
-                        textArea.setText(variant.getCurrentText());
+                        variant.reset();
+                        textArea.setText(variant.getEditedText());
                         resetLink.setVisible(false);
                         saveLink.setVisible(false);
                         // Update "Save All" button state
                         updateSaveAllButtonState(entry);
+                        updateToolbarSaveAllButtonState();
                     });
 
                     // Set up save functionality
@@ -273,9 +305,10 @@ public class MainController {
                         // Hide the save link after successful save
                         saveLink.setVisible(false);
                         // Reset button should still be visible if text differs from original
-                        resetLink.setVisible(!currentText.equals(variant.getOriginalText()));
+                        resetLink.setVisible(false);
                         // Update "Save All" button state
                         updateSaveAllButtonState(entry);
+                        updateToolbarSaveAllButtonState();
                     });
 
                     // Track text changes and show/hide reset and save buttons
@@ -285,12 +318,13 @@ public class MainController {
                             resetLink.setVisible(true);
                             saveLink.setVisible(true);
                         } else if (newText != null && newText.equals(variant.getOriginalText())) {
-                            variant.resetToOriginal();
+                            variant.reset();
                             resetLink.setVisible(false);
                             saveLink.setVisible(false);
                         }
                         // Update "Save All" button state
                         updateSaveAllButtonState(entry);
+                        updateToolbarSaveAllButtonState();
                     });
 
                     // Store with unique key for multiple variants
@@ -309,6 +343,7 @@ public class MainController {
             PZTranslationManager.saveEntry(entry);
             // Update button states after saving
             updateSaveAllButtonState(entry);
+            updateToolbarSaveAllButtonState();
             // Update individual save/reset buttons
             updateVariantButtons();
         });
@@ -588,7 +623,7 @@ public class MainController {
                 for (PZTranslationVariant variant : translationEntry.getVariants()) {
                     if (variant.getFile() != null && variant.getFile().getLanguage() != null &&
                             lang.equals(variant.getFile().getLanguage().getCode()) &&
-                            variant.getText() != null && !variant.getText().isEmpty()) {
+                            variant.getOriginalText() != null && !variant.getOriginalText().isEmpty()) {
                         found = true;
                         break;
                     }
