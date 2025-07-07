@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 import java.util.List;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.CheckMenuItem;
+import javafx.scene.control.TextField;
 
 /**
  * Main controller for the Polyglot application.
@@ -64,6 +65,8 @@ public class MainController {
 
     @FXML
     private TreeTableView<TranslationRow> treeTableView;
+    @FXML
+    private TextField filterField;
     @FXML
     private javafx.scene.control.MenuBar menuBar;
     @FXML
@@ -109,6 +112,9 @@ public class MainController {
     private Set<TextArea> manuallyResizedTextAreas = new HashSet<>();
     // Save All button
     private Button saveAllButton;
+    // Store root item for filtering
+    private TreeItem<TranslationRow> rootItem;
+    private List<TreeItem<TranslationRow>> allTableItems = new ArrayList<>();
 
     /**
      * Initializes the TreeTableView and its columns with translation data.
@@ -120,6 +126,7 @@ public class MainController {
         quitMenuItem.setOnAction(event -> Platform.exit());
         setupRowSelectionListener();
         setupToolbarButtons();
+        setupFilterField();
         loadCssStyles();
     }
 
@@ -612,6 +619,9 @@ public class MainController {
         // Build rows
         TreeItem<TranslationRow> root = new TreeItem<>(new TranslationRow("Root", Collections.emptyMap()));
         root.setExpanded(true);
+        rootItem = root; // Store reference for filtering
+        allTableItems.clear(); // Clear previous items
+        
         for (Map.Entry<String, PZTranslationEntry> entry : allTranslations.entrySet()) {
             String key = entry.getKey();
             PZTranslationEntry translationEntry = entry.getValue();
@@ -628,10 +638,18 @@ public class MainController {
                 }
                 langPresence.put(lang, found);
             }
-            root.getChildren().add(new TreeItem<>(new TranslationRow(key, langPresence)));
+            TreeItem<TranslationRow> item = new TreeItem<>(new TranslationRow(key, langPresence));
+            allTableItems.add(item); // Store all items for filtering
+            root.getChildren().add(item);
         }
+        
         treeTableView.setRoot(root);
         treeTableView.setShowRoot(false);
+        
+        // Apply current filter if any
+        if (filterField != null && filterField.getText() != null && !filterField.getText().trim().isEmpty()) {
+            filterTable(filterField.getText());
+        }
     }
 
     /**
@@ -688,6 +706,61 @@ public class MainController {
                 textArea.setText(currentText + " ");
                 textArea.setText(currentText);
             });
+        }
+    }
+
+    /**
+     * Sets up the filter field for filtering table rows by key name.
+     */
+    private void setupFilterField() {
+        if (filterField != null) {
+            filterField.setPromptText("Filter by key...");
+            filterField.textProperty().addListener((observable, oldValue, newValue) -> {
+                filterTable(newValue);
+            });
+        }
+    }
+
+    /**
+     * Filters the table rows based on the filter text.
+     */
+    private void filterTable(String filterText) {
+        if (rootItem == null || allTableItems.isEmpty()) return;
+        
+        // Store current sort order
+        TreeTableColumn<TranslationRow, ?> sortColumn = null;
+        TreeTableColumn.SortType sortType = null;
+        if (!treeTableView.getSortOrder().isEmpty()) {
+            sortColumn = treeTableView.getSortOrder().get(0);
+            sortType = sortColumn.getSortType();
+        }
+        
+        // Clear current selection when filtering
+        treeTableView.getSelectionModel().clearSelection();
+        
+        // Clear all children from root
+        rootItem.getChildren().clear();
+        
+        // Add back only matching items
+        for (TreeItem<TranslationRow> item : allTableItems) {
+            if (filterText == null || filterText.trim().isEmpty()) {
+                // Show all items when filter is empty
+                rootItem.getChildren().add(item);
+            } else {
+                // Check if key contains the filter text (case-insensitive)
+                String key = item.getValue().getKey();
+                if (key.toLowerCase().contains(filterText.toLowerCase())) {
+                    rootItem.getChildren().add(item);
+                }
+            }
+        }
+        
+        // Restore sort order if it was set
+        if (sortColumn != null && sortType != null) {
+            sortColumn.setSortType(sortType);
+            treeTableView.getSortOrder().clear();
+            treeTableView.getSortOrder().add(sortColumn);
+            treeTableView.sort();
         }
     }
 }

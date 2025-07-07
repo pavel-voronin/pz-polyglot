@@ -41,6 +41,12 @@
           <Button fx:id="saveAllToolbarButton" text="Save all" style="-fx-padding: 5 15; -fx-font-size: 12px;" disable="true" />
         </children>
       </HBox>
+      <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 8 10; -fx-border-color: #cccccc; -fx-border-width: 0 0 1 0;">
+        <children>
+          <Label text="Filter:" style="-fx-font-size: 12px;" />
+          <TextField fx:id="filterField" promptText="Filter by key..." prefWidth="200" style="-fx-font-size: 12px;" />
+        </children>
+      </HBox>
       <StackPane VBox.vgrow="ALWAYS">
         <TreeTableView fx:id="treeTableView" editable="true" />
       <VBox fx:id="rightPanel" visible="false" managed="false" 
