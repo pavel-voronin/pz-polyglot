@@ -48,10 +48,12 @@ public class MainController {
     public static class TranslationRow {
         private final String key;
         private final Map<String, Boolean> languagePresence;
+        private final Map<String, Boolean> languageChanges;
 
-        public TranslationRow(String key, Map<String, Boolean> languagePresence) {
+        public TranslationRow(String key, Map<String, Boolean> languagePresence, Map<String, Boolean> languageChanges) {
             this.key = key;
             this.languagePresence = languagePresence;
+            this.languageChanges = languageChanges;
         }
 
         public String getKey() {
@@ -60,6 +62,10 @@ public class MainController {
 
         public boolean hasTranslation(String langCode) {
             return languagePresence.getOrDefault(langCode, false);
+        }
+
+        public boolean hasChanges(String langCode) {
+            return languageChanges.getOrDefault(langCode, false);
         }
     }
 
@@ -116,6 +122,10 @@ public class MainController {
     private TreeItem<TranslationRow> rootItem;
     private List<TreeItem<TranslationRow>> allTableItems = new ArrayList<>();
 
+    // Timer for periodic table indicator updates
+    private javafx.animation.Timeline tableRefreshTimer;
+    private final Set<String> keysNeedingRefresh = new HashSet<>();
+
     /**
      * Initializes the TreeTableView and its columns with translation data.
      */
@@ -141,6 +151,8 @@ public class MainController {
             updateToolbarSaveAllButtonState();
             // Update individual variant buttons
             updateVariantButtons();
+            // Refresh table indicators
+            refreshTableIndicators();
         });
 
         // Initial state update
@@ -283,6 +295,8 @@ public class MainController {
                         // Update "Save All" button state
                         updateSaveAllButtonState(entry);
                         updateToolbarSaveAllButtonState();
+                        // Refresh table indicators for this specific key
+                        refreshTableIndicatorsForKey(translationKey);
                     });
 
                     // Set up save functionality
@@ -300,6 +314,8 @@ public class MainController {
                         // Update "Save All" button state
                         updateSaveAllButtonState(entry);
                         updateToolbarSaveAllButtonState();
+                        // Refresh table indicators for this specific key
+                        refreshTableIndicatorsForKey(translationKey);
                     });
 
                     // Track text changes and show/hide reset and save buttons
@@ -316,6 +332,8 @@ public class MainController {
                         // Update "Save All" button state
                         updateSaveAllButtonState(entry);
                         updateToolbarSaveAllButtonState();
+                        // Schedule table refresh with delay for better performance
+                        scheduleTableRefresh(translationKey);
                     });
 
                     // Store with unique key for multiple variants
@@ -337,6 +355,8 @@ public class MainController {
             updateToolbarSaveAllButtonState();
             // Update individual save/reset buttons
             updateVariantButtons();
+            // Refresh table indicators for this specific key only
+            refreshTableIndicatorsForKey(translationKey);
         });
 
         // Add some spacing before the button
@@ -359,6 +379,12 @@ public class MainController {
      */
     @FXML
     private void closePanelAction() {
+        // Stop the table refresh timer
+        if (tableRefreshTimer != null) {
+            tableRefreshTimer.stop();
+        }
+        keysNeedingRefresh.clear();
+
         rightPanel.setVisible(false);
         rightPanel.setManaged(false);
         languageTextFields.clear();
@@ -535,7 +561,16 @@ public class MainController {
             TreeTableColumn<TranslationRow, String> col = new TreeTableColumn<>(lang);
             col.setCellValueFactory(param -> {
                 boolean present = param.getValue().getValue().hasTranslation(lang);
-                return new SimpleStringProperty(present ? "✔" : "");
+                boolean hasChanges = param.getValue().getValue().hasChanges(lang);
+
+                String content = "";
+                if (present) {
+                    content += "✔";
+                }
+                if (hasChanges) {
+                    content += " ●"; // Bullet point to indicate changes
+                }
+                return new SimpleStringProperty(content);
             });
             col.setPrefWidth(60);
             col.setReorderable(true);
@@ -603,7 +638,8 @@ public class MainController {
         });
 
         // Build rows
-        TreeItem<TranslationRow> root = new TreeItem<>(new TranslationRow("Root", Collections.emptyMap()));
+        TreeItem<TranslationRow> root = new TreeItem<>(
+                new TranslationRow("Root", Collections.emptyMap(), Collections.emptyMap()));
         root.setExpanded(true);
         rootItem = root; // Store reference for filtering
         allTableItems.clear(); // Clear previous items
@@ -612,19 +648,27 @@ public class MainController {
             String key = entry.getKey();
             PZTranslationEntry translationEntry = entry.getValue();
             Map<String, Boolean> langPresence = new HashMap<>();
+            Map<String, Boolean> langChanges = new HashMap<>();
+
             for (String lang : allList) {
                 boolean found = false;
+                boolean hasChanges = false;
+
                 for (PZTranslationVariant variant : translationEntry.getVariants()) {
                     if (variant.getFile() != null && variant.getFile().getLanguage() != null &&
-                            lang.equals(variant.getFile().getLanguage().getCode()) &&
-                            variant.getOriginalText() != null && !variant.getOriginalText().isEmpty()) {
-                        found = true;
-                        break;
+                            lang.equals(variant.getFile().getLanguage().getCode())) {
+                        if (variant.getOriginalText() != null && !variant.getOriginalText().isEmpty()) {
+                            found = true;
+                        }
+                        if (variant.isChanged()) {
+                            hasChanges = true;
+                        }
                     }
                 }
                 langPresence.put(lang, found);
+                langChanges.put(lang, hasChanges);
             }
-            TreeItem<TranslationRow> item = new TreeItem<>(new TranslationRow(key, langPresence));
+            TreeItem<TranslationRow> item = new TreeItem<>(new TranslationRow(key, langPresence, langChanges));
             allTableItems.add(item); // Store all items for filtering
             root.getChildren().add(item);
         }
@@ -749,5 +793,153 @@ public class MainController {
             treeTableView.getSortOrder().add(sortColumn);
             treeTableView.sort();
         }
+    }
+
+    /**
+     * Refreshes the table indicators to show current state of translations and
+     * changes.
+     */
+    public void refreshTableIndicators() {
+        if (rootItem == null || allTableItems.isEmpty()) {
+            return;
+        }
+
+        // Update the data for all table items
+        for (TreeItem<TranslationRow> item : allTableItems) {
+            String key = item.getValue().getKey();
+            PZTranslations translations = PZTranslations.getInstance();
+            PZTranslationEntry entry = translations.getAllTranslations().get(key);
+
+            if (entry != null) {
+                // Get all available languages
+                PZLanguages pzLang = PZLanguages.getInstance();
+                Set<String> avail = pzLang.getAllLanguageCodes();
+                List<String> allList = new ArrayList<>(avail);
+                Collections.sort(allList);
+                if (allList.remove("EN")) {
+                    allList.add(0, "EN");
+                }
+
+                Map<String, Boolean> langPresence = new HashMap<>();
+                Map<String, Boolean> langChanges = new HashMap<>();
+
+                for (String lang : allList) {
+                    boolean found = false;
+                    boolean hasChanges = false;
+
+                    for (PZTranslationVariant variant : entry.getVariants()) {
+                        if (variant.getFile() != null && variant.getFile().getLanguage() != null &&
+                                lang.equals(variant.getFile().getLanguage().getCode())) {
+                            if (variant.getOriginalText() != null && !variant.getOriginalText().isEmpty()) {
+                                found = true;
+                            }
+                            if (variant.isChanged()) {
+                                hasChanges = true;
+                            }
+                        }
+                    }
+                    langPresence.put(lang, found);
+                    langChanges.put(lang, hasChanges);
+                }
+
+                // Create new TranslationRow with updated data
+                TranslationRow updatedRow = new TranslationRow(key, langPresence, langChanges);
+                item.setValue(updatedRow);
+            }
+        }
+
+        // Force table refresh
+        treeTableView.refresh();
+    }
+
+    /**
+     * Refreshes the table indicators for a specific translation key.
+     * This is more efficient than refreshing the entire table.
+     */
+    private void refreshTableIndicatorsForKey(String translationKey) {
+        if (rootItem == null || allTableItems.isEmpty()) {
+            return;
+        }
+
+        // Find the specific item to update
+        TreeItem<TranslationRow> targetItem = null;
+        for (TreeItem<TranslationRow> item : allTableItems) {
+            if (item.getValue().getKey().equals(translationKey)) {
+                targetItem = item;
+                break;
+            }
+        }
+
+        if (targetItem == null) {
+            return;
+        }
+
+        // Update only this specific item
+        PZTranslations translations = PZTranslations.getInstance();
+        PZTranslationEntry entry = translations.getAllTranslations().get(translationKey);
+
+        if (entry != null) {
+            // Get all available languages
+            PZLanguages pzLang = PZLanguages.getInstance();
+            Set<String> avail = pzLang.getAllLanguageCodes();
+            List<String> allList = new ArrayList<>(avail);
+            Collections.sort(allList);
+            if (allList.remove("EN")) {
+                allList.add(0, "EN");
+            }
+
+            Map<String, Boolean> langPresence = new HashMap<>();
+            Map<String, Boolean> langChanges = new HashMap<>();
+
+            for (String lang : allList) {
+                boolean found = false;
+                boolean hasChanges = false;
+
+                for (PZTranslationVariant variant : entry.getVariants()) {
+                    if (variant.getFile() != null && variant.getFile().getLanguage() != null &&
+                            lang.equals(variant.getFile().getLanguage().getCode())) {
+                        if (variant.getOriginalText() != null && !variant.getOriginalText().isEmpty()) {
+                            found = true;
+                        }
+                        if (variant.isChanged()) {
+                            hasChanges = true;
+                        }
+                    }
+                }
+                langPresence.put(lang, found);
+                langChanges.put(lang, hasChanges);
+            }
+
+            // Create new TranslationRow with updated data
+            TranslationRow updatedRow = new TranslationRow(translationKey, langPresence, langChanges);
+            targetItem.setValue(updatedRow);
+
+            // Refresh only the specific item
+            treeTableView.refresh();
+        }
+    }
+
+    /**
+     * Schedules a key for table indicator refresh.
+     * The actual refresh will happen after a short delay to avoid frequent updates.
+     */
+    private void scheduleTableRefresh(String translationKey) {
+        keysNeedingRefresh.add(translationKey);
+
+        // Stop existing timer if running
+        if (tableRefreshTimer != null) {
+            tableRefreshTimer.stop();
+        }
+
+        // Create new timer with 100 ms delay
+        tableRefreshTimer = new javafx.animation.Timeline(
+                new javafx.animation.KeyFrame(javafx.util.Duration.millis(100), event -> {
+                    // Refresh indicators for all keys that need it
+                    for (String key : keysNeedingRefresh) {
+                        refreshTableIndicatorsForKey(key);
+                    }
+                    keysNeedingRefresh.clear();
+                }));
+        tableRefreshTimer.play();
     }
 }
