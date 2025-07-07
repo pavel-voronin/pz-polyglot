@@ -14,6 +14,7 @@
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.TextArea?>
+<?import org.pz.polyglot.ui.components.SystemMonitor?>
 
 <BorderPane prefHeight="600.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.pz.polyglot.ui.MainController">
   <top>
@@ -80,7 +81,7 @@
   <bottom>
     <HBox fx:id="statusBar" spacing="10" alignment="CENTER_LEFT" style="-fx-background-color: #e0e0e0; -fx-padding: 4 8;">
       <children>
-        <Label fx:id="memoryLabel" text="Memory: 0 MB" />
+        <SystemMonitor />
       </children>
     </HBox>
   </bottom>

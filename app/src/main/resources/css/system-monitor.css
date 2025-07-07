@@ -1,0 +1,10 @@
+.system-monitor {
+    -fx-padding: 5;
+    -fx-spacing: 10;
+    -fx-alignment: center-left;
+}
+
+.system-monitor .memory-label {
+    -fx-font-size: 12px;
+    -fx-text-fill: #666666;
+}

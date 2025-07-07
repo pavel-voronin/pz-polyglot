@@ -89,8 +89,6 @@ public class MainController {
     private javafx.scene.control.MenuItem documentationMenuItem;
     @FXML
     private javafx.scene.control.MenuItem discordMenuItem;
-    @FXML
-    private javafx.scene.control.Label memoryLabel;
 
     // Toolbar components
     @FXML
@@ -131,7 +129,6 @@ public class MainController {
      */
     @FXML
     private void initialize() {
-        startMemoryMonitor();
         // Handle Quit menu action
         quitMenuItem.setOnAction(event -> Platform.exit());
         setupRowSelectionListener();
@@ -392,25 +389,6 @@ public class MainController {
         manuallyResizedTextAreas.clear();
         saveAllButton = null;
         treeTableView.getSelectionModel().clearSelection();
-    }
-
-    /**
-     * Starts a timer to update the memory usage label in the status bar.
-     */
-    private void startMemoryMonitor() {
-        javafx.animation.Timeline timeline = new javafx.animation.Timeline(
-                new javafx.animation.KeyFrame(javafx.util.Duration.seconds(1), event -> updateMemoryLabel()));
-        timeline.setCycleCount(javafx.animation.Animation.INDEFINITE);
-        timeline.play();
-    }
-
-    /**
-     * Updates the memory usage label with the current memory usage.
-     */
-    private void updateMemoryLabel() {
-        long used = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
-        long usedMB = used / (1024 * 1024);
-        memoryLabel.setText("Memory: " + usedMB + " MB");
     }
 
     /**
