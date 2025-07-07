@@ -130,7 +130,15 @@ public class PZTranslationManager {
         entry.getChangedVariants().forEach(PZTranslationManager::saveVariant);
     }
 
+    public static void resetEntry(PZTranslationEntry entry) {
+        entry.getChangedVariants().forEach(PZTranslationVariant::reset);
+    }
+
     public static void saveAll() {
         PZTranslationUpdatedVariants.getInstance().getVariants().forEach(PZTranslationManager::saveVariant);
+    }
+
+    public static void resetAll() {
+        PZTranslationUpdatedVariants.getInstance().getVariants().forEach(PZTranslationVariant::reset);
     }
 }
