@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -127,18 +128,31 @@ public class PZTranslationManager {
     }
 
     public static void saveEntry(PZTranslationEntry entry) {
-        entry.getChangedVariants().forEach(PZTranslationManager::saveVariant);
+        // Create a copy of the collection to avoid ConcurrentModificationException
+        // since saveVariant() calls markSaved() which may modify the original
+        // collection
+        var changedVariantsCopy = new ArrayList<>(entry.getChangedVariants());
+        changedVariantsCopy.forEach(PZTranslationManager::saveVariant);
     }
 
     public static void resetEntry(PZTranslationEntry entry) {
-        entry.getChangedVariants().forEach(PZTranslationVariant::reset);
+        // Create a copy of the collection to avoid ConcurrentModificationException
+        // since reset() may modify the original collection
+        var changedVariantsCopy = new ArrayList<>(entry.getChangedVariants());
+        changedVariantsCopy.forEach(PZTranslationVariant::reset);
     }
 
     public static void saveAll() {
-        PZTranslationUpdatedVariants.getInstance().getVariants().forEach(PZTranslationManager::saveVariant);
+        // Create a copy of the collection to avoid ConcurrentModificationException
+        // since saveVariant() calls markSaved() which modifies the original collection
+        var variantsCopy = new ArrayList<>(PZTranslationUpdatedVariants.getInstance().getVariants());
+        variantsCopy.forEach(PZTranslationManager::saveVariant);
     }
 
     public static void resetAll() {
-        PZTranslationUpdatedVariants.getInstance().getVariants().forEach(PZTranslationVariant::reset);
+        // Create a copy of the collection to avoid ConcurrentModificationException
+        // since reset() may modify the original collection
+        var variantsCopy = new ArrayList<>(PZTranslationUpdatedVariants.getInstance().getVariants());
+        variantsCopy.forEach(PZTranslationVariant::reset);
     }
 }
