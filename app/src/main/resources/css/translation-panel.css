@@ -1,0 +1,46 @@
+/* Translation Panel Styles */
+
+.translation-panel {
+    -fx-background-color: white;
+    -fx-spacing: 0;
+}
+
+.translation-panel-header {
+    -fx-padding: 8;
+    -fx-background-color: #f5f5f5;
+    -fx-border-color: #cccccc;
+    -fx-border-width: 0 0 1 0;
+}
+
+.translation-panel-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-overrun: ELLIPSIS;
+    -fx-padding: 0 0 0 9;
+    -fx-max-width: 340;
+}
+
+.translation-panel-close-button {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-font-size: 14px;
+    -fx-text-fill: #666666;
+    -fx-font-family: monospace;
+    -fx-pref-width: 25;
+    -fx-pref-height: 25;
+}
+
+.translation-panel-content {
+    -fx-spacing: 10;
+    -fx-padding: 15;
+}
+
+.translation-panel-save-button {
+    -fx-padding: 10 20;
+    -fx-font-size: 14px;
+    -fx-pref-width: 150px;
+}
+
+.translation-panel-spacer {
+    -fx-pref-height: 20;
+}

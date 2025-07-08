@@ -15,6 +15,8 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.TextArea?>
 <?import org.pz.polyglot.ui.components.SystemMonitor?>
+<?import org.pz.polyglot.ui.components.TranslationPanel?>
+<?import org.pz.polyglot.ui.components.ToolbarComponent?>
 
 <BorderPane prefHeight="600.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.pz.polyglot.ui.MainController">
   <top>
@@ -37,11 +39,7 @@
   </top>
   <center>
     <VBox>
-      <HBox fx:id="toolbar" spacing="10" alignment="CENTER_LEFT" style="-fx-background-color: #f5f5f5; -fx-padding: 8 10; -fx-border-color: #cccccc; -fx-border-width: 0 0 1 0;">
-        <children>
-          <Button fx:id="saveAllToolbarButton" text="Save all" style="-fx-padding: 5 15; -fx-font-size: 12px;" disable="true" />
-        </children>
-      </HBox>
+      <ToolbarComponent fx:id="toolbarComponent" />
       <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 8 10; -fx-border-color: #cccccc; -fx-border-width: 0 0 1 0;">
         <children>
           <Label text="Filter:" style="-fx-font-size: 12px;" />
@@ -50,31 +48,10 @@
       </HBox>
       <StackPane VBox.vgrow="ALWAYS">
         <TreeTableView fx:id="treeTableView" editable="true" />
-      <VBox fx:id="rightPanel" visible="false" managed="false" 
-            maxWidth="400" prefWidth="400" 
+        <TranslationPanel fx:id="translationPanel" visible="false" managed="false" 
+            maxWidth="400" prefWidth="400" VBox.vgrow="ALWAYS"
             style="-fx-background-color: white; -fx-border-color: #cccccc; -fx-border-width: 1; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0, 2, 2);"
-            StackPane.alignment="CENTER_RIGHT">
-        <children>
-          <BorderPane style="-fx-padding: 8; -fx-background-color: #f5f5f5; -fx-border-color: #cccccc; -fx-border-width: 0 0 1 0;">
-            <left>
-              <Label fx:id="panelTitleLabel" text="" style="-fx-font-weight: bold; -fx-font-size: 16px; -fx-text-overrun: ELLIPSIS; -fx-padding: 0 0 0 9;" maxWidth="340"/>
-            </left>
-            <right>
-              <Button fx:id="closePanelButton" text="✕" style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-font-size: 14px; -fx-text-fill: #666666; -fx-font-family: monospace;" 
-                      onAction="#closePanelAction" prefWidth="25" prefHeight="25"/>
-            </right>
-          </BorderPane>
-          <ScrollPane fx:id="panelScrollPane" fitToWidth="true" VBox.vgrow="ALWAYS">
-            <content>
-              <VBox fx:id="panelContent" spacing="10" style="-fx-padding: 15;">
-                <children>
-                  <VBox fx:id="languageFieldsContainer" spacing="8"/>
-                </children>
-              </VBox>
-            </content>
-          </ScrollPane>
-        </children>
-      </VBox>
+            StackPane.alignment="CENTER_RIGHT" />
       </StackPane>
     </VBox>
   </center>
