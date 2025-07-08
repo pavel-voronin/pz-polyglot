@@ -1,14 +1,8 @@
 package org.pz.polyglot.ui;
 
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.scene.control.TreeTableColumn;
-import javafx.scene.control.TreeTableView;
-import javafx.scene.control.TreeItem;
-import javafx.scene.control.Label;
-import javafx.scene.control.Button;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextArea;
 import javafx.scene.layout.VBox;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.ListChangeListener;
@@ -16,18 +10,17 @@ import org.pz.polyglot.pz.translations.PZTranslations;
 import org.pz.polyglot.pz.translations.PZTranslationEntry;
 import org.pz.polyglot.pz.translations.PZTranslationVariant;
 import org.pz.polyglot.pz.translations.PZTranslationManager;
-import org.pz.polyglot.pz.translations.PZTranslationUpdatedVariants;
-import org.pz.polyglot.pz.languages.PZLanguage;
+import org.pz.polyglot.pz.translations.PZTranslationSession;
 import org.pz.polyglot.pz.languages.PZLanguages;
 import org.pz.polyglot.config.AppConfig;
 import org.pz.polyglot.ui.components.TranslationVariantField;
+import org.pz.polyglot.ui.models.TranslationVariantViewModel;
+import org.pz.polyglot.ui.models.registries.TranslationVariantViewModelRegistry;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.List;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.CheckMenuItem;
-import javafx.scene.control.TextField;
+
+import javafx.scene.control.*;
 
 /**
  * Main controller for the Polyglot application.
@@ -66,21 +59,21 @@ public class MainController {
     @FXML
     private TextField filterField;
     @FXML
-    private javafx.scene.control.MenuBar menuBar;
+    private MenuBar menuBar;
     @FXML
-    private javafx.scene.control.Menu fileMenu;
+    private Menu fileMenu;
     @FXML
-    private javafx.scene.control.Menu helpMenu;
+    private Menu helpMenu;
     @FXML
     private TreeTableColumn<TranslationRow, String> keyColumn; // Reference to the key column
     @FXML
-    private javafx.scene.control.MenuItem quitMenuItem;
+    private MenuItem quitMenuItem;
     @FXML
-    private javafx.scene.control.MenuItem aboutMenuItem;
+    private MenuItem aboutMenuItem;
     @FXML
-    private javafx.scene.control.MenuItem documentationMenuItem;
+    private MenuItem documentationMenuItem;
     @FXML
-    private javafx.scene.control.MenuItem discordMenuItem;
+    private MenuItem discordMenuItem;
 
     // Toolbar components
     @FXML
@@ -100,22 +93,12 @@ public class MainController {
     @FXML
     private VBox languageFieldsContainer;
 
-    // Current translation data
-    private Map<String, TextArea> languageTextFields = new HashMap<>();
-    private Map<TextArea, PZTranslationVariant> textAreaToVariant = new HashMap<>(); // Track which variant each text
-                                                                                     // area represents
-    // Track which text areas have been manually resized
-    private Set<TextArea> manuallyResizedTextAreas = new HashSet<>();
-    // Track variant field components
     private List<TranslationVariantField> variantFields = new ArrayList<>();
-    // Save All button
     private Button saveAllButton;
-    // Store root item for filtering
     private TreeItem<TranslationRow> rootItem;
     private List<TreeItem<TranslationRow>> allTableItems = new ArrayList<>();
 
-    // Timer for periodic table indicator updates
-    private javafx.animation.Timeline tableRefreshTimer;
+    private Timeline tableRefreshTimer;
     private final Set<String> keysNeedingRefresh = new HashSet<>();
 
     /**
@@ -154,7 +137,7 @@ public class MainController {
      * Updates the state of the toolbar "Save All" button based on updated variants.
      */
     private void updateToolbarSaveAllButtonState() {
-        PZTranslationUpdatedVariants updatedVariants = PZTranslationUpdatedVariants.getInstance();
+        PZTranslationSession updatedVariants = PZTranslationSession.getInstance();
         boolean hasUpdatedVariants = !updatedVariants.getVariants().isEmpty();
         saveAllToolbarButton.setDisable(!hasUpdatedVariants);
     }
@@ -192,8 +175,6 @@ public class MainController {
 
         // Clear previous fields
         languageFieldsContainer.getChildren().clear();
-        languageTextFields.clear();
-        textAreaToVariant.clear();
         variantFields.clear();
 
         // Get translation entry
@@ -208,7 +189,6 @@ public class MainController {
 
         // Create fields for each language
         for (String langCode : sortedLangCodes) {
-            PZLanguage lang = PZLanguages.getInstance().getLanguage(langCode).orElse(null);
             // Find all translation variants for this language
             List<PZTranslationVariant> languageVariants = new ArrayList<>();
             if (entry != null) {
@@ -226,12 +206,10 @@ public class MainController {
                 for (int i = 0; i < languageVariants.size(); i++) {
                     PZTranslationVariant variant = languageVariants.get(i);
 
-                    // Create field key
-                    String fieldKey = languageVariants.size() == 1 ? langCode : langCode + "_" + i;
-
                     // Create variant field component
-                    TranslationVariantField variantField = new TranslationVariantField(
-                            variant, entry, lang, translationKey, fieldKey);
+                    TranslationVariantViewModel variantViewModel = TranslationVariantViewModelRegistry
+                            .getViewModel(variant);
+                    TranslationVariantField variantField = new TranslationVariantField(variantViewModel);
 
                     // Set up callbacks
                     variantField.setOnStateChanged(() -> {
@@ -245,8 +223,6 @@ public class MainController {
 
                     // Store references
                     variantFields.add(variantField);
-                    languageTextFields.put(fieldKey, variantField.getTextArea());
-                    textAreaToVariant.put(variantField.getTextArea(), variant);
 
                     // Add to container
                     languageFieldsContainer.getChildren().add(variantField);
@@ -297,9 +273,6 @@ public class MainController {
 
         rightPanel.setVisible(false);
         rightPanel.setManaged(false);
-        languageTextFields.clear();
-        textAreaToVariant.clear();
-        manuallyResizedTextAreas.clear();
         variantFields.clear();
         saveAllButton = null;
         treeTableView.getSelectionModel().clearSelection();

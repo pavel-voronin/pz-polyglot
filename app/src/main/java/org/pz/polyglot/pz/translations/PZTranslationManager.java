@@ -145,14 +145,14 @@ public class PZTranslationManager {
     public static void saveAll() {
         // Create a copy of the collection to avoid ConcurrentModificationException
         // since saveVariant() calls markSaved() which modifies the original collection
-        var variantsCopy = new ArrayList<>(PZTranslationUpdatedVariants.getInstance().getVariants());
+        var variantsCopy = new ArrayList<>(PZTranslationSession.getInstance().getVariants());
         variantsCopy.forEach(PZTranslationManager::saveVariant);
     }
 
     public static void resetAll() {
         // Create a copy of the collection to avoid ConcurrentModificationException
         // since reset() may modify the original collection
-        var variantsCopy = new ArrayList<>(PZTranslationUpdatedVariants.getInstance().getVariants());
+        var variantsCopy = new ArrayList<>(PZTranslationSession.getInstance().getVariants());
         variantsCopy.forEach(PZTranslationVariant::reset);
     }
 }

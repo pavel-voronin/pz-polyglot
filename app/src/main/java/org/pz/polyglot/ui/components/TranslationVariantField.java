@@ -11,10 +11,8 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Polygon;
 import javafx.scene.Cursor;
-import org.pz.polyglot.pz.translations.PZTranslationVariant;
-import org.pz.polyglot.pz.translations.PZTranslationEntry;
 import org.pz.polyglot.pz.translations.PZTranslationManager;
-import org.pz.polyglot.pz.languages.PZLanguage;
+import org.pz.polyglot.ui.models.TranslationVariantViewModel;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -26,7 +24,7 @@ import java.util.function.Consumer;
  */
 public class TranslationVariantField extends VBox {
 
-    private final PZTranslationVariant variant;
+    private final TranslationVariantViewModel viewModel;
 
     // FXML components
     @FXML
@@ -57,9 +55,8 @@ public class TranslationVariantField extends VBox {
     private Consumer<String> onVariantChanged;
     private Runnable onStateChanged;
 
-    public TranslationVariantField(PZTranslationVariant variant, PZTranslationEntry entry,
-            PZLanguage language, String translationKey, String fieldKey) {
-        this.variant = variant;
+    public TranslationVariantField(TranslationVariantViewModel viewModel) {
+        this.viewModel = viewModel;
 
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/TranslationVariantField.fxml"));
@@ -87,98 +84,72 @@ public class TranslationVariantField extends VBox {
         }
 
         // Setup the component
-        setupComponent(variant, entry, language, translationKey, fieldKey);
+        setupComponent();
     }
 
-    private void setupComponent(PZTranslationVariant variant, PZTranslationEntry entry,
-            PZLanguage language, String translationKey, String fieldKey) {
-
-        // Create and add language tag
-        LanguageTag langTag = new LanguageTag(language);
+    private void setupComponent() {
+        LanguageTag langTag = new LanguageTag(viewModel.getLanguage());
         languageTagContainer.getChildren().add(langTag);
 
         // Setup source label
-        String detectedCharsetName = variant.getUsedCharset() != null
-                ? variant.getUsedCharset().name()
-                : "Unknown";
-        String supposedCharsetName = variant.getSupposedCharset() != null
-                ? variant.getSupposedCharset().name()
-                : "Unknown";
+        sourceLabel.textProperty().bind(viewModel.sourceLabelTextProperty());
 
-        String sourceName = variant.getFile().getSource().getName();
-        sourceLabel.setText("(" + sourceName + ", " + detectedCharsetName
-                + (detectedCharsetName.equals(supposedCharsetName) ? "" : " *") + ")");
+        // Setup text area prompt text
+        textArea.setPromptText("Enter translation for " + viewModel.getTranslationKey());
 
-        // Setup text area
-        textArea.setPromptText("Enter translation for " + fieldKey);
-        textArea.setText(variant.getEditedText());
+        // Bind text area to ViewModel
+        textArea.textProperty().bindBidirectional(viewModel.editedTextProperty());
 
         // Setup visibility based on variant state
-        resetLink.setVisible(variant.isChanged());
-        saveLink.setVisible(variant.isChanged());
+        resetLink.visibleProperty().bind(viewModel.changedProperty());
+        saveLink.visibleProperty().bind(viewModel.changedProperty());
 
         // Setup resize handle cursor
         resizeHandle.setCursor(Cursor.SE_RESIZE);
         hitArea.setCursor(Cursor.SE_RESIZE);
 
         // Setup event handlers
-        setupEventHandlers(translationKey);
+        setupEventHandlers();
 
         // Setup resize functionality
         setupResizeHandlers();
     }
 
-    private void setupEventHandlers(String translationKey) {
+    private void setupEventHandlers() {
         // Set up reset functionality
         resetLink.setOnAction(e -> {
-            variant.reset();
-            textArea.setText(variant.getEditedText());
-            resetLink.setVisible(false);
-            saveLink.setVisible(false);
+            viewModel.reset();
             if (onStateChanged != null) {
                 onStateChanged.run();
             }
             if (onVariantChanged != null) {
-                onVariantChanged.accept(translationKey);
+                onVariantChanged.accept(viewModel.getTranslationKey());
+                onVariantChanged.accept(""); // Temporary placeholder
             }
         });
 
         // Set up save functionality
         saveLink.setOnAction(e -> {
-            // Get the current text from the text area
-            String currentText = textArea.getText();
-            // Update the variant with the current text
-            variant.setEditedText(currentText);
             // Save the variant to file
-            PZTranslationManager.saveVariant(variant);
-            // Hide the save link after successful save
-            saveLink.setVisible(false);
-            // Reset button should still be visible if text differs from original
-            resetLink.setVisible(false);
+            PZTranslationManager.saveVariant(viewModel.getVariant());
+            viewModel.markSaved();
             if (onStateChanged != null) {
                 onStateChanged.run();
             }
             if (onVariantChanged != null) {
-                onVariantChanged.accept(translationKey);
+                onVariantChanged.accept(viewModel.getTranslationKey());
+                onVariantChanged.accept(""); // Temporary placeholder
             }
         });
 
-        // Track text changes and show/hide reset and save buttons
-        textArea.textProperty().addListener((obs, oldText, newText) -> {
-            if (newText != null && !newText.equals(variant.getOriginalText())) {
-                variant.setEditedText(newText);
-                resetLink.setVisible(true);
-                saveLink.setVisible(true);
-            } else if (newText != null && newText.equals(variant.getOriginalText())) {
-                variant.reset();
-                resetLink.setVisible(false);
-                saveLink.setVisible(false);
-            }
+        // Listen to ViewModel property changes for callbacks
+        viewModel.changedProperty().addListener((obs, oldVal, newVal) -> {
             if (onStateChanged != null) {
                 onStateChanged.run();
             }
             if (onVariantChanged != null) {
-                onVariantChanged.accept(translationKey);
+                onVariantChanged.accept(viewModel.getTranslationKey());
+                onVariantChanged.accept(""); // Temporary placeholder
             }
         });
 
@@ -270,19 +241,5 @@ public class TranslationVariantField extends VBox {
      */
     public void setOnStateChanged(Runnable callback) {
         this.onStateChanged = callback;
-    }
-
-    /**
-     * Gets the text area for this variant field.
-     */
-    public TextArea getTextArea() {
-        return textArea;
-    }
-
-    /**
-     * Gets the variant associated with this field.
-     */
-    public PZTranslationVariant getVariant() {
-        return variant;
     }
 }

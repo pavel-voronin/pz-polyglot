@@ -2,14 +2,14 @@ package org.pz.polyglot.pz.translations;
 
 import java.util.HashSet;
 
-public class PZTranslationUpdatedVariants {
-    private static final PZTranslationUpdatedVariants INSTANCE = new PZTranslationUpdatedVariants();
+public class PZTranslationSession {
+    private static final PZTranslationSession INSTANCE = new PZTranslationSession();
     private HashSet<PZTranslationVariant> variants = new HashSet<>();
 
-    private PZTranslationUpdatedVariants() {
+    private PZTranslationSession() {
     }
 
-    public static PZTranslationUpdatedVariants getInstance() {
+    public static PZTranslationSession getInstance() {
         return INSTANCE;
     }
 

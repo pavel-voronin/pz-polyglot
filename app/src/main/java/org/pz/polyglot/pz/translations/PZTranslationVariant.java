@@ -79,9 +79,9 @@ public class PZTranslationVariant {
     public void setEditedText(String editedText) {
         this.editedText = editedText;
         if (this.isChanged()) {
-            PZTranslationUpdatedVariants.getInstance().addVariant(this);
+            PZTranslationSession.getInstance().addVariant(this);
         } else {
-            PZTranslationUpdatedVariants.getInstance().removeVariant(this);
+            PZTranslationSession.getInstance().removeVariant(this);
         }
     }
 
@@ -95,6 +95,6 @@ public class PZTranslationVariant {
 
     public void markSaved() {
         this.originalText = editedText;
-        PZTranslationUpdatedVariants.getInstance().removeVariant(this);
+        PZTranslationSession.getInstance().removeVariant(this);
     }
 }
