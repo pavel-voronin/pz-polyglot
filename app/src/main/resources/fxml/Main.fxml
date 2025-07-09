@@ -48,10 +48,7 @@
       </HBox>
       <StackPane VBox.vgrow="ALWAYS">
         <TreeTableView fx:id="treeTableView" editable="true" />
-        <TranslationPanel fx:id="translationPanel" visible="false" managed="false" 
-            maxWidth="400" prefWidth="400" VBox.vgrow="ALWAYS"
-            style="-fx-background-color: white; -fx-border-color: #cccccc; -fx-border-width: 1; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0, 2, 2);"
-            StackPane.alignment="CENTER_RIGHT" />
+        <TranslationPanel fx:id="translationPanel" visible="false" managed="false" maxWidth="400" prefWidth="400" VBox.vgrow="ALWAYS" StackPane.alignment="CENTER_RIGHT" />
       </StackPane>
     </VBox>
   </center>

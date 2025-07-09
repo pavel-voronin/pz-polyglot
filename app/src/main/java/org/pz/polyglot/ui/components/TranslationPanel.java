@@ -5,6 +5,7 @@ import javafx.animation.Timeline;
 import javafx.collections.ListChangeListener;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.HBox;
 import javafx.util.Duration;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
@@ -15,6 +16,7 @@ import org.pz.polyglot.ui.models.TranslationEntryViewModel;
 import org.pz.polyglot.ui.state.UIStateManager;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Component for displaying and editing translation details for a selected
@@ -23,6 +25,16 @@ import java.util.*;
  */
 public class TranslationPanel extends VBox {
 
+    /**
+     * Represents a group of translation variants from the same source.
+     */
+    private record SourceGroup(
+            String sourceName,
+            Label sourceHeader,
+            VBox container,
+            List<TranslationVariantField> variantFields) {
+    }
+
     // UI components
     private final Label panelTitleLabel;
     private final Button closePanelButton;
@@ -30,7 +42,8 @@ public class TranslationPanel extends VBox {
     private final VBox languageFieldsContainer;
 
     // Internal state
-    private final List<TranslationVariantField> variantFields = new ArrayList<>();
+    private final Map<String, SourceGroup> sourceGroups = new LinkedHashMap<>();
+    private final List<TranslationVariantField> allVariantFields = new ArrayList<>();
     private Button saveAllButton;
     private Timeline tableRefreshTimer;
     private final Set<String> keysNeedingRefresh = new HashSet<>();
@@ -96,6 +109,7 @@ public class TranslationPanel extends VBox {
         panelScrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         panelScrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         panelScrollPane.setContent(languageFieldsContainer);
+        panelScrollPane.getStyleClass().add("translation-scroll-panel");
 
         // Make scroll pane expand to fill available space
         VBox.setVgrow(panelScrollPane, Priority.ALWAYS);
@@ -149,41 +163,38 @@ public class TranslationPanel extends VBox {
 
         // Clear previous fields
         languageFieldsContainer.getChildren().clear();
-        variantFields.clear();
+        sourceGroups.clear();
+        allVariantFields.clear();
 
         // Get visible languages from state manager
         List<String> visibleLanguageCodes = new ArrayList<>(stateManager.getVisibleLanguages());
 
-        // Create fields for each language
+        // Collect all variants for visible languages
+        List<TranslationVariantViewModel> allVariants = new ArrayList<>();
         for (String langCode : visibleLanguageCodes) {
-            // Get variant ViewModels for this language
             List<TranslationVariantViewModel> languageVariantViewModels = currentEntryViewModel
                     .getVariantViewModelsForLanguage(langCode);
+            allVariants.addAll(languageVariantViewModels);
+        }
 
-            // Only create fields if variants exist
-            if (!languageVariantViewModels.isEmpty()) {
-                // Create fields for each variant of this language
-                for (TranslationVariantViewModel variantViewModel : languageVariantViewModels) {
-                    // Create variant field component
-                    TranslationVariantField variantField = new TranslationVariantField(variantViewModel);
+        // Group variants by source
+        Map<String, List<TranslationVariantViewModel>> variantsBySource = allVariants.stream()
+                .collect(Collectors.groupingBy(
+                        TranslationVariantViewModel::getSource,
+                        LinkedHashMap::new,
+                        Collectors.toList()));
 
-                    // Set up callbacks
-                    variantField.setOnStateChanged(() -> {
-                        updateSaveAllButtonState();
-                        stateManager.updateHasChangesFromSession();
-                    });
+        // Create source groups and add to UI
+        for (Map.Entry<String, List<TranslationVariantViewModel>> entry : variantsBySource.entrySet()) {
+            String sourceName = entry.getKey();
+            List<TranslationVariantViewModel> sourceVariants = entry.getValue();
 
-                    variantField.setOnVariantChanged(key -> {
-                        scheduleTableRefresh(key);
-                    });
+            // Create source group
+            SourceGroup sourceGroup = createSourceGroup(sourceName, sourceVariants);
+            sourceGroups.put(sourceName, sourceGroup);
 
-                    // Store references
-                    variantFields.add(variantField);
-
-                    // Add to container
-                    languageFieldsContainer.getChildren().add(variantField);
-                }
-            }
+            // Add to container
+            languageFieldsContainer.getChildren().add(sourceGroup.container());
         }
 
         // Create "Save All" button
@@ -212,6 +223,64 @@ public class TranslationPanel extends VBox {
     }
 
     /**
+     * Creates a source group with header and variant fields.
+     */
+    private SourceGroup createSourceGroup(String sourceName, List<TranslationVariantViewModel> sourceVariants) {
+        // Check if source is editable (all variants from same source should have same
+        // editability)
+        boolean isSourceEditable = sourceVariants.isEmpty() || sourceVariants.get(0).isSourceEditable();
+
+        // Create source header container
+        HBox headerContainer = new HBox();
+        headerContainer.setSpacing(5);
+
+        // Create source name label
+        Label sourceHeader = new Label(sourceName);
+        sourceHeader.getStyleClass().add("translation-panel-source-header");
+        headerContainer.getChildren().add(sourceHeader);
+
+        // Add lock icon if not editable
+        if (!isSourceEditable) {
+            Label lockIcon = new Label("🔒");
+            lockIcon.getStyleClass().add("translation-panel-lock-icon");
+            headerContainer.getChildren().add(lockIcon);
+        }
+
+        // Create container for this source group
+        VBox sourceContainer = new VBox();
+        sourceContainer.getStyleClass().add("translation-panel-source-group");
+
+        // Add header to container
+        sourceContainer.getChildren().add(headerContainer);
+
+        // Create variant fields for this source
+        List<TranslationVariantField> variantFields = new ArrayList<>();
+        for (TranslationVariantViewModel variantViewModel : sourceVariants) {
+            // Create variant field component
+            TranslationVariantField variantField = new TranslationVariantField(variantViewModel);
+
+            // Set up callbacks
+            variantField.setOnStateChanged(() -> {
+                updateSaveAllButtonState();
+                stateManager.updateHasChangesFromSession();
+            });
+
+            variantField.setOnVariantChanged(key -> {
+                scheduleTableRefresh(key);
+            });
+
+            // Store references
+            variantFields.add(variantField);
+            allVariantFields.add(variantField);
+
+            // Add to source container
+            sourceContainer.getChildren().add(variantField);
+        }
+
+        return new SourceGroup(sourceName, sourceHeader, sourceContainer, variantFields);
+    }
+
+    /**
      * Hides the translation panel and cleans up resources.
      */
     public void hidePanel() {
@@ -223,7 +292,8 @@ public class TranslationPanel extends VBox {
 
         setVisible(false);
         setManaged(false);
-        variantFields.clear();
+        sourceGroups.clear();
+        allVariantFields.clear();
         saveAllButton = null;
         currentTranslationKey = null;
         currentEntryViewModel = null;
@@ -244,7 +314,7 @@ public class TranslationPanel extends VBox {
      * Updates the state of individual variant save/reset buttons.
      */
     public void updateVariantButtons() {
-        for (TranslationVariantField variantField : variantFields) {
+        for (TranslationVariantField variantField : allVariantFields) {
             variantField.updateVariantButtons();
         }
     }

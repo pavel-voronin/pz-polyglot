@@ -11,7 +11,6 @@ public class TranslationVariantViewModel {
     private final StringProperty originalText = new SimpleStringProperty();
     private final StringProperty editedText = new SimpleStringProperty();
     private final BooleanProperty changed = new SimpleBooleanProperty();
-    private final StringProperty sourceLabelText = new SimpleStringProperty();
 
     public TranslationVariantViewModel(PZTranslationVariant variant) {
         this.variant = variant;
@@ -19,15 +18,6 @@ public class TranslationVariantViewModel {
         originalText.set(variant.getOriginalText());
         editedText.set(variant.getEditedText());
         changed.set(variant.isChanged());
-
-        // TODO: remove in favor of using grouping and separate components
-        {
-            String sourceName = variant.getFile().getSource().getName();
-            String detectedCharsetName = variant.getUsedCharset().name();
-            Boolean charsetChanged = !detectedCharsetName.equals(variant.getSupposedCharset().name());
-
-            sourceLabelText.set("(" + sourceName + ", " + detectedCharsetName + (charsetChanged ? " *" : "") + ")");
-        }
 
         originalText.addListener((obs, oldVal, newVal) -> variant.setOriginalText(newVal));
         editedText.addListener((obs, oldVal, newVal) -> {
@@ -46,10 +36,6 @@ public class TranslationVariantViewModel {
 
     public BooleanProperty changedProperty() {
         return changed;
-    }
-
-    public StringProperty sourceLabelTextProperty() {
-        return sourceLabelText;
     }
 
     public void reset() {
@@ -78,5 +64,13 @@ public class TranslationVariantViewModel {
 
     public String getTranslationKey() {
         return variant.getKey().getKey();
+    }
+
+    public String getSource() {
+        return variant.getFile().getSource().getName();
+    }
+
+    public boolean isSourceEditable() {
+        return variant.getFile().getSource().isEditable();
     }
 }

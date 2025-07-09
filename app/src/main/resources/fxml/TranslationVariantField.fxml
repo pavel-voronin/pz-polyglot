@@ -12,7 +12,7 @@
 <?import javafx.scene.shape.Polygon?>
 <?import javafx.scene.shape.Rectangle?>
 
-<VBox fx:id="root" spacing="5" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1">
+<fx:root type="VBox" spacing="5" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" styleClass="translation-variant-field">
    <children>
       <HBox fx:id="labelContainer" alignment="CENTER_LEFT" spacing="10">
          <padding>
@@ -20,7 +20,6 @@
          </padding>
          <children>
             <VBox fx:id="languageTagContainer" />
-            <Label fx:id="sourceLabel" maxWidth="240.0" minWidth="0.0" styleClass="source-label" textOverrun="ELLIPSIS" />
             <Region fx:id="spacer" HBox.hgrow="ALWAYS" />
             <Hyperlink fx:id="saveLink" styleClass="action-link" text="save" visible="false" />
             <Hyperlink fx:id="resetLink" styleClass="action-link" text="reset" visible="false" />
@@ -43,4 +42,4 @@
          </children>
       </StackPane>
    </children>
-</VBox>
+</fx:root>

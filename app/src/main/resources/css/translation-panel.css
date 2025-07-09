@@ -1,8 +1,8 @@
-/* Translation Panel Styles */
-
 .translation-panel {
     -fx-background-color: white;
     -fx-spacing: 0;
+    -fx-border-color: #cccccc;
+    -fx-border-width: 1;
 }
 
 .translation-panel-header {
@@ -30,6 +30,10 @@
     -fx-pref-height: 25;
 }
 
+.translation-scroll-panel {
+    -fx-background-color: transparent;
+}
+
 .translation-panel-content {
     -fx-spacing: 10;
     -fx-padding: 15;
@@ -43,4 +47,23 @@
 
 .translation-panel-spacer {
     -fx-pref-height: 20;
+}
+
+/* Source Group Styles */
+.translation-panel-source-header {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-padding: 0 0 0 0;
+    -fx-text-fill: #666666;
+}
+
+.translation-panel-lock-icon {
+    -fx-font-size: 12px;
+    -fx-text-fill: #999999;
+    -fx-padding: 1 0 0 0;
+}
+
+.translation-panel-source-group {
+    /* -fx-spacing: 8; */
+    -fx-padding: 0 0 8 0;
 }
