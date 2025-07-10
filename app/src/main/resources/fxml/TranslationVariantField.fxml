@@ -19,7 +19,7 @@
             <Insets top="10.0" />
          </padding>
          <children>
-            <VBox fx:id="languageTagContainer" />
+            <HBox fx:id="tagsContainer" spacing="5" />
             <Region fx:id="spacer" HBox.hgrow="ALWAYS" />
             <Hyperlink fx:id="saveLink" styleClass="action-link" text="save" visible="false" />
             <Hyperlink fx:id="resetLink" styleClass="action-link" text="reset" visible="false" />

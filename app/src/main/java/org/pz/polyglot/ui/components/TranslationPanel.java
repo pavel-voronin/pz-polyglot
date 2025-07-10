@@ -292,10 +292,7 @@ public class TranslationPanel extends VBox {
             // Add language tags for active languages
             for (String langCode : activeLanguageCodes) {
                 pzLanguages.getLanguage(langCode).ifPresent(language -> {
-                    LanguageTag languageTag = new LanguageTag(language);
-
-                    // Set click handler separately to avoid scope issues
-                    languageTag.setOnMouseClicked(event -> {
+                    LanguageTag languageTag = new LanguageTag(language, tag -> {
                         // Create and show dynamic context menu starting from source selection (level 2)
                         DynamicContextMenu contextMenu = new DynamicContextMenu(language, selection -> {
                             // Handle the complete selection - create new translation variant
@@ -303,7 +300,7 @@ public class TranslationPanel extends VBox {
                         });
 
                         // Show the context menu at the language tag location
-                        contextMenu.show(languageTag, javafx.geometry.Side.BOTTOM, 0, 0);
+                        contextMenu.show(tag, javafx.geometry.Side.BOTTOM, 0, 0);
                     });
 
                     languageTagsFlow.getChildren().add(languageTag);

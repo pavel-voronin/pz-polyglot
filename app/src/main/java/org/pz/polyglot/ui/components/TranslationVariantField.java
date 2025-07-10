@@ -27,7 +27,7 @@ public class TranslationVariantField extends VBox {
     @FXML
     private HBox labelContainer;
     @FXML
-    private VBox languageTagContainer;
+    private HBox tagsContainer;
     @FXML
     private Hyperlink resetLink;
     @FXML
@@ -67,7 +67,8 @@ public class TranslationVariantField extends VBox {
 
     private void setupComponent() {
         LanguageTag langTag = new LanguageTag(viewModel.getLanguage());
-        languageTagContainer.getChildren().add(langTag);
+        TypeTag typeTag = new TypeTag(viewModel.getVariant().getType());
+        tagsContainer.getChildren().addAll(langTag, typeTag);
 
         // Setup text area prompt text
         textArea.setPromptText("Enter translation for " + viewModel.getTranslationKey());

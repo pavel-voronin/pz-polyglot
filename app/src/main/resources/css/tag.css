@@ -1,0 +1,51 @@
+.tag {
+    -fx-border-radius: 3px;
+    -fx-border-width: 1px;
+    -fx-border-style: solid;
+    -fx-padding: 2px 6px;
+    -fx-alignment: center;
+}
+
+.tag-label {
+    -fx-font: normal 12px "System";
+}
+
+.tag-tooltip {
+    -fx-background-color: rgba(0, 0, 0, 0.8);
+    -fx-text-fill: white;
+    -fx-background-radius: 3px;
+    -fx-font-size: 14px;
+    -fx-padding: 3px 6px;
+}
+
+/* THEMES */
+
+/* BLUE - default */
+
+.tag.blue {
+    -fx-border-color: #87ceeb;
+}
+
+.tag.blue.active:hover {
+    -fx-border-color: #67c8ef;
+    -fx-background-color: #e0f7ff;
+}
+
+.tag.blue .tag-label {
+    -fx-text-fill: #333333;
+}
+
+/* PURPLE */
+
+.tag.purple {
+    -fx-border-color: #e2c2ff;
+}
+
+.tag.purple.active:hover {
+    -fx-border-color: #660066;
+    -fx-background-color: #f0e0ff;
+}
+
+.tag.purple .tag-label {
+    -fx-text-fill: #333333;
+}
