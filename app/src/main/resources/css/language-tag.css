@@ -7,6 +7,11 @@
     -fx-alignment: center;
 }
 
+.language-tag.active:hover {
+    -fx-border-color: #67c8ef;
+    -fx-background-color: #e0f7ff;
+}
+
 .language-tag-label {
     -fx-font: normal 12px "System";
     -fx-text-fill: #333333;
@@ -18,4 +23,21 @@
     -fx-background-radius: 3px;
     -fx-font-size: 14px;
     -fx-padding: 3px 6px;
+}
+
+/* Clickable language tag styles */
+.language-tag-clickable {
+    -fx-cursor: hand;
+    -fx-border-color: #4a90e2;
+    -fx-background-color: #f0f8ff;
+}
+
+.language-tag-clickable:hover {
+    -fx-border-color: #357abd;
+    -fx-background-color: #e6f3ff;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.2), 2, 0, 0, 1);
+}
+
+.language-tag-clickable:pressed {
+    -fx-background-color: #d4edfc;
 }

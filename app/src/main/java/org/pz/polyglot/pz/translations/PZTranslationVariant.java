@@ -2,11 +2,17 @@ package org.pz.polyglot.pz.translations;
 
 import java.nio.charset.Charset;
 
+import org.pz.polyglot.pz.languages.PZLanguage;
+import org.pz.polyglot.pz.sources.PZSource;
+
 public class PZTranslationVariant {
     private final PZTranslationEntry key;
     private String originalText;
     private String editedText;
     private PZTranslationFile file;
+    private final PZSource source;
+    private final PZLanguage language;
+    private final PZTranslationType type;
     private final Charset supposedCharset;
     private final Charset usedCharset;
     private final int startLine;
@@ -14,19 +20,32 @@ public class PZTranslationVariant {
     private final boolean isNew;
 
     public PZTranslationVariant(PZTranslationEntry key, PZTranslationFile file, String text, Charset supposedCharset,
-            Charset detectedCharset) {
-        this(key, file, text, supposedCharset, detectedCharset, -1, -1, true);
-    }
-
-    public PZTranslationVariant(PZTranslationEntry key, PZTranslationFile file, String text, Charset supposedCharset,
             Charset detectedCharset, int startLine, int endLine) {
         this(key, file, text, supposedCharset, detectedCharset, startLine, endLine, false);
     }
 
-    public PZTranslationVariant(PZTranslationEntry key, PZTranslationFile file, String text, Charset supposedCharset,
+    public PZTranslationVariant(PZTranslationEntry key, PZSource source, PZLanguage language, PZTranslationType type,
+            String text, Charset supposedCharset, Charset detectedCharset) {
+        this(key, null, source, language, type, text, supposedCharset, detectedCharset, 0, 0, true);
+    }
+
+    private PZTranslationVariant(PZTranslationEntry key, PZTranslationFile file, String text, Charset supposedCharset,
             Charset detectedCharset, int startLine, int endLine, boolean isNew) {
+        this(key, file,
+                file != null ? file.getSource() : null,
+                file != null ? file.getLanguage() : null,
+                file != null ? file.getType() : null,
+                text, supposedCharset, detectedCharset, startLine, endLine, isNew);
+    }
+
+    private PZTranslationVariant(PZTranslationEntry key, PZTranslationFile file, PZSource source, PZLanguage language,
+            PZTranslationType type, String text, Charset supposedCharset, Charset detectedCharset,
+            int startLine, int endLine, boolean isNew) {
         this.key = key;
         this.file = file;
+        this.source = source;
+        this.language = language;
+        this.type = type;
         this.originalText = text;
         this.editedText = text;
         this.supposedCharset = supposedCharset;
@@ -50,6 +69,22 @@ public class PZTranslationVariant {
 
     public PZTranslationFile getFile() {
         return file;
+    }
+
+    public void setFile(PZTranslationFile file) {
+        this.file = file;
+    }
+
+    public PZSource getSource() {
+        return source;
+    }
+
+    public PZLanguage getLanguage() {
+        return language;
+    }
+
+    public PZTranslationType getType() {
+        return type;
     }
 
     public Charset getSupposedCharset() {

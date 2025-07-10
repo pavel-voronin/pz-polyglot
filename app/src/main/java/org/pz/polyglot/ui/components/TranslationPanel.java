@@ -9,11 +9,16 @@ import javafx.scene.layout.HBox;
 import javafx.util.Duration;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
+import javafx.scene.layout.FlowPane;
 
 import org.pz.polyglot.ui.models.TranslationVariantViewModel;
 import org.pz.polyglot.ui.models.TranslationEntryViewModel;
 import org.pz.polyglot.ui.state.UIStateManager;
+import org.pz.polyglot.pz.languages.PZLanguages;
+import org.pz.polyglot.pz.languages.PZLanguage;
+import org.pz.polyglot.pz.sources.PZSource;
+import org.pz.polyglot.pz.translations.PZTranslationType;
+import org.pz.polyglot.pz.translations.PZTranslationVariant;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -44,7 +49,6 @@ public class TranslationPanel extends VBox {
     // Internal state
     private final Map<String, SourceGroup> sourceGroups = new LinkedHashMap<>();
     private final List<TranslationVariantField> allVariantFields = new ArrayList<>();
-    private Button saveAllButton;
     private Timeline tableRefreshTimer;
     private final Set<String> keysNeedingRefresh = new HashSet<>();
 
@@ -145,9 +149,6 @@ public class TranslationPanel extends VBox {
         // Update language fields
         updateLanguageFields();
 
-        // Initial state update
-        updateSaveAllButtonState();
-
         // Show the panel
         setVisible(true);
         setManaged(true);
@@ -197,29 +198,11 @@ public class TranslationPanel extends VBox {
             languageFieldsContainer.getChildren().add(sourceGroup.container());
         }
 
-        // Create "Save All" button
-        saveAllButton = new Button("Save All");
-        saveAllButton.getStyleClass().add("translation-panel-save-button");
-        saveAllButton.setOnAction(e -> {
-            // Save all changes for this entry
-            if (currentEntryViewModel != null) {
-                currentEntryViewModel.saveAll();
-                // Update button states after saving
-                updateSaveAllButtonState();
-                stateManager.updateHasChangesFromSession();
-                // Update individual save/reset buttons
-                updateVariantButtons();
-                // Refresh table indicators for this specific key only
-                stateManager.triggerRefreshForKey(currentTranslationKey);
-            }
-        });
+        // Create active languages section for adding new variants
+        VBox activeLanguagesSection = createActiveLanguagesSection();
 
-        // Add some spacing before the button
-        Region spacer = new Region();
-        spacer.getStyleClass().add("translation-panel-spacer");
-
-        // Add button to the container
-        languageFieldsContainer.getChildren().addAll(spacer, saveAllButton);
+        // Add button and active languages section to the container
+        languageFieldsContainer.getChildren().addAll(activeLanguagesSection);
     }
 
     /**
@@ -261,7 +244,6 @@ public class TranslationPanel extends VBox {
 
             // Set up callbacks
             variantField.setOnStateChanged(() -> {
-                updateSaveAllButtonState();
                 stateManager.updateHasChangesFromSession();
             });
 
@@ -281,6 +263,60 @@ public class TranslationPanel extends VBox {
     }
 
     /**
+     * Creates a section showing active languages (languages that are currently
+     * selected
+     * in the state manager) for adding new translation variants.
+     */
+    private VBox createActiveLanguagesSection() {
+        VBox sectionContainer = new VBox();
+        sectionContainer.getStyleClass().add("translation-panel-active-languages-section");
+
+        // Get all active languages from state manager
+        List<String> activeLanguageCodes = new ArrayList<>(stateManager.getVisibleLanguages());
+
+        // Only show section if there are active languages
+        if (!activeLanguageCodes.isEmpty()) {
+            // Create header
+            Label headerLabel = new Label("Add new variant:");
+            headerLabel.getStyleClass().add("translation-panel-source-header");
+
+            // Create flow pane for language tags
+            FlowPane languageTagsFlow = new FlowPane();
+            languageTagsFlow.getStyleClass().add("translation-panel-active-languages-flow");
+            languageTagsFlow.setHgap(5);
+            languageTagsFlow.setVgap(5);
+
+            // Get PZLanguages instance
+            PZLanguages pzLanguages = PZLanguages.getInstance();
+
+            // Add language tags for active languages
+            for (String langCode : activeLanguageCodes) {
+                pzLanguages.getLanguage(langCode).ifPresent(language -> {
+                    LanguageTag languageTag = new LanguageTag(language);
+
+                    // Set click handler separately to avoid scope issues
+                    languageTag.setOnMouseClicked(event -> {
+                        // Create and show dynamic context menu starting from source selection (level 2)
+                        DynamicContextMenu contextMenu = new DynamicContextMenu(language, selection -> {
+                            // Handle the complete selection - create new translation variant
+                            createNewTranslationVariant(selection);
+                        });
+
+                        // Show the context menu at the language tag location
+                        contextMenu.show(languageTag, javafx.geometry.Side.BOTTOM, 0, 0);
+                    });
+
+                    languageTagsFlow.getChildren().add(languageTag);
+                });
+            }
+
+            sectionContainer.getChildren().addAll(headerLabel, languageTagsFlow);
+        }
+
+        return sectionContainer;
+    }
+
+    /**
      * Hides the translation panel and cleans up resources.
      */
     public void hidePanel() {
@@ -294,20 +330,8 @@ public class TranslationPanel extends VBox {
         setManaged(false);
         sourceGroups.clear();
         allVariantFields.clear();
-        saveAllButton = null;
         currentTranslationKey = null;
         currentEntryViewModel = null;
-    }
-
-    /**
-     * Updates the state of the "Save All" button based on whether there are changes
-     * to save.
-     */
-    private void updateSaveAllButtonState() {
-        if (saveAllButton != null && currentEntryViewModel != null) {
-            boolean hasChanges = currentEntryViewModel.getHasChanges();
-            saveAllButton.setDisable(!hasChanges);
-        }
     }
 
     /**
@@ -355,5 +379,53 @@ public class TranslationPanel extends VBox {
      */
     public boolean isShowingTranslation() {
         return currentTranslationKey != null && isVisible();
+    }
+
+    /**
+     * Creates a new translation variant based on the provided selection.
+     * 
+     * @param selection the complete selection from the dynamic context menu
+     */
+    private void createNewTranslationVariant(DynamicContextMenu.TranslationVariantSelection selection) {
+        if (currentEntryViewModel == null) {
+            System.err.println("Cannot create variant: no current translation entry");
+            return;
+        }
+
+        try {
+            // Get the charset for the selected language and source version
+            PZLanguage language = selection.language();
+            PZSource source = selection.source();
+            PZTranslationType type = selection.translationType();
+
+            // Get charset for this language/source combination
+            java.nio.charset.Charset charset = language.getCharset(source.getVersion())
+                    .orElse(java.nio.charset.StandardCharsets.UTF_8);
+
+            // Create new translation variant
+            PZTranslationVariant newVariant = new PZTranslationVariant(
+                    currentEntryViewModel.getEntry(),
+                    source,
+                    language,
+                    type,
+                    "", // Empty initial text
+                    charset,
+                    charset);
+
+            // Add the variant to the entry
+            currentEntryViewModel.getEntry().getVariants().add(newVariant);
+
+            // Refresh the view model and UI
+            currentEntryViewModel.refresh();
+            updateLanguageFields();
+
+            System.out.println("Created new translation variant: Language=" + language.getCode() +
+                    ", Source=" + source.getName() +
+                    ", Type=" + type.name());
+
+        } catch (Exception e) {
+            System.err.println("Failed to create new translation variant: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 }

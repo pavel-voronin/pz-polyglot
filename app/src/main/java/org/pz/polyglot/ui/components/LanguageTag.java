@@ -16,23 +16,38 @@ public class LanguageTag extends StackPane {
      * @param language the language to display
      */
     public LanguageTag(PZLanguage language) {
+        this(language, null);
+    }
+
+    /**
+     * Creates a new LanguageTag with the specified language and optional click
+     * callback.
+     * 
+     * @param language        the language to display
+     * @param onClickCallback optional callback to execute when the tag is clicked,
+     *                        if null the tag is not clickable
+     */
+    public LanguageTag(PZLanguage language, Runnable onClickCallback) {
         this.getStylesheets().add(getClass().getResource("/css/language-tag.css").toExternalForm());
 
         this.getStyleClass().add("language-tag");
 
-        // Set size constraints to prevent compression
+        // Add clickable style and behavior if callback is provided
+        if (onClickCallback != null) {
+            this.getStyleClass().add("active");
+            this.setOnMouseClicked(event -> onClickCallback.run());
+        }
 
+        // Set size constraints to prevent compression
         this.setMinWidth(javafx.scene.layout.Region.USE_PREF_SIZE);
         this.setMaxWidth(javafx.scene.layout.Region.USE_PREF_SIZE);
 
         // label
-
         Label label = new Label(language.getCode());
         label.getStyleClass().add("language-tag-label");
         this.getChildren().add(label);
 
         // tooltip
-
         Tooltip tooltip = new Tooltip(language.getName());
         tooltip.setShowDelay(javafx.util.Duration.millis(100));
         tooltip.setHideDelay(javafx.util.Duration.millis(0));

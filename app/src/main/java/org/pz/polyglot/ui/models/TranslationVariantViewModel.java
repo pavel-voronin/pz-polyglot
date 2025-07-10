@@ -59,7 +59,7 @@ public class TranslationVariantViewModel {
     }
 
     public PZLanguage getLanguage() {
-        return variant.getFile().getLanguage();
+        return variant.getLanguage();
     }
 
     public String getTranslationKey() {
@@ -67,10 +67,10 @@ public class TranslationVariantViewModel {
     }
 
     public String getSource() {
-        return variant.getFile().getSource().getName();
+        return variant.getSource().getName();
     }
 
     public boolean isSourceEditable() {
-        return variant.getFile().getSource().isEditable();
+        return variant.getSource().isEditable();
     }
 }

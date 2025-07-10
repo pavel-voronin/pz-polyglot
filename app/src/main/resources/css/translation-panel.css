@@ -45,10 +45,6 @@
     -fx-pref-width: 150px;
 }
 
-.translation-panel-spacer {
-    -fx-pref-height: 20;
-}
-
 /* Source Group Styles */
 .translation-panel-source-header {
     -fx-font-size: 14px;
@@ -66,4 +62,18 @@
 .translation-panel-source-group {
     /* -fx-spacing: 8; */
     -fx-padding: 0 0 8 0;
+}
+
+/* Active Languages Section Styles */
+.translation-panel-active-languages-section {
+    -fx-spacing: 8;
+    -fx-padding: 0 0 0 0;
+}
+
+.translation-panel-active-languages-flow {
+    -fx-padding: 5 0 0 0;
+}
+
+.translation-panel-active-language-tag:hover {
+    -fx-cursor: hand;
 }
