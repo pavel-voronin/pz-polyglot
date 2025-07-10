@@ -4,6 +4,9 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 
+import org.pz.polyglot.pz.languages.PZLanguage;
+import org.pz.polyglot.pz.sources.PZSource;
+
 public class PZTranslationEntry {
     private final String key;
     private ArrayList<PZTranslationVariant> variants = new ArrayList<>();
@@ -25,11 +28,11 @@ public class PZTranslationEntry {
                 .collect(Collectors.toCollection(ArrayList::new));
     }
 
-    public PZTranslationVariant addVariant(PZTranslationFile file, String text, Charset charset, int startLine,
-            int endLine) {
-        Charset supposedCharset = file.getLanguage().getCharset(file.getSource().getVersion()).orElse(null);
-        PZTranslationVariant variant = new PZTranslationVariant(this, file, text, supposedCharset, charset, startLine,
-                endLine);
+    public PZTranslationVariant addVariant(PZSource source, PZLanguage language, PZTranslationType type, String text,
+            Charset charset) {
+        Charset supposedCharset = language.getCharset(source.getVersion()).orElse(null);
+        PZTranslationVariant variant = new PZTranslationVariant(this, source, language, type, text, supposedCharset,
+                charset);
         variants.add(variant);
         return variant;
     }

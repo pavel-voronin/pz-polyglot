@@ -33,23 +33,19 @@ public class PZTranslationManager {
 
                 try (DirectoryStream<Path> files = Files.newDirectoryStream(langDir, p -> Files.isRegularFile(p)
                         && p.getFileName().toString().endsWith("_" + lang.getCode() + ".txt")
-                        && PZTranslationType.fromString(p.getFileName().toString().split("_")[0]).isPresent())) {
+                        && PZTranslationType
+                                .fromString(extractTypeFromFileName(p.getFileName().toString(), lang.getCode()))
+                                .isPresent())) {
                     for (Path file : files) {
                         PZTranslationType translationType = PZTranslationType
-                                .fromString(file.getFileName().toString().split("_")[0])
+                                .fromString(extractTypeFromFileName(file.getFileName().toString(), lang.getCode()))
                                 .get();
 
-                        PZTranslationFile translationFile = new PZTranslationFile(file, translationType, lang, source,
-                                false);
-                        try (PZTranslationParser reader = new PZTranslationParser(translationFile);
+                        try (PZTranslationParser reader = new PZTranslationParser(file, lang, source);
                                 Stream<PZTranslationParser.Pair> stream = reader.stream()) {
                             stream.forEach(s -> {
                                 PZTranslationEntry entry = PZTranslations.getInstance().getOrCreateTranslation(s.key());
-
-                                PZTranslationVariant variant = entry.addVariant(translationFile, s.value(),
-                                        reader.getUsedCharset(), s.startLine(),
-                                        s.endLine());
-                                translationFile.addVariant(variant);
+                                entry.addVariant(source, lang, translationType, s.value(), reader.getUsedCharset());
                             });
                         }
                     }
@@ -61,33 +57,50 @@ public class PZTranslationManager {
         }
     }
 
+    /**
+     * Extracts the translation type from a filename by removing the language
+     * suffix and extension.
+     * For example: "IG_UI_PTBR.txt" with language "PTBR" -> "IG_UI"
+     */
+    private static String extractTypeFromFileName(String fileName, String languageCode) {
+        // Remove _LANG.txt suffix using regex
+        return fileName.replaceFirst("_" + languageCode + "\\.txt$", "");
+    }
+
     public static void saveVariant(PZTranslationVariant variant) {
-        if (variant.isNew()) {
-            return; // Do not save new variants for now
-        }
-
-        PZTranslationFile file = variant.getFile();
-
-        if (file.isNew()) {
-            return; // Do not save new files for now
-        }
-
-        Path path = file.getPath();
-
         try {
-            // Get the text to save - either edited or original
-            String textToSave = variant.getEditedText();
-            String key = variant.getKey().getKey();
+            Path filePath = constructFilePath(variant);
+
+            // Create file if it doesn't exist
+            if (!Files.exists(filePath)) {
+                createNewTranslationFile(filePath, variant);
+            }
 
             // Read all lines from the file
-            List<String> lines = Files.readAllLines(path, variant.getUsedCharset());
+            List<String> lines = Files.readAllLines(filePath, variant.getUsedCharset());
 
-            // Replace the specified lines with the new translation
-            replaceLines(lines, variant.getStartLine(), variant.getEndLine(),
-                    key, textToSave);
+            // TODO ATTENTION!!!
+            // broken flow: initially file may be encoded with a wrong charset
+            // then we detect right charset and save it in variants as usedCharset
+            // then we try to save it with the right charset into the file with the wrong
+            // charset need to handle this case properly
+
+            String key = variant.getKey().getKey();
+            String textToSave = variant.getEditedText();
+
+            // Find existing key or add new one
+            int[] keyLines = findKeyInFile(lines, key);
+
+            if (keyLines != null) {
+                // Replace existing key
+                replaceLines(lines, keyLines[0], keyLines[1], key, textToSave);
+            } else {
+                // Add new key before closing brace
+                addNewKeyToFile(lines, key, textToSave);
+            }
 
             // Write the modified lines back to the file
-            Files.write(path, lines, variant.getUsedCharset());
+            Files.write(filePath, lines, variant.getUsedCharset());
 
             variant.markSaved();
         } catch (IOException e) {
@@ -119,12 +132,64 @@ public class PZTranslationManager {
 
         // Add the new line at the start position
         lines.add(startIndex, newLine);
+    }
 
-        // If there were multiple lines before, add empty lines to maintain structure
-        int originalLineCount = endIndex - startIndex + 1;
-        for (int i = 1; i < originalLineCount; i++) {
-            lines.add(startIndex + i, "");
+    private static Path constructFilePath(PZTranslationVariant variant) {
+        // Construct the file path based on source, language, and type
+        Path sourcePath = variant.getSource().getPath();
+        String languageCode = variant.getLanguage().getCode();
+        String fileName = variant.getType().name() + "_" + languageCode + ".txt";
+        return sourcePath.resolve(languageCode).resolve(fileName);
+    }
+
+    private static int[] findKeyInFile(List<String> lines, String key) {
+        for (int i = 0; i < lines.size(); i++) {
+            String line = lines.get(i).trim();
+            if (line.startsWith(key + " =")) {
+                // Found the key, now find where it ends
+                int endLine = i + 1;
+
+                // If it's a multiline value, find the actual end
+                if (!line.endsWith(",") && !line.endsWith("}")) {
+                    for (int j = i + 1; j < lines.size(); j++) {
+                        String nextLine = lines.get(j).trim();
+                        if (nextLine.endsWith(",") || nextLine.equals("}")) {
+                            endLine = j + 1;
+                            break;
+                        }
+                    }
+                }
+
+                return new int[] { i + 1, endLine }; // Convert to 1-based indexing
+            }
         }
+        return null; // Key not found
+    }
+
+    private static void addNewKeyToFile(List<String> lines, String key, String value) {
+        // Find the position to insert (before closing brace)
+        int insertPosition = lines.size(); // Default to end
+
+        for (int i = lines.size() - 1; i >= 0; i--) {
+            String line = lines.get(i).trim();
+            if (line.equals("}")) {
+                insertPosition = i;
+                break;
+            }
+        }
+
+        // Create the new translation line
+        String newLine = "    " + key + " = \"" + value + "\",";
+        lines.add(insertPosition, newLine);
+    }
+
+    private static void createNewTranslationFile(Path filePath, PZTranslationVariant variant) throws IOException {
+        // Create directories if they don't exist
+        Files.createDirectories(filePath.getParent());
+
+        // Create the file with the basic structure
+        String fileTemplate = variant.getType().name() + "_" + variant.getLanguage().getCode() + " = {\n}";
+        Files.write(filePath, fileTemplate.getBytes(variant.getSupposedCharset()));
     }
 
     public static void saveEntry(PZTranslationEntry entry) {

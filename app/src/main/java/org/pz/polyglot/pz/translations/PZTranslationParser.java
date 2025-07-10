@@ -3,6 +3,7 @@ package org.pz.polyglot.pz.translations;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -13,8 +14,11 @@ import java.util.logging.Logger;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import org.pz.polyglot.pz.languages.PZLanguage;
+import org.pz.polyglot.pz.sources.PZSource;
+
 /**
- * Reads a PZTranslationFile and returns a stream of non-comment lines, skipping
+ * Reads a file and returns a stream of non-comment lines, skipping
  * the first line (header).
  * Handles block and line comments, and supports fallback charset if decoding
  * fails.
@@ -30,15 +34,15 @@ public class PZTranslationParser implements AutoCloseable, Iterable<PZTranslatio
     private record ReadResult(List<String> lines, Charset charset) {
     }
 
-    private final PZTranslationFile file;
+    private Path path;
     private final LinkedHashSet<Charset> availableCharsets;
     private final List<String> allLines;
     private final Charset usedCharset;
     private boolean closed;
 
-    public PZTranslationParser(PZTranslationFile file) {
-        this.file = file;
-        this.availableCharsets = file.getLanguage().getCharsetsDownFrom(file.getSource().getVersion());
+    public PZTranslationParser(Path path, PZLanguage language, PZSource source) {
+        this.path = path;
+        this.availableCharsets = language.getCharsetsDownFrom(source.getVersion());
         this.closed = false;
         var result = readAllLinesWithCorrectCharset();
         this.allLines = result.lines();
@@ -51,14 +55,14 @@ public class PZTranslationParser implements AutoCloseable, Iterable<PZTranslatio
     private ReadResult readAllLinesWithCorrectCharset() {
         for (Charset charset : availableCharsets) {
             try {
-                List<String> lines = Files.readAllLines(file.getPath(), charset);
+                List<String> lines = Files.readAllLines(path, charset);
                 return new ReadResult(lines, charset);
             } catch (IOException e) {
                 // Try next charset
                 continue;
             }
         }
-        LOGGER.log(Level.WARNING, "Failed to read file with any available charset: " + file.getPath()
+        LOGGER.log(Level.WARNING, "Failed to read file with any available charset: " + path
                 + ". Tried charsets: " + availableCharsets);
         return new ReadResult(List.of(), null); // Return empty list if no charset works
     }
