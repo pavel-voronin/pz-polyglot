@@ -2,6 +2,8 @@ package org.pz.polyglot.pz.translations;
 
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
+
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -196,7 +198,7 @@ class PZTranslationParserTest {
         PZLanguage lang = new PZLanguage("en", "English");
         lang.setCharset(new SemanticVersion("43"), StandardCharsets.UTF_8);
         lang.setCharset(new SemanticVersion("42"), StandardCharsets.ISO_8859_1);
-        lang.setCharset(new SemanticVersion("41"), java.nio.charset.Charset.forName("windows-1252"));
+        lang.setCharset(new SemanticVersion("41"), Charset.forName("windows-1252"));
 
         PZSource source = new PZSource("Test", new SemanticVersion("43"), tempFile.getParent(), true);
         PZTranslationFile file = new PZTranslationFile(tempFile, PZTranslationType.UI, lang, source);

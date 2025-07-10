@@ -1,7 +1,8 @@
 package org.pz.polyglot.util;
 
 import java.io.File;
-import org.pz.polyglot.config.AppConfig;
+
+import org.pz.polyglot.AppConfig;
 
 /**
  * Utility class for folder validation logic.

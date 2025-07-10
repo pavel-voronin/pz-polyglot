@@ -3,7 +3,7 @@ package org.pz.polyglot.util;
 import java.nio.file.Path;
 import java.util.Optional;
 
-import org.pz.polyglot.config.AppConfig;
+import org.pz.polyglot.AppConfig;
 
 public class FolderUtils {
     public static Optional<Path> getWorkshopPath() {

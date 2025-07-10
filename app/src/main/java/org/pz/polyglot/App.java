@@ -6,13 +6,12 @@ import javafx.stage.Stage;
 
 import java.util.logging.Logger;
 
-import org.pz.polyglot.config.AppConfig;
+import org.pz.polyglot.components.folderSelection.FolderSelectionDialogManager;
+import org.pz.polyglot.components.main.MainWindowManager;
 import org.pz.polyglot.i18n.I18nManager;
-import org.pz.polyglot.pz.languages.PZLanguageManager;
-import org.pz.polyglot.pz.sources.PZSources;
-import org.pz.polyglot.pz.translations.PZTranslationManager;
-import org.pz.polyglot.ui.FolderDialogManager;
-import org.pz.polyglot.ui.MainWindowManager;
+import org.pz.polyglot.models.languages.PZLanguageManager;
+import org.pz.polyglot.models.sources.PZSources;
+import org.pz.polyglot.models.translations.PZTranslationManager;
 import org.pz.polyglot.util.FolderValidationUtils;
 
 public class App extends Application {
@@ -26,7 +25,7 @@ public class App extends Application {
 
         MainWindowManager.showMain(stage);
         if (!FolderValidationUtils.hasValidFolders(AppConfig.getInstance())) {
-            boolean selected = FolderDialogManager.showFolderDialog(stage);
+            boolean selected = FolderSelectionDialogManager.showFolderDialog(stage);
             if (!selected) {
                 logger.warning("No valid folders selected. Exiting application.");
                 Platform.exit();
@@ -40,8 +39,8 @@ public class App extends Application {
         PZTranslationManager.loadFilesFromSources();
         // Refresh translations table after loading
         javafx.application.Platform.runLater(() -> {
-            if (org.pz.polyglot.ui.MainWindowManager.mainControllerInstance != null) {
-                org.pz.polyglot.ui.MainWindowManager.mainControllerInstance.populateTranslationsTable();
+            if (org.pz.polyglot.components.main.MainWindowManager.mainControllerInstance != null) {
+                org.pz.polyglot.components.main.MainWindowManager.mainControllerInstance.populateTranslationsTable();
             }
         });
     }
