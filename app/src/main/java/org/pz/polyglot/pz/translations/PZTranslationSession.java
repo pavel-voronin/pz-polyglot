@@ -1,10 +1,11 @@
 package org.pz.polyglot.pz.translations;
 
-import java.util.HashSet;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableSet;
 
 public class PZTranslationSession {
     private static final PZTranslationSession INSTANCE = new PZTranslationSession();
-    private HashSet<PZTranslationVariant> variants = new HashSet<>();
+    private final ObservableSet<PZTranslationVariant> variants = FXCollections.observableSet();
 
     private PZTranslationSession() {
     }
@@ -13,7 +14,7 @@ public class PZTranslationSession {
         return INSTANCE;
     }
 
-    public HashSet<PZTranslationVariant> getVariants() {
+    public ObservableSet<PZTranslationVariant> getVariants() {
         return variants;
     }
 

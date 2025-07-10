@@ -1,11 +1,13 @@
 package org.pz.polyglot.ui.components;
 
+import javafx.collections.SetChangeListener;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Button;
 import javafx.scene.control.ToolBar;
 import org.pz.polyglot.pz.translations.PZTranslationManager;
 import org.pz.polyglot.pz.translations.PZTranslationSession;
+import org.pz.polyglot.pz.translations.PZTranslationVariant;
 import org.pz.polyglot.ui.state.UIStateManager;
 
 import java.io.IOException;
@@ -35,43 +37,29 @@ public class ToolbarComponent extends ToolBar {
 
     @FXML
     private void initialize() {
-        setupToolbarButtons();
-        setupReactiveBindings();
-    }
-
-    /**
-     * Sets up the toolbar buttons and their actions.
-     */
-    private void setupToolbarButtons() {
-        // Set up Save All toolbar button
+        // Set up Save All toolbar button action
         saveAllToolbarButton.setOnAction(e -> {
             PZTranslationManager.saveAll();
-            // Update state which will trigger all necessary updates
             stateManager.updateHasChangesFromSession();
-            // Trigger save all event for other components to react
             stateManager.triggerSaveAllEvent();
         });
 
-        // Initial state update
-        updateToolbarSaveAllButtonState();
+        // Listen to changes in the set of dirty variants
+        PZTranslationSession.getInstance().getVariants()
+                .addListener((SetChangeListener<PZTranslationVariant>) change -> updateSaveAllButtonState());
+
+        // Initial state
+        updateSaveAllButtonState();
     }
 
     /**
-     * Sets up reactive bindings with UIStateManager.
+     * Updates the Save All button's text and enabled state based on the current
+     * variants.
      */
-    private void setupReactiveBindings() {
-        // Bind toolbar button state to changes
-        stateManager.hasChangesProperty().addListener((obs, oldVal, newVal) -> {
-            saveAllToolbarButton.setDisable(!newVal);
-        });
-    }
-
-    /**
-     * Updates the state of the toolbar "Save All" button based on updated variants.
-     */
-    private void updateToolbarSaveAllButtonState() {
-        PZTranslationSession updatedVariants = PZTranslationSession.getInstance();
-        boolean hasUpdatedVariants = !updatedVariants.getVariants().isEmpty();
-        saveAllToolbarButton.setDisable(!hasUpdatedVariants);
+    private void updateSaveAllButtonState() {
+        var variants = PZTranslationSession.getInstance().getVariants();
+        int count = variants.size();
+        saveAllToolbarButton.setText("Save All" + (count > 0 ? " (" + count + ")" : ""));
+        saveAllToolbarButton.setDisable(count == 0);
     }
 }
