@@ -3,20 +3,16 @@
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuBar?>
 <?import javafx.scene.control.MenuItem?>
-<?import javafx.scene.control.TableColumn?>
-<?import javafx.scene.control.TableView?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TextField?>
-<?import javafx.scene.control.TextArea?>
 <?import org.pz.polyglot.ui.components.SystemMonitor?>
 <?import org.pz.polyglot.ui.components.TranslationPanel?>
 <?import org.pz.polyglot.ui.components.ToolbarComponent?>
+<?import org.pz.polyglot.ui.components.TranslationTable?>
 
 <BorderPane prefHeight="600.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.pz.polyglot.ui.MainController">
   <top>
@@ -40,16 +36,16 @@
   <center>
     <VBox>
       <ToolbarComponent fx:id="toolbarComponent" />
-      <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 8 10; -fx-border-color: #cccccc; -fx-border-width: 0 0 1 0;">
+      <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 8 10;">
         <children>
-          <Label text="Filter:" style="-fx-font-size: 12px;" />
+          <Label text="Filter by key:" style="-fx-font-size: 12px;" />
           <TextField fx:id="filterField" promptText="Filter by key..." prefWidth="200" style="-fx-font-size: 12px;" />
         </children>
       </HBox>
-      <StackPane VBox.vgrow="ALWAYS">
-        <TableView fx:id="tableView" editable="true" />
-        <TranslationPanel fx:id="translationPanel" visible="false" managed="false" maxWidth="400" prefWidth="400" VBox.vgrow="ALWAYS" StackPane.alignment="CENTER_RIGHT" />
-      </StackPane>
+      <HBox spacing="0" VBox.vgrow="ALWAYS">
+        <TranslationTable fx:id="translationTable" HBox.hgrow="ALWAYS" />
+        <TranslationPanel fx:id="translationPanel" visible="false" managed="false" maxWidth="400" prefWidth="400" minWidth="300" HBox.hgrow="NEVER" />
+      </HBox>
     </VBox>
   </center>
   <bottom>

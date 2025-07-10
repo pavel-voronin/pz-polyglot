@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.VBox?>
+<fx:root
+    type="TableView"
+    xmlns="http://javafx.com/javafx/21"
+    xmlns:fx="http://javafx.com/fxml/1"
+    fx:id="tableView"
+    VBox.vgrow="ALWAYS"
+    minHeight="200"
+    minWidth="400"
+    stylesheets="/css/translation-table.css">
+</fx:root>

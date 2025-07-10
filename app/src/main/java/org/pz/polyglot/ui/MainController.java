@@ -6,23 +6,22 @@ import org.pz.polyglot.pz.translations.PZTranslations;
 import org.pz.polyglot.pz.translations.PZTranslationEntry;
 import org.pz.polyglot.ui.components.TranslationPanel;
 import org.pz.polyglot.ui.components.ToolbarComponent;
+import org.pz.polyglot.ui.components.TranslationTable;
 import org.pz.polyglot.ui.models.TranslationEntryViewModel;
 import org.pz.polyglot.ui.models.registries.TranslationEntryViewModelRegistry;
 import org.pz.polyglot.ui.state.UIStateManager;
-import org.pz.polyglot.ui.columns.ColumnManager;
 
-import java.util.*;
+import javafx.scene.control.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.scene.control.*;
+
+import java.util.Map;
 
 /**
  * Main controller for the Polyglot application.
  * Handles initialization and configuration of the main TableView.
  */
 public class MainController {
-    @FXML
-    private TableView<TranslationEntryViewModel> tableView;
     @FXML
     private TextField filterField;
     @FXML
@@ -31,8 +30,6 @@ public class MainController {
     private Menu fileMenu;
     @FXML
     private Menu helpMenu;
-    @FXML
-    private TableColumn<TranslationEntryViewModel, String> keyColumn;
     @FXML
     private MenuItem quitMenuItem;
     @FXML
@@ -45,8 +42,9 @@ public class MainController {
     private TranslationPanel translationPanel;
     @FXML
     private ToolbarComponent toolbarComponent;
+    @FXML
+    private TranslationTable translationTable;
     private ObservableList<TranslationEntryViewModel> allTableItems = FXCollections.observableArrayList();
-    private ColumnManager columnManager;
     private final UIStateManager stateManager = UIStateManager.getInstance();
 
     /**
@@ -55,16 +53,27 @@ public class MainController {
     @FXML
     private void initialize() {
         quitMenuItem.setOnAction(event -> Platform.exit());
-
-        columnManager = new ColumnManager(tableView);
-
-        // Create columns ONCE during initialization
-        columnManager.createColumns();
-        keyColumn = columnManager.getKeyColumn();
-
         setupRowSelectionListener();
-        setupFilterField();
         setupObservableBindings();
+        setupFilterField();
+    }
+
+    private void setupFilterField() {
+        filterField.setPromptText("Filter by key...");
+        filterField.textProperty().addListener((observable, oldValue, newValue) -> {
+            updateFilteredItems(newValue);
+        });
+    }
+
+    private void updateFilteredItems(String filterText) {
+        ObservableList<TranslationEntryViewModel> filtered = FXCollections.observableArrayList();
+        for (TranslationEntryViewModel item : allTableItems) {
+            if (filterText == null || filterText.trim().isEmpty()
+                    || item.getKey().toLowerCase().contains(filterText.toLowerCase())) {
+                filtered.add(item);
+            }
+        }
+        translationTable.setItems(filtered);
     }
 
     /**
@@ -79,7 +88,7 @@ public class MainController {
             translationPanel.setVisible(newVal);
             translationPanel.setManaged(newVal);
             if (!newVal) {
-                tableView.getSelectionModel().clearSelection();
+                translationTable.getSelectionModel().clearSelection();
             }
         });
 
@@ -106,12 +115,13 @@ public class MainController {
      * Sets up the row selection listener for the TableView.
      */
     private void setupRowSelectionListener() {
-        tableView.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
-            if (newSelection != null) {
-                stateManager.setSelectedTranslationKey(newSelection.getKey());
-                stateManager.setRightPanelVisible(true);
-            }
-        });
+        translationTable.getSelectionModel().selectedItemProperty()
+                .addListener((obs, oldSelection, newSelection) -> {
+                    if (newSelection != null) {
+                        stateManager.setSelectedTranslationKey(newSelection.getKey());
+                        stateManager.setRightPanelVisible(true);
+                    }
+                });
     }
 
     /**
@@ -132,42 +142,7 @@ public class MainController {
             TranslationEntryViewModel entryViewModel = TranslationEntryViewModelRegistry.getViewModel(translationEntry);
             allTableItems.add(entryViewModel);
         }
-        tableView.setItems(allTableItems);
-        if (filterField != null && filterField.getText() != null && !filterField.getText().trim().isEmpty()) {
-            filterTable(filterField.getText());
-        }
-    }
-
-    /**
-     * Sets up the filter field for filtering table rows by key name.
-     */
-    private void setupFilterField() {
-        if (filterField != null) {
-            filterField.setPromptText("Filter by key...");
-            filterField.textProperty().addListener((observable, oldValue, newValue) -> {
-                filterTable(newValue);
-            });
-        }
-    }
-
-    /**
-     * Filters the table rows based on the filter text.
-     */
-    private void filterTable(String filterText) {
-        if (allTableItems.isEmpty())
-            return;
-        ObservableList<TranslationEntryViewModel> filtered = FXCollections.observableArrayList();
-        for (TranslationEntryViewModel item : allTableItems) {
-            if (filterText == null || filterText.trim().isEmpty()) {
-                filtered.add(item);
-            } else {
-                String key = item.getKey();
-                if (key.toLowerCase().contains(filterText.toLowerCase())) {
-                    filtered.add(item);
-                }
-            }
-        }
-        tableView.setItems(filtered);
+        updateFilteredItems(filterField.getText());
     }
 
     /**
@@ -175,14 +150,7 @@ public class MainController {
      * changes.
      */
     public void refreshTableIndicators() {
-        if (allTableItems.isEmpty())
-            return;
-        for (TranslationEntryViewModel entryViewModel : allTableItems) {
-            if (entryViewModel != null) {
-                entryViewModel.refresh();
-            }
-        }
-        tableView.refresh();
+        translationTable.refreshTableIndicators();
     }
 
     /**
@@ -190,14 +158,6 @@ public class MainController {
      * This is more efficient than refreshing the entire table.
      */
     private void refreshTableIndicatorsForKey(String translationKey) {
-        if (allTableItems.isEmpty())
-            return;
-        for (TranslationEntryViewModel item : allTableItems) {
-            if (item.getKey().equals(translationKey)) {
-                item.refresh();
-                tableView.refresh();
-                break;
-            }
-        }
+        translationTable.refreshTableIndicatorsForKey(translationKey);
     }
 }
