@@ -13,6 +13,7 @@
 <?import org.pz.polyglot.components.TranslationPanel?>
 <?import org.pz.polyglot.components.ToolbarComponent?>
 <?import org.pz.polyglot.components.TranslationTable?>
+<?import javafx.scene.control.SplitPane?>
 
 <BorderPane prefHeight="600.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.pz.polyglot.components.main.MainController">
   <top>
@@ -42,8 +43,14 @@
         </children>
       </HBox>
       <HBox spacing="0" VBox.vgrow="ALWAYS">
-        <TranslationTable fx:id="translationTable" HBox.hgrow="ALWAYS" />
-        <TranslationPanel fx:id="translationPanel" visible="false" managed="false" maxWidth="400" prefWidth="400" minWidth="300" HBox.hgrow="NEVER" />
+        <children>
+          <SplitPane orientation="HORIZONTAL" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS" fx:id="mainSplitPane">
+            <items>
+              <TranslationTable fx:id="translationTable" />
+              <TranslationPanel fx:id="translationPanel" visible="false" managed="false" maxWidth="400" prefWidth="400" minWidth="300" />
+            </items>
+          </SplitPane>
+        </children>
       </HBox>
     </VBox>
   </center>

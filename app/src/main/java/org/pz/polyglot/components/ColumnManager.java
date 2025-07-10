@@ -41,8 +41,8 @@ public class ColumnManager {
         // Create language columns - ONLY based on UIStateManager
         createLanguageColumns(allLanguages);
 
-        // Enable column visibility control button
-        tableView.setTableMenuButtonVisible(true);
+        // Disable standard column visibility control button
+        tableView.setTableMenuButtonVisible(false);
 
         // Create header context menu
         createHeaderContextMenu(allLanguages);

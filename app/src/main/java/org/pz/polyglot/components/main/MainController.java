@@ -44,6 +44,8 @@ public class MainController {
     private ToolbarComponent toolbarComponent;
     @FXML
     private TranslationTable translationTable;
+    @FXML
+    private SplitPane mainSplitPane;
     private ObservableList<TranslationEntryViewModel> allTableItems = FXCollections.observableArrayList();
     private final State stateManager = State.getInstance();
     private HostServices hostServices;
@@ -67,6 +69,12 @@ public class MainController {
         setupRowSelectionListener();
         setupObservableBindings();
         setupFilterField();
+        // Ensure TranslationTable takes all space if TranslationPanel is hidden at startup
+        Platform.runLater(() -> {
+            if (!translationPanel.isVisible() && mainSplitPane.getItems().size() == 2) {
+                mainSplitPane.getItems().remove(1);
+            }
+        });
     }
 
     private void setupFilterField() {
@@ -100,6 +108,15 @@ public class MainController {
             translationPanel.setManaged(newVal);
             if (!newVal) {
                 translationTable.getSelectionModel().clearSelection();
+                // Hide right panel in SplitPane, so left takes all space
+                if(mainSplitPane.getItems().size() == 2) {
+                    mainSplitPane.getItems().remove(1);
+                }
+            } else {
+                // Show right panel in SplitPane if not present
+                if(!mainSplitPane.getItems().contains(translationPanel)) {
+                    mainSplitPane.getItems().add(translationPanel);
+                }
             }
         });
 
