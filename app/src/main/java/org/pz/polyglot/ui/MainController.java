@@ -12,15 +12,17 @@ import org.pz.polyglot.ui.state.UIStateManager;
 import org.pz.polyglot.ui.columns.ColumnManager;
 
 import java.util.*;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.scene.control.*;
 
 /**
  * Main controller for the Polyglot application.
- * Handles initialization and configuration of the main TreeTableView.
+ * Handles initialization and configuration of the main TableView.
  */
 public class MainController {
     @FXML
-    private TreeTableView<TranslationEntryViewModel> treeTableView;
+    private TableView<TranslationEntryViewModel> tableView;
     @FXML
     private TextField filterField;
     @FXML
@@ -30,7 +32,7 @@ public class MainController {
     @FXML
     private Menu helpMenu;
     @FXML
-    private TreeTableColumn<TranslationEntryViewModel, String> keyColumn;
+    private TableColumn<TranslationEntryViewModel, String> keyColumn;
     @FXML
     private MenuItem quitMenuItem;
     @FXML
@@ -43,20 +45,18 @@ public class MainController {
     private TranslationPanel translationPanel;
     @FXML
     private ToolbarComponent toolbarComponent;
-    private TreeItem<TranslationEntryViewModel> rootItem;
-    private List<TreeItem<TranslationEntryViewModel>> allTableItems = new ArrayList<>();
+    private ObservableList<TranslationEntryViewModel> allTableItems = FXCollections.observableArrayList();
     private ColumnManager columnManager;
-
     private final UIStateManager stateManager = UIStateManager.getInstance();
 
     /**
-     * Initializes the TreeTableView and its columns with translation data.
+     * Initializes the TableView and its columns with translation data.
      */
     @FXML
     private void initialize() {
         quitMenuItem.setOnAction(event -> Platform.exit());
 
-        columnManager = new ColumnManager(treeTableView);
+        columnManager = new ColumnManager(tableView);
 
         // Create columns ONCE during initialization
         columnManager.createColumns();
@@ -79,7 +79,7 @@ public class MainController {
             translationPanel.setVisible(newVal);
             translationPanel.setManaged(newVal);
             if (!newVal) {
-                treeTableView.getSelectionModel().clearSelection();
+                tableView.getSelectionModel().clearSelection();
             }
         });
 
@@ -103,12 +103,12 @@ public class MainController {
     }
 
     /**
-     * Sets up the row selection listener for the TreeTableView.
+     * Sets up the row selection listener for the TableView.
      */
     private void setupRowSelectionListener() {
-        treeTableView.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
-            if (newSelection != null && newSelection.getValue() != null) {
-                stateManager.setSelectedTranslationKey(newSelection.getValue().getKey());
+        tableView.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
+            if (newSelection != null) {
+                stateManager.setSelectedTranslationKey(newSelection.getKey());
                 stateManager.setRightPanelVisible(true);
             }
         });
@@ -126,25 +126,13 @@ public class MainController {
     public void populateTranslationsTable() {
         PZTranslations translations = PZTranslations.getInstance();
         Map<String, PZTranslationEntry> allTranslations = translations.getAllTranslations();
-
-        TreeItem<TranslationEntryViewModel> root = new TreeItem<>(null);
-        root.setExpanded(true);
-        rootItem = root;
         allTableItems.clear();
-
         for (Map.Entry<String, PZTranslationEntry> entry : allTranslations.entrySet()) {
             PZTranslationEntry translationEntry = entry.getValue();
-
             TranslationEntryViewModel entryViewModel = TranslationEntryViewModelRegistry.getViewModel(translationEntry);
-
-            TreeItem<TranslationEntryViewModel> item = new TreeItem<>(entryViewModel);
-            allTableItems.add(item);
-            root.getChildren().add(item);
+            allTableItems.add(entryViewModel);
         }
-
-        treeTableView.setRoot(root);
-        treeTableView.setShowRoot(false);
-
+        tableView.setItems(allTableItems);
         if (filterField != null && filterField.getText() != null && !filterField.getText().trim().isEmpty()) {
             filterTable(filterField.getText());
         }
@@ -166,37 +154,20 @@ public class MainController {
      * Filters the table rows based on the filter text.
      */
     private void filterTable(String filterText) {
-        if (rootItem == null || allTableItems.isEmpty())
+        if (allTableItems.isEmpty())
             return;
-
-        TreeTableColumn<TranslationEntryViewModel, ?> sortColumn = null;
-        TreeTableColumn.SortType sortType = null;
-        if (!treeTableView.getSortOrder().isEmpty()) {
-            sortColumn = treeTableView.getSortOrder().get(0);
-            sortType = sortColumn.getSortType();
-        }
-
-        treeTableView.getSelectionModel().clearSelection();
-
-        rootItem.getChildren().clear();
-
-        for (TreeItem<TranslationEntryViewModel> item : allTableItems) {
+        ObservableList<TranslationEntryViewModel> filtered = FXCollections.observableArrayList();
+        for (TranslationEntryViewModel item : allTableItems) {
             if (filterText == null || filterText.trim().isEmpty()) {
-                rootItem.getChildren().add(item);
+                filtered.add(item);
             } else {
-                String key = item.getValue().getKey();
+                String key = item.getKey();
                 if (key.toLowerCase().contains(filterText.toLowerCase())) {
-                    rootItem.getChildren().add(item);
+                    filtered.add(item);
                 }
             }
         }
-
-        if (sortColumn != null && sortType != null) {
-            sortColumn.setSortType(sortType);
-            treeTableView.getSortOrder().clear();
-            treeTableView.getSortOrder().add(sortColumn);
-            treeTableView.sort();
-        }
+        tableView.setItems(filtered);
     }
 
     /**
@@ -204,18 +175,14 @@ public class MainController {
      * changes.
      */
     public void refreshTableIndicators() {
-        if (rootItem == null || allTableItems.isEmpty()) {
+        if (allTableItems.isEmpty())
             return;
-        }
-
-        for (TreeItem<TranslationEntryViewModel> item : allTableItems) {
-            TranslationEntryViewModel entryViewModel = item.getValue();
+        for (TranslationEntryViewModel entryViewModel : allTableItems) {
             if (entryViewModel != null) {
                 entryViewModel.refresh();
             }
         }
-
-        treeTableView.refresh();
+        tableView.refresh();
     }
 
     /**
@@ -223,26 +190,14 @@ public class MainController {
      * This is more efficient than refreshing the entire table.
      */
     private void refreshTableIndicatorsForKey(String translationKey) {
-        if (rootItem == null || allTableItems.isEmpty()) {
+        if (allTableItems.isEmpty())
             return;
-        }
-
-        TreeItem<TranslationEntryViewModel> targetItem = null;
-        for (TreeItem<TranslationEntryViewModel> item : allTableItems) {
-            if (item.getValue().getKey().equals(translationKey)) {
-                targetItem = item;
+        for (TranslationEntryViewModel item : allTableItems) {
+            if (item.getKey().equals(translationKey)) {
+                item.refresh();
+                tableView.refresh();
                 break;
             }
-        }
-
-        if (targetItem == null) {
-            return;
-        }
-
-        TranslationEntryViewModel entryViewModel = targetItem.getValue();
-        if (entryViewModel != null) {
-            entryViewModel.refresh();
-            treeTableView.refresh();
         }
     }
 }

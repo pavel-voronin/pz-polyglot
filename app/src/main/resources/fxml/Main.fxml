@@ -3,8 +3,8 @@
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuBar?>
 <?import javafx.scene.control.MenuItem?>
-<?import javafx.scene.control.TreeTableColumn?>
-<?import javafx.scene.control.TreeTableView?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.BorderPane?>
@@ -47,7 +47,7 @@
         </children>
       </HBox>
       <StackPane VBox.vgrow="ALWAYS">
-        <TreeTableView fx:id="treeTableView" editable="true" />
+        <TableView fx:id="tableView" editable="true" />
         <TranslationPanel fx:id="translationPanel" visible="false" managed="false" maxWidth="400" prefWidth="400" VBox.vgrow="ALWAYS" StackPane.alignment="CENTER_RIGHT" />
       </StackPane>
     </VBox>
