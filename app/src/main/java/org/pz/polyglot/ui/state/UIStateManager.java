@@ -3,8 +3,10 @@ package org.pz.polyglot.ui.state;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import org.pz.polyglot.config.AppConfig;
 import org.pz.polyglot.pz.translations.PZTranslationSession;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -20,11 +22,15 @@ public class UIStateManager {
     private final BooleanProperty rightPanelVisible = new SimpleBooleanProperty(false);
     private final StringProperty refreshKey = new SimpleStringProperty(); // For specific key refresh
     private final BooleanProperty saveAllTriggered = new SimpleBooleanProperty(false); // For save all events
+    private final BooleanProperty tableRebuildRequired = new SimpleBooleanProperty(false); // For full table rebuild
     private final ObservableList<String> visibleLanguages = FXCollections.observableArrayList();
 
     private UIStateManager() {
         // Initialize with current session state
         updateHasChangesFromSession();
+
+        // Initialize visible languages from config
+        initializeVisibleLanguagesFromConfig();
     }
 
     public static UIStateManager getInstance() {
@@ -53,6 +59,10 @@ public class UIStateManager {
 
     public BooleanProperty saveAllTriggeredProperty() {
         return saveAllTriggered;
+    }
+
+    public BooleanProperty tableRebuildRequiredProperty() {
+        return tableRebuildRequired;
     }
 
     public ObservableList<String> getVisibleLanguages() {
@@ -122,5 +132,33 @@ public class UIStateManager {
     public void requestTableRefresh() {
         // Trigger refresh by setting refreshKey to empty string (means refresh all)
         refreshKey.set("");
+    }
+
+    /**
+     * Requests a complete table rebuild (for adding new entries).
+     */
+    public void requestTableRebuild() {
+        tableRebuildRequired.set(!tableRebuildRequired.get()); // Toggle to trigger listeners
+    }
+
+    /**
+     * Initializes visible languages from configuration.
+     * If no languages are configured, defaults to showing only EN.
+     */
+    private void initializeVisibleLanguagesFromConfig() {
+        try {
+            AppConfig config = AppConfig.getInstance();
+            String[] cfgLangs = config.getPzLanguages();
+            if (cfgLangs != null && cfgLangs.length > 0) {
+                visibleLanguages.setAll(Arrays.asList(cfgLangs));
+            } else {
+                // Default to showing only EN if no languages are configured
+                // FIXME #18
+                visibleLanguages.setAll(Arrays.asList("EN"));
+            }
+        } catch (Exception e) {
+            // If config loading fails, default to showing only EN
+            visibleLanguages.setAll(Arrays.asList("EN"));
+        }
     }
 }

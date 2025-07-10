@@ -1,9 +1,9 @@
 ---
-id: task-4
-title: add new translation key
-status: Done
+id: task-18
+title: fix languages behavior
+status: To Do
 assignee: []
-created_date: '2025-07-09'
+created_date: '2025-07-10'
 updated_date: '2025-07-10'
 labels: []
 dependencies: []

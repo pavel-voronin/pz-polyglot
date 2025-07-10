@@ -4,6 +4,7 @@
 
 <fx:root type="ToolBar" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1">
    <items>
+      <Button fx:id="addKeyButton" mnemonicParsing="false" text="Add Key" />
       <Button fx:id="saveAllToolbarButton" mnemonicParsing="false" text="Save All" />
    </items>
 </fx:root>

@@ -6,7 +6,6 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import org.pz.polyglot.pz.languages.PZLanguages;
 import org.pz.polyglot.pz.translations.PZTranslationEntry;
-import org.pz.polyglot.pz.translations.PZTranslationManager;
 import org.pz.polyglot.pz.translations.PZTranslationVariant;
 import org.pz.polyglot.ui.models.registries.TranslationVariantViewModelRegistry;
 
@@ -124,24 +123,6 @@ public class TranslationEntryViewModel {
 
     public BooleanProperty hasChangesProperty() {
         return hasChanges;
-    }
-
-    /**
-     * Saves all changes for this translation entry.
-     */
-    public void saveAll() {
-        PZTranslationManager.saveEntry(entry);
-        refreshVariantViewModels();
-        updateHasChangesProperty();
-    }
-
-    /**
-     * Resets all changes for this translation entry.
-     */
-    public void resetAll() {
-        PZTranslationManager.resetEntry(entry);
-        refreshVariantViewModels();
-        updateHasChangesProperty();
     }
 
     /**

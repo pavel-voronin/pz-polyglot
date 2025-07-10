@@ -1,0 +1,88 @@
+.add-key-dialog {
+    -fx-background-color: #f4f4f4;
+    -fx-font-family: "Segoe UI", Arial, sans-serif;
+    -fx-min-width: 350;
+    -fx-max-width: 350;
+    -fx-pref-width: 350;
+}
+
+.add-key-dialog .dialog-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+    -fx-alignment: center;
+}
+
+.add-key-dialog .field-label {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+}
+
+.add-key-dialog .key-field {
+    -fx-pref-width: 310;
+    -fx-padding: 8 10 8 10;
+    -fx-background-color: white;
+    -fx-border-color: #cccccc;
+    -fx-border-width: 1px;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-font-size: 12px;
+}
+
+.add-key-dialog .key-field:focused {
+    -fx-border-color: #0078d4;
+    -fx-effect: dropshadow(gaussian, rgba(0, 120, 212, 0.3), 3, 0, 0, 0);
+}
+
+.add-key-dialog .button-container {
+    -fx-alignment: center-right;
+    -fx-spacing: 10;
+}
+
+.add-key-dialog .cancel-button {
+    -fx-pref-width: 80;
+    -fx-padding: 8 16 8 16;
+    -fx-background-color: #f0f0f0;
+    -fx-text-fill: #333333;
+    -fx-border-color: #cccccc;
+    -fx-border-width: 1px;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-font-size: 12px;
+    -fx-cursor: hand;
+}
+
+.add-key-dialog .cancel-button:hover {
+    -fx-background-color: #e0e0e0;
+}
+
+.add-key-dialog .cancel-button:pressed {
+    -fx-background-color: #d0d0d0;
+}
+
+.add-key-dialog .save-button {
+    -fx-pref-width: 80;
+    -fx-padding: 8 16 8 16;
+    -fx-background-color: #0078d4;
+    -fx-text-fill: white;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+
+.add-key-dialog .save-button:hover {
+    -fx-background-color: #106ebe;
+}
+
+.add-key-dialog .save-button:pressed {
+    -fx-background-color: #005a9e;
+}
+
+.add-key-dialog .save-button:disabled {
+    -fx-background-color: #cccccc;
+    -fx-text-fill: #999999;
+    -fx-cursor: default;
+}

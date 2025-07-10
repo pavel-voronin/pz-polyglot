@@ -31,21 +31,14 @@ public class ColumnManager {
     public void createColumns() {
         treeTableView.getColumns().clear();
 
-        // Load config languages order
-        AppConfig config = AppConfig.getInstance();
-        String[] cfgLangs = config.getPzLanguages();
-        List<String> cfgList = (cfgLangs != null && cfgLangs.length > 0)
-                ? new ArrayList<>(Arrays.asList(cfgLangs))
-                : null;
-
         // All available languages sorted with EN first
         List<String> allLanguages = getAllLanguagesInOrder();
 
         // Create key column
         createKeyColumn();
 
-        // Create language columns
-        createLanguageColumns(allLanguages, cfgList);
+        // Create language columns - ONLY based on UIStateManager
+        createLanguageColumns(allLanguages);
 
         // Enable column visibility control button
         treeTableView.setTableMenuButtonVisible(true);
@@ -55,9 +48,6 @@ public class ColumnManager {
 
         // Setup column reordering protection and listeners
         setupColumnOrderingProtection();
-
-        // Update initial state
-        updateVisibleLanguagesState();
     }
 
     /**
@@ -77,38 +67,67 @@ public class ColumnManager {
     /**
      * Creates language columns with proper configuration.
      */
-    private void createLanguageColumns(List<String> allLanguages, List<String> cfgList) {
-        for (String lang : allLanguages) {
-            TreeTableColumn<TranslationEntryViewModel, String> col = new TreeTableColumn<>(lang);
-            col.setCellValueFactory(param -> {
-                TranslationEntryViewModel entryViewModel = param.getValue().getValue();
-                if (entryViewModel == null) {
-                    return new SimpleStringProperty("");
-                }
+    private void createLanguageColumns(List<String> allLanguages) {
+        // Get current visible languages from state manager - this is the ONLY source of
+        // truth
+        List<String> visibleLanguagesInOrder = new ArrayList<>(stateManager.getVisibleLanguages());
 
-                boolean present = entryViewModel.hasTranslationForLanguage(lang);
-                boolean hasChanges = entryViewModel.hasChangesForLanguage(lang);
-
-                String content = "";
-                if (present) {
-                    content += "✔";
-                }
-                if (hasChanges) {
-                    content += " ●"; // Bullet point to indicate changes
-                }
-                return new SimpleStringProperty(content);
-            });
-            col.setPrefWidth(60);
-            col.setReorderable(true);
-            // Set visibility based on config
-            col.setVisible(cfgList == null || cfgList.contains(lang));
-            // Listen for visibility changes to save config and update state
-            col.visibleProperty().addListener((obs, oldV, newV) -> {
-                saveLanguageOrderToConfig();
-                updateVisibleLanguagesState();
-            });
-            treeTableView.getColumns().add(col);
+        // Fallback: if no visible languages configured, default to EN only
+        // TODO: must be fixed in #18
+        if (visibleLanguagesInOrder.isEmpty()) {
+            visibleLanguagesInOrder.add("EN");
         }
+
+        // First, create columns for visible languages in the saved order
+        for (String lang : visibleLanguagesInOrder) {
+            if (allLanguages.contains(lang)) {
+                createLanguageColumn(lang, true);
+            }
+        }
+
+        // Then, create columns for remaining languages (invisible)
+        for (String lang : allLanguages) {
+            if (!visibleLanguagesInOrder.contains(lang)) {
+                createLanguageColumn(lang, false);
+            }
+        }
+    }
+
+    /**
+     * Creates a single language column.
+     */
+    private void createLanguageColumn(String lang, boolean visible) {
+        TreeTableColumn<TranslationEntryViewModel, String> col = new TreeTableColumn<>(lang);
+        col.setCellValueFactory(param -> {
+            TranslationEntryViewModel entryViewModel = param.getValue().getValue();
+            if (entryViewModel == null) {
+                return new SimpleStringProperty("");
+            }
+
+            boolean present = entryViewModel.hasTranslationForLanguage(lang);
+            boolean hasChanges = entryViewModel.hasChangesForLanguage(lang);
+
+            String content = "";
+            if (present) {
+                content += "✔";
+            }
+            if (hasChanges) {
+                content += " ●"; // Bullet point to indicate changes
+            }
+            return new SimpleStringProperty(content);
+        });
+        col.setPrefWidth(60);
+        col.setReorderable(true);
+
+        // Set visibility based on parameter
+        col.setVisible(visible);
+
+        // Listen for visibility changes to update state and save config
+        col.visibleProperty().addListener((obs, oldV, newV) -> {
+            updateVisibleLanguagesState();
+            saveLanguageOrderToConfig();
+        });
+        treeTableView.getColumns().add(col);
     }
 
     /**
@@ -162,8 +181,8 @@ public class ColumnManager {
                             }
 
                             // Save the new language column order to config and update state
-                            saveLanguageOrderToConfig();
                             updateVisibleLanguagesState();
+                            saveLanguageOrderToConfig();
                         }
                     }
                 });
@@ -199,19 +218,18 @@ public class ColumnManager {
      * Saves the current language column order to config.
      */
     private void saveLanguageOrderToConfig() {
-        List<String> allLanguages = getAllLanguagesInOrder();
+        // Save visible languages in the ACTUAL order they appear in the table
+        List<String> visibleLanguagesInOrder = new ArrayList<>();
 
-        // Save only visible languages in their fixed alphabetical order
-        List<String> visibleLanguages = new ArrayList<>();
-        for (String lang : allLanguages) {
-            TreeTableColumn<TranslationEntryViewModel, ?> column = findLanguageColumn(lang);
-            if (column != null && column.isVisible()) {
-                visibleLanguages.add(lang);
+        for (TreeTableColumn<TranslationEntryViewModel, ?> column : treeTableView.getColumns()) {
+            // Skip the key column, only process language columns
+            if (column != keyColumn && column.isVisible()) {
+                visibleLanguagesInOrder.add(column.getText());
             }
         }
 
         AppConfig cfg = AppConfig.getInstance();
-        cfg.setPzLanguages(visibleLanguages.toArray(new String[0]));
+        cfg.setPzLanguages(visibleLanguagesInOrder.toArray(new String[0]));
         cfg.save();
     }
 

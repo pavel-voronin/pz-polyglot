@@ -5,9 +5,12 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Button;
 import javafx.scene.control.ToolBar;
+import javafx.stage.Stage;
 import org.pz.polyglot.pz.translations.PZTranslationManager;
 import org.pz.polyglot.pz.translations.PZTranslationSession;
 import org.pz.polyglot.pz.translations.PZTranslationVariant;
+import org.pz.polyglot.pz.translations.PZTranslations;
+import org.pz.polyglot.ui.AddKeyDialogManager;
 import org.pz.polyglot.ui.state.UIStateManager;
 
 import java.io.IOException;
@@ -18,6 +21,8 @@ import java.io.IOException;
  */
 public class ToolbarComponent extends ToolBar {
 
+    @FXML
+    private Button addKeyButton;
     @FXML
     private Button saveAllToolbarButton;
 
@@ -37,6 +42,21 @@ public class ToolbarComponent extends ToolBar {
 
     @FXML
     private void initialize() {
+        // Set up Add Key button action
+        addKeyButton.setOnAction(e -> {
+            // Get the current stage
+            Stage stage = (Stage) addKeyButton.getScene().getWindow();
+            String newKey = AddKeyDialogManager.showAddKeyDialog(stage);
+
+            if (newKey != null && !newKey.trim().isEmpty()) {
+                // Add the new key to translations
+                PZTranslations.getInstance().getOrCreateTranslation(newKey.trim());
+
+                // Rebuild the table to show the new entry
+                stateManager.requestTableRebuild();
+            }
+        });
+
         // Set up Save All toolbar button action
         saveAllToolbarButton.setOnAction(e -> {
             PZTranslationManager.saveAll();

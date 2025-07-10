@@ -84,6 +84,7 @@ public class PZTranslationManager {
             // then we detect right charset and save it in variants as usedCharset
             // then we try to save it with the right charset into the file with the wrong
             // charset need to handle this case properly
+            // task-16
 
             String key = variant.getKey().getKey();
             String textToSave = variant.getEditedText();
@@ -192,32 +193,10 @@ public class PZTranslationManager {
         Files.write(filePath, fileTemplate.getBytes(variant.getSupposedCharset()));
     }
 
-    public static void saveEntry(PZTranslationEntry entry) {
-        // Create a copy of the collection to avoid ConcurrentModificationException
-        // since saveVariant() calls markSaved() which may modify the original
-        // collection
-        var changedVariantsCopy = new ArrayList<>(entry.getChangedVariants());
-        changedVariantsCopy.forEach(PZTranslationManager::saveVariant);
-    }
-
-    public static void resetEntry(PZTranslationEntry entry) {
-        // Create a copy of the collection to avoid ConcurrentModificationException
-        // since reset() may modify the original collection
-        var changedVariantsCopy = new ArrayList<>(entry.getChangedVariants());
-        changedVariantsCopy.forEach(PZTranslationVariant::reset);
-    }
-
     public static void saveAll() {
         // Create a copy of the collection to avoid ConcurrentModificationException
         // since saveVariant() calls markSaved() which modifies the original collection
         var variantsCopy = new ArrayList<>(PZTranslationSession.getInstance().getVariants());
         variantsCopy.forEach(PZTranslationManager::saveVariant);
-    }
-
-    public static void resetAll() {
-        // Create a copy of the collection to avoid ConcurrentModificationException
-        // since reset() may modify the original collection
-        var variantsCopy = new ArrayList<>(PZTranslationSession.getInstance().getVariants());
-        variantsCopy.forEach(PZTranslationVariant::reset);
     }
 }

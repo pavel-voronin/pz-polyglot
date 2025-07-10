@@ -58,10 +58,13 @@ public class MainController {
 
         columnManager = new ColumnManager(treeTableView);
 
+        // Create columns ONCE during initialization
+        columnManager.createColumns();
+        keyColumn = columnManager.getKeyColumn();
+
         setupRowSelectionListener();
         setupFilterField();
         setupObservableBindings();
-
     }
 
     /**
@@ -84,6 +87,10 @@ public class MainController {
             if (newVal != null && !newVal.isEmpty()) {
                 refreshTableIndicatorsForKey(newVal);
             }
+        });
+
+        stateManager.tableRebuildRequiredProperty().addListener((obs, oldVal, newVal) -> {
+            populateTranslationsTable();
         });
 
         stateManager.selectedTranslationKeyProperty().addListener((obs, oldVal, newVal) -> {
@@ -117,10 +124,6 @@ public class MainController {
     }
 
     public void populateTranslationsTable() {
-        columnManager.createColumns();
-
-        keyColumn = columnManager.getKeyColumn();
-
         PZTranslations translations = PZTranslations.getInstance();
         Map<String, PZTranslationEntry> allTranslations = translations.getAllTranslations();
 
