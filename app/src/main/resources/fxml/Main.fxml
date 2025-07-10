@@ -25,8 +25,7 @@
         </Menu>
         <Menu fx:id="helpMenu" mnemonicParsing="false" text="%menu.help">
           <items>
-            <MenuItem fx:id="aboutMenuItem" mnemonicParsing="false" text="%menu.about" />
-            <MenuItem fx:id="documentationMenuItem" mnemonicParsing="false" text="%menu.documentation" />
+            <MenuItem fx:id="githubMenuItem" mnemonicParsing="false" text="%menu.github" />
             <MenuItem fx:id="discordMenuItem" mnemonicParsing="false" text="%menu.discord" />
           </items>
         </Menu>

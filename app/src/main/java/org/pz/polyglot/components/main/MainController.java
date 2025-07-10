@@ -2,6 +2,7 @@ package org.pz.polyglot.components.main;
 
 import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.application.HostServices;
 
 import org.pz.polyglot.State;
 import org.pz.polyglot.components.ToolbarComponent;
@@ -34,9 +35,7 @@ public class MainController {
     @FXML
     private MenuItem quitMenuItem;
     @FXML
-    private MenuItem aboutMenuItem;
-    @FXML
-    private MenuItem documentationMenuItem;
+    private MenuItem githubMenuItem;
     @FXML
     private MenuItem discordMenuItem;
     @FXML
@@ -47,6 +46,7 @@ public class MainController {
     private TranslationTable translationTable;
     private ObservableList<TranslationEntryViewModel> allTableItems = FXCollections.observableArrayList();
     private final State stateManager = State.getInstance();
+    private HostServices hostServices;
 
     /**
      * Initializes the TableView and its columns with translation data.
@@ -54,6 +54,16 @@ public class MainController {
     @FXML
     private void initialize() {
         quitMenuItem.setOnAction(event -> Platform.exit());
+        githubMenuItem.setOnAction(event -> {
+            if (hostServices != null) {
+                hostServices.showDocument("https://github.com/pavel-voronin/pz-polyglot");
+            }
+        });
+        discordMenuItem.setOnAction(event -> {
+            if (hostServices != null) {
+                hostServices.showDocument("https://discord.gg/byCBHwpa");
+            }
+        });
         setupRowSelectionListener();
         setupObservableBindings();
         setupFilterField();
@@ -160,5 +170,9 @@ public class MainController {
      */
     private void refreshTableIndicatorsForKey(String translationKey) {
         translationTable.refreshTableIndicatorsForKey(translationKey);
+    }
+
+    public void setHostServices(HostServices hostServices) {
+        this.hostServices = hostServices;
     }
 }

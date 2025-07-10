@@ -30,8 +30,7 @@ public class TranslationProvider {
         ENGLISH_TRANSLATIONS.put("menu.file", "File");
         ENGLISH_TRANSLATIONS.put("menu.help", "Help");
         ENGLISH_TRANSLATIONS.put("menu.quit", "Quit");
-        ENGLISH_TRANSLATIONS.put("menu.about", "About");
-        ENGLISH_TRANSLATIONS.put("menu.documentation", "Documentation");
+        ENGLISH_TRANSLATIONS.put("menu.github", "Github");
         ENGLISH_TRANSLATIONS.put("menu.discord", "Discord");
     }
 

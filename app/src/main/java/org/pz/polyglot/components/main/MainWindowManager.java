@@ -28,6 +28,7 @@ public class MainWindowManager {
             FXMLLoader loader = new FXMLLoader(App.class.getResource("/fxml/Main.fxml"), i18n.getBundle());
             Parent root = loader.load();
             mainControllerInstance = loader.getController();
+            mainControllerInstance.setHostServices(App.getInstance().getHostServices());
             Scene scene = new Scene(root, DEFAULT_WIDTH, DEFAULT_HEIGHT);
             stage.setTitle(i18n.getString("app.title"));
             stage.setScene(scene);

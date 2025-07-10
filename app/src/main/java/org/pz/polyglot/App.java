@@ -16,6 +16,11 @@ import org.pz.polyglot.util.FolderValidationUtils;
 
 public class App extends Application {
     private static final Logger logger = Logger.getLogger(App.class.getName());
+    private static App instance;
+
+    public App() {
+        instance = this;
+    }
 
     @Override
     public void start(Stage stage) {
@@ -43,6 +48,10 @@ public class App extends Application {
                 org.pz.polyglot.components.main.MainWindowManager.mainControllerInstance.populateTranslationsTable();
             }
         });
+    }
+
+    public static App getInstance() {
+        return instance;
     }
 
     public static void main(String[] args) {
