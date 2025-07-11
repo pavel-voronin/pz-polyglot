@@ -3,12 +3,14 @@ package org.pz.polyglot;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-
 import org.pz.polyglot.models.translations.PZTranslationSession;
+import org.pz.polyglot.models.translations.PZTranslationType;
 import org.pz.polyglot.models.languages.PZLanguages;
 
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Centralized Observable state manager for UI components.
@@ -26,6 +28,9 @@ public class State {
     private final BooleanProperty tableRebuildRequired = new SimpleBooleanProperty(false); // For full table rebuild
     private final ObservableList<String> visibleLanguages = FXCollections.observableArrayList();
     private final StringProperty filterText = new SimpleStringProperty(""); // For global filter management
+    private final EnumSet<PZTranslationType> selectedTypes = EnumSet.noneOf(PZTranslationType.class);
+    private final BooleanProperty selectedTypesChanged = new SimpleBooleanProperty(false);
+    private final BooleanProperty typesPanelVisible = new SimpleBooleanProperty(false); // For TypesPanel visibility
 
     private State() {
         // Initialize with current session state
@@ -33,6 +38,8 @@ public class State {
 
         // Initialize visible languages from config
         initializeVisibleLanguagesFromConfig();
+
+        initializeSelectedTypesFromConfig();
     }
 
     public static State getInstance() {
@@ -75,6 +82,14 @@ public class State {
         return filterText;
     }
 
+    public BooleanProperty selectedTypesChangedProperty() {
+        return selectedTypesChanged;
+    }
+
+    public Set<PZTranslationType> getSelectedTypes() {
+        return EnumSet.copyOf(selectedTypes);
+    }
+
     // Convenience methods
     public void setHasChanges(boolean value) {
         hasChanges.set(value);
@@ -114,6 +129,28 @@ public class State {
 
     public void setFilterText(String value) {
         filterText.set(value);
+    }
+
+    public void setSelectedTypes(Set<PZTranslationType> types) {
+        selectedTypes.clear();
+        selectedTypes.addAll(types);
+        AppConfig config = AppConfig.getInstance();
+        String[] typeNames = selectedTypes.stream().map(Enum::name).toArray(String[]::new);
+        config.setPzTranslationTypes(typeNames);
+        config.save();
+        selectedTypesChanged.set(!selectedTypesChanged.get()); // Notify listeners once
+    }
+
+    public boolean isTypesPanelVisible() {
+        return typesPanelVisible.get();
+    }
+
+    public void setTypesPanelVisible(boolean visible) {
+        typesPanelVisible.set(visible);
+    }
+
+    public BooleanProperty typesPanelVisibleProperty() {
+        return typesPanelVisible;
     }
 
     /**
@@ -182,6 +219,15 @@ public class State {
         } catch (Exception e) {
             // If config loading fails, default to showing only EN
             visibleLanguages.setAll(Arrays.asList("EN"));
+        }
+    }
+
+    private void initializeSelectedTypesFromConfig() {
+        AppConfig config = AppConfig.getInstance();
+        String[] cfgTypes = config.getPzTranslationTypes();
+        selectedTypes.clear();
+        for (String typeName : cfgTypes) {
+            PZTranslationType.fromString(typeName).ifPresent(selectedTypes::add);
         }
     }
 }

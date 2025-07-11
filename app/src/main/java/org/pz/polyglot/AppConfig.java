@@ -13,6 +13,9 @@ import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.pz.polyglot.models.languages.PZLanguages;
+import org.pz.polyglot.models.translations.PZTranslationType;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class AppConfig {
     private static final String CONFIG_FILE_NAME = "config.json";
@@ -31,6 +34,8 @@ public class AppConfig {
     private String cachePath;
     @JsonProperty("pzLanguages")
     private String[] pzLanguages = new String[0];
+    @JsonProperty("pzTranslationTypes")
+    private String[] pzTranslationTypes = new String[0];
     @JsonProperty("gamePathEditable")
     private boolean gamePathEditable = false;
     @JsonProperty("steamModsPathEditable")
@@ -69,6 +74,10 @@ public class AppConfig {
         }
         logger.info("Creating new config file");
         AppConfig config = new AppConfig();
+        config.setPzLanguages(PZLanguages.getInstance().getAllLanguageCodes()
+                .toArray(new String[0]));
+        config.setPzTranslationTypes(Arrays.stream(PZTranslationType.values())
+                .map(Enum::name).toArray(String[]::new));
         config.save();
         return config;
     }
@@ -130,6 +139,19 @@ public class AppConfig {
         }
 
         this.pzLanguages = new LinkedHashSet<>(Arrays.asList(pzLanguages))
+                .toArray(new String[0]);
+    }
+
+    public String[] getPzTranslationTypes() {
+        return pzTranslationTypes;
+    }
+
+    public void setPzTranslationTypes(String[] pzTranslationTypes) {
+        if (pzTranslationTypes == null) {
+            this.pzTranslationTypes = new String[0];
+            return;
+        }
+        this.pzTranslationTypes = new LinkedHashSet<>(Arrays.asList(pzTranslationTypes))
                 .toArray(new String[0]);
     }
 

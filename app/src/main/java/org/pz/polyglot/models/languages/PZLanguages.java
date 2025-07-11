@@ -107,6 +107,14 @@ public final class PZLanguages {
     }
 
     public Set<String> getAllLanguageCodes() {
-        return new HashSet<>(languages.keySet());
+        return languages.keySet().stream()
+                .sorted((a, b) -> {
+                    if (a.equals("EN"))
+                        return -1;
+                    if (b.equals("EN"))
+                        return 1;
+                    return a.compareTo(b);
+                })
+                .collect(java.util.LinkedHashSet::new, java.util.Set::add, java.util.Set::addAll);
     }
 }

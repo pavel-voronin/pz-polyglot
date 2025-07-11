@@ -1,9 +1,12 @@
 package org.pz.polyglot.components;
 
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.SetChangeListener;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Button;
+import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToolBar;
 import javafx.stage.Stage;
 
@@ -30,8 +33,11 @@ public class ToolbarComponent extends ToolBar {
     private Button addModButton;
     @FXML
     private Button saveAllToolbarButton;
+    @FXML
+    private ToggleButton typesButton;
 
     private final State stateManager = State.getInstance();
+    private final BooleanProperty typesPanelVisible = new SimpleBooleanProperty(false);
 
     public ToolbarComponent() {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/toolbar.fxml"));
@@ -76,6 +82,25 @@ public class ToolbarComponent extends ToolBar {
             stateManager.triggerSaveAllEvent();
         });
 
+        // Types panel toggle logic
+        typesButton.setOnAction(e -> {
+            boolean show = typesButton.isSelected();
+            typesPanelVisible.set(show);
+            // Show/hide TypesPanel in main UI via state or controller
+            stateManager.setTypesPanelVisible(show);
+        });
+
+        // Listen for changes in selected types and update button text
+        stateManager.selectedTypesChangedProperty().addListener((obs, oldVal, newVal) -> {
+            updateTypesButtonText();
+        });
+        updateTypesButtonText();
+
+        // Listen for changes in panel visibility and update toggle state
+        typesPanelVisible.addListener((obs, oldVal, newVal) -> {
+            typesButton.setSelected(newVal);
+        });
+
         // Listen to changes in the set of dirty variants
         PZTranslationSession.getInstance().getVariants()
                 .addListener((SetChangeListener<PZTranslationVariant>) change -> updateSaveAllButtonState());
@@ -103,5 +128,10 @@ public class ToolbarComponent extends ToolBar {
     private void updateAddModButtonState() {
         boolean hasValidWorkshopPath = FolderUtils.getWorkshopPath().isPresent();
         addModButton.setDisable(!hasValidWorkshopPath);
+    }
+
+    private void updateTypesButtonText() {
+        int count = stateManager.getSelectedTypes().size();
+        typesButton.setText("Types (" + count + ")");
     }
 }

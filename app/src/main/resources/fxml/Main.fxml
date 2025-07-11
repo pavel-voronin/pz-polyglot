@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.Menu?>
+<?import javafx.scene.control.Button?>
 <?import javafx.scene.control.MenuBar?>
 <?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.layout.VBox?>
@@ -14,6 +15,7 @@
 <?import org.pz.polyglot.components.ToolbarComponent?>
 <?import org.pz.polyglot.components.TranslationTable?>
 <?import javafx.scene.control.SplitPane?>
+<?import org.pz.polyglot.components.TypesPanel?>
 
 <BorderPane prefHeight="600.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.pz.polyglot.components.main.MainController">
   <top>
@@ -44,12 +46,17 @@
       </HBox>
       <HBox spacing="0" VBox.vgrow="ALWAYS">
         <children>
-          <SplitPane orientation="HORIZONTAL" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS" fx:id="mainSplitPane">
-            <items>
-              <TranslationTable fx:id="translationTable" />
-              <TranslationPanel fx:id="translationPanel" visible="false" managed="false" maxWidth="400" prefWidth="400" minWidth="300" />
-            </items>
-          </SplitPane>
+          <TypesPanel fx:id="typesPanel" visible="false" managed="false" minWidth="150" maxWidth="150" prefWidth="150" />
+          <VBox spacing="0" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
+            <children>
+              <SplitPane orientation="HORIZONTAL" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS" fx:id="mainSplitPane" dividerPositions="0.0">
+                <items>
+                  <TranslationTable fx:id="translationTable" />
+                  <TranslationPanel fx:id="translationPanel" visible="false" managed="false" maxWidth="400" prefWidth="400" minWidth="300" />
+                </items>
+              </SplitPane>
+            </children>
+          </VBox>
         </children>
       </HBox>
     </VBox>

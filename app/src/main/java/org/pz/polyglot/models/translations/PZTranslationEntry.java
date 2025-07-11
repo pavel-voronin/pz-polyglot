@@ -36,4 +36,12 @@ public class PZTranslationEntry {
         variants.add(variant);
         return variant;
     }
+
+    /**
+     * Returns the type of this entry (from the first variant), or null if none
+     * exist.
+     */
+    public PZTranslationType getType() {
+        return variants.isEmpty() ? null : variants.get(0).getType();
+    }
 }

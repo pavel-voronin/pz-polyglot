@@ -6,6 +6,7 @@ import javafx.application.HostServices;
 
 import org.pz.polyglot.State;
 import org.pz.polyglot.components.TranslationPanel;
+import org.pz.polyglot.components.TypesPanel;
 
 import javafx.scene.control.*;
 
@@ -24,6 +25,8 @@ public class MainController {
     private MenuItem discordMenuItem;
     @FXML
     private TranslationPanel translationPanel;
+    @FXML
+    private TypesPanel typesPanel;
     @FXML
     private SplitPane mainSplitPane;
     private final State stateManager = State.getInstance();
@@ -71,15 +74,32 @@ public class MainController {
             translationPanel.setVisible(newVal);
             translationPanel.setManaged(newVal);
             if (!newVal) {
-                // Hide right panel in SplitPane, so left takes all space
-                if (mainSplitPane.getItems().size() == 2) {
-                    mainSplitPane.getItems().remove(1);
-                }
+                mainSplitPane.getItems().remove(translationPanel);
             } else {
-                // Show right panel in SplitPane if not present
                 if (!mainSplitPane.getItems().contains(translationPanel)) {
                     mainSplitPane.getItems().add(translationPanel);
                 }
+            }
+        });
+        stateManager.typesPanelVisibleProperty().addListener((obs, oldVal, newVal) -> {
+            typesPanel.setVisible(newVal);
+            typesPanel.setManaged(newVal);
+            if (!newVal) {
+                mainSplitPane.getItems().remove(typesPanel);
+            } else {
+                if (!mainSplitPane.getItems().contains(typesPanel)) {
+                    mainSplitPane.getItems().add(0, typesPanel);
+                    SplitPane.setResizableWithParent(typesPanel, false);
+                }
+            }
+        });
+        // Ensure only visible panels are present
+        Platform.runLater(() -> {
+            if (!stateManager.isTypesPanelVisible()) {
+                mainSplitPane.getItems().remove(typesPanel);
+            }
+            if (!stateManager.isRightPanelVisible()) {
+                mainSplitPane.getItems().remove(translationPanel);
             }
         });
     }

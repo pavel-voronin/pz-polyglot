@@ -7,6 +7,7 @@ import javafx.collections.ObservableList;
 
 import org.pz.polyglot.models.languages.PZLanguages;
 import org.pz.polyglot.models.translations.PZTranslationEntry;
+import org.pz.polyglot.models.translations.PZTranslationType;
 import org.pz.polyglot.models.translations.PZTranslationVariant;
 import org.pz.polyglot.viewModels.registries.TranslationVariantViewModelRegistry;
 
@@ -176,6 +177,23 @@ public class TranslationEntryViewModel {
         }
 
         return languageChanges;
+    }
+
+    /**
+     * Gets the translation type for this entry.
+     */
+    public PZTranslationType getType() {
+        return entry.getType();
+    }
+
+    /**
+     * Returns all types present in this entry (from its variants).
+     */
+    public Set<PZTranslationType> getTypes() {
+        return entry.getVariants().stream()
+                .map(PZTranslationVariant::getType)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
     }
 
     private void refreshVariantViewModels() {

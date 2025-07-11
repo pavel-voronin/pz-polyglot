@@ -97,6 +97,8 @@ public class TranslationTable extends TableView<TranslationEntryViewModel> {
             filterText = newVal == null ? "" : newVal;
             applyFilter();
         });
+        stateManager.selectedTypesChangedProperty()
+                .addListener((obs, oldVal, newVal) -> applyFilter());
     }
 
     /**
@@ -125,8 +127,10 @@ public class TranslationTable extends TableView<TranslationEntryViewModel> {
     }
 
     private void applyFilter() {
+        var selectedTypes = stateManager.getSelectedTypes();
         filteredTableItems.setPredicate(
-                item -> filterText.isBlank() || item.getKey().toLowerCase().contains(filterText.toLowerCase()));
+                item -> (filterText.isBlank() || item.getKey().toLowerCase().contains(filterText.toLowerCase()))
+                        && (item.getTypes().isEmpty() || selectedTypes.contains(item.getType())));
     }
 
     public void populateTranslationsTable() {
