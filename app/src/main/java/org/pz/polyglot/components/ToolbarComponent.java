@@ -9,10 +9,12 @@ import javafx.stage.Stage;
 
 import org.pz.polyglot.State;
 import org.pz.polyglot.components.addKeyDialog.AddKeyDialogManager;
+import org.pz.polyglot.components.addModDialog.AddModDialogManager;
 import org.pz.polyglot.models.translations.PZTranslationManager;
 import org.pz.polyglot.models.translations.PZTranslationSession;
 import org.pz.polyglot.models.translations.PZTranslationVariant;
 import org.pz.polyglot.models.translations.PZTranslations;
+import org.pz.polyglot.util.FolderUtils;
 
 import java.io.IOException;
 
@@ -24,6 +26,8 @@ public class ToolbarComponent extends ToolBar {
 
     @FXML
     private Button addKeyButton;
+    @FXML
+    private Button addModButton;
     @FXML
     private Button saveAllToolbarButton;
 
@@ -58,6 +62,13 @@ public class ToolbarComponent extends ToolBar {
             }
         });
 
+        // Set up Add Mod button action
+        addModButton.setOnAction(e -> {
+            // Get the current stage
+            Stage stage = (Stage) addModButton.getScene().getWindow();
+            AddModDialogManager.showAddModDialog(stage);
+        });
+
         // Set up Save All toolbar button action
         saveAllToolbarButton.setOnAction(e -> {
             PZTranslationManager.saveAll();
@@ -71,6 +82,7 @@ public class ToolbarComponent extends ToolBar {
 
         // Initial state
         updateSaveAllButtonState();
+        updateAddModButtonState();
     }
 
     /**
@@ -82,5 +94,14 @@ public class ToolbarComponent extends ToolBar {
         int count = variants.size();
         saveAllToolbarButton.setText("Save All" + (count > 0 ? " (" + count + ")" : ""));
         saveAllToolbarButton.setDisable(count == 0);
+    }
+
+    /**
+     * Updates the Add Mod button's enabled state based on workshop path
+     * availability.
+     */
+    private void updateAddModButtonState() {
+        boolean hasValidWorkshopPath = FolderUtils.getWorkshopPath().isPresent();
+        addModButton.setDisable(!hasValidWorkshopPath);
     }
 }

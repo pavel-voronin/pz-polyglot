@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" 
+      fx:controller="org.pz.polyglot.components.addModDialog.AddModDialogController" 
+      styleClass="add-mod-dialog" 
+      stylesheets="@/css/add-mod-dialog.css"
+      spacing="15">
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20" />
+    </padding>
+    <children>
+        <!-- Header -->
+        <Label text="Add New Mod" styleClass="dialog-title" />
+        
+        <!-- Mod Name Input Section -->
+        <VBox spacing="8">
+            <children>
+                <Label text="Mod name:" styleClass="field-label" />
+                <TextField fx:id="modNameField" promptText="Enter mod name..." styleClass="mod-name-field" />
+            </children>
+        </VBox>
+        
+        <!-- Version Selection Section -->
+        <VBox spacing="8">
+            <children>
+                <Label text="Version:" styleClass="field-label" />
+                <ComboBox fx:id="versionComboBox" styleClass="version-combo" />
+            </children>
+        </VBox>
+        
+        <!-- Buttons -->
+        <HBox spacing="10" styleClass="button-container">
+            <children>
+                <Button text="Create" fx:id="createButton" 
+                        onAction="#onCreate" styleClass="create-button" />
+                <Button text="Cancel" fx:id="cancelButton" 
+                        onAction="#onCancel" styleClass="cancel-button" />
+            </children>
+        </HBox>
+    </children>
+</VBox>

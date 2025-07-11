@@ -1,0 +1,115 @@
+/* Add Mod Dialog Styles */
+
+.add-mod-dialog {
+    -fx-background-color: #f4f4f4;
+    -fx-font-family: "Segoe UI", Arial, sans-serif;
+    -fx-min-width: 380;
+    -fx-max-width: 380;
+    -fx-pref-width: 380;
+}
+
+.add-mod-dialog .dialog-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+    -fx-alignment: center;
+}
+
+.add-mod-dialog .field-label {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+}
+
+.add-mod-dialog .mod-name-field {
+    -fx-pref-width: 340;
+    -fx-padding: 8 10 8 10;
+    -fx-background-color: white;
+    -fx-border-color: #cccccc;
+    -fx-border-width: 1px;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-font-size: 12px;
+}
+
+.add-mod-dialog .mod-name-field:focused {
+    -fx-border-color: #0078d4;
+    -fx-effect: dropshadow(gaussian, rgba(0, 120, 212, 0.3), 3, 0, 0, 0);
+}
+
+.add-mod-dialog .version-combo {
+    -fx-pref-width: 340;
+    -fx-padding: 6 8 6 8;
+    -fx-background-color: white;
+    -fx-border-color: #cccccc;
+    -fx-border-width: 1px;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-font-size: 12px;
+}
+
+.add-mod-dialog .version-combo:focused {
+    -fx-border-color: #0078d4;
+    -fx-effect: dropshadow(gaussian, rgba(0, 120, 212, 0.3), 3, 0, 0, 0);
+}
+
+.add-mod-dialog .version-combo .arrow-button {
+    -fx-background-color: #f0f0f0;
+    -fx-border-color: #cccccc;
+}
+
+.add-mod-dialog .version-combo .arrow-button:hover {
+    -fx-background-color: #e0e0e0;
+}
+
+.add-mod-dialog .button-container {
+    -fx-alignment: center-right;
+    -fx-spacing: 10;
+}
+
+.add-mod-dialog .cancel-button {
+    -fx-pref-width: 80;
+    -fx-padding: 8 16 8 16;
+    -fx-background-color: #f0f0f0;
+    -fx-text-fill: #333333;
+    -fx-border-color: #cccccc;
+    -fx-border-width: 1px;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-font-size: 12px;
+    -fx-cursor: hand;
+}
+
+.add-mod-dialog .cancel-button:hover {
+    -fx-background-color: #e0e0e0;
+}
+
+.add-mod-dialog .cancel-button:pressed {
+    -fx-background-color: #d0d0d0;
+}
+
+.add-mod-dialog .create-button {
+    -fx-pref-width: 80;
+    -fx-padding: 8 16 8 16;
+    -fx-background-color: #0078d4;
+    -fx-text-fill: white;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+
+.add-mod-dialog .create-button:hover {
+    -fx-background-color: #106ebe;
+}
+
+.add-mod-dialog .create-button:pressed {
+    -fx-background-color: #005a9e;
+}
+
+.add-mod-dialog .create-button:disabled {
+    -fx-background-color: #cccccc;
+    -fx-text-fill: #999999;
+    -fx-cursor: default;
+}
