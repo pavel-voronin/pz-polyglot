@@ -24,6 +24,7 @@ public class State {
     private final BooleanProperty saveAllTriggered = new SimpleBooleanProperty(false); // For save all events
     private final BooleanProperty tableRebuildRequired = new SimpleBooleanProperty(false); // For full table rebuild
     private final ObservableList<String> visibleLanguages = FXCollections.observableArrayList();
+    private final StringProperty filterText = new SimpleStringProperty(""); // For global filter management
 
     private State() {
         // Initialize with current session state
@@ -69,6 +70,10 @@ public class State {
         return visibleLanguages;
     }
 
+    public StringProperty filterTextProperty() {
+        return filterText;
+    }
+
     // Convenience methods
     public void setHasChanges(boolean value) {
         hasChanges.set(value);
@@ -100,6 +105,14 @@ public class State {
 
     public void updateVisibleLanguages(List<String> languages) {
         visibleLanguages.setAll(languages);
+    }
+
+    public String getFilterText() {
+        return filterText.get();
+    }
+
+    public void setFilterText(String value) {
+        filterText.set(value);
     }
 
     /**

@@ -4,22 +4,29 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
-
+import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
+import org.pz.polyglot.State;
 import org.pz.polyglot.models.translations.PZTranslationEntry;
-import org.pz.polyglot.models.translations.PZTranslations;
 import org.pz.polyglot.viewModels.TranslationEntryViewModel;
 import org.pz.polyglot.viewModels.registries.TranslationEntryViewModelRegistry;
 
 import java.io.IOException;
-import java.util.Map;
 
 /**
  * Component encapsulating the translation entries TableView and its logic.
+ * Now subscribes directly to global State for all table-related events.
  */
 public class TranslationTable extends TableView<TranslationEntryViewModel> {
-    private ObservableList<TranslationEntryViewModel> allTableItems = FXCollections.observableArrayList();
+    private ObservableList<TranslationEntryViewModel> backingList = FXCollections.observableArrayList();
+    private FilteredList<TranslationEntryViewModel> filteredTableItems;
+    private SortedList<TranslationEntryViewModel> sortedTableItems;
+    private ObservableList<PZTranslationEntry> allEntries = FXCollections.observableArrayList();
     private ColumnManager columnManager;
+    private String filterText = "";
+    private final State stateManager = State.getInstance();
 
     public TranslationTable() {
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/fxml/TranslationTable.fxml"));
@@ -30,37 +37,106 @@ public class TranslationTable extends TableView<TranslationEntryViewModel> {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        subscribeToState();
+        setupTableVirtualization();
+
+        SystemMonitor.addHook(() -> "backing: " + backingList.size());
+        SystemMonitor.addHook(() -> "filtered: " + filteredTableItems.size());
+        SystemMonitor.addHook(() -> "sorted: " + sortedTableItems.size());
+    }
+
+    private void setupTableVirtualization() {
+        filteredTableItems = new FilteredList<>(backingList, p -> true);
+        sortedTableItems = new SortedList<>(filteredTableItems);
+        sortedTableItems.comparatorProperty().bind(comparatorProperty());
+        setItems(sortedTableItems);
+        setRowFactory(tableView -> new TableRow<>() {
+            @Override
+            protected void updateItem(TranslationEntryViewModel item, boolean empty) {
+                super.updateItem(item, empty);
+                // ...custom row logic if needed...
+            }
+        });
     }
 
     @FXML
     private void initialize() {
         columnManager = new ColumnManager(this);
         columnManager.createColumns();
+        getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
+            if (newSelection != null) {
+                stateManager.setSelectedTranslationKey(newSelection.getKey());
+                stateManager.setRightPanelVisible(true);
+            }
+        });
+    }
+
+    private void subscribeToState() {
+        stateManager.saveAllTriggeredProperty().addListener((obs, oldVal, newVal) -> refreshTableIndicators());
+        stateManager.refreshKeyProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null && !newVal.isEmpty()) {
+                refreshTableIndicatorsForKey(newVal);
+            } else {
+                refreshTableIndicators();
+            }
+        });
+        stateManager.tableRebuildRequiredProperty().addListener((obs, oldVal, newVal) -> populateTranslationsTable());
+        stateManager.selectedTranslationKeyProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal == null || newVal.isEmpty()) {
+                getSelectionModel().clearSelection();
+            } else {
+                for (var item : filteredTableItems) {
+                    if (item.getKey().equals(newVal)) {
+                        getSelectionModel().select(item);
+                        break;
+                    }
+                }
+            }
+        });
+        stateManager.filterTextProperty().addListener((obs, oldVal, newVal) -> {
+            filterText = newVal == null ? "" : newVal;
+            applyFilter();
+        });
     }
 
     /**
      * Set the items to display in the table. This is the only way to set data.
      */
-    public void setTableItems(ObservableList<TranslationEntryViewModel> items) {
-        this.setItems(items);
+    public void setTableEntries(ObservableList<PZTranslationEntry> entries) {
+        allEntries.setAll(entries);
+        rebuildFilteredList();
+    }
+
+    private void rebuildFilteredList() {
+        backingList.clear();
+        for (var entry : allEntries) {
+            backingList.add((TranslationEntryViewModel) TranslationEntryViewModelRegistry.getViewModel(entry));
+        }
+        applyFilter();
+    }
+
+    /**
+     * Deprecated: use State.filterTextProperty instead.
+     */
+    @Deprecated
+    public void setFilterText(String filterText) {
+        this.filterText = filterText == null ? "" : filterText;
+        applyFilter();
+    }
+
+    private void applyFilter() {
+        filteredTableItems.setPredicate(
+                item -> filterText.isBlank() || item.getKey().toLowerCase().contains(filterText.toLowerCase()));
     }
 
     public void populateTranslationsTable() {
-        PZTranslations translations = PZTranslations.getInstance();
-        Map<String, PZTranslationEntry> allTranslations = translations.getAllTranslations();
-        allTableItems.clear();
-        for (Map.Entry<String, PZTranslationEntry> entry : allTranslations.entrySet()) {
-            PZTranslationEntry translationEntry = entry.getValue();
-            TranslationEntryViewModel entryViewModel = TranslationEntryViewModelRegistry.getViewModel(translationEntry);
-            allTableItems.add(entryViewModel);
-        }
-        setItems(allTableItems);
+        var translations = org.pz.polyglot.models.translations.PZTranslations.getInstance();
+        allEntries.setAll(translations.getAllTranslations().values());
+        rebuildFilteredList();
     }
 
     public void refreshTableIndicators() {
-        if (allTableItems.isEmpty())
-            return;
-        for (TranslationEntryViewModel entryViewModel : allTableItems) {
+        for (TranslationEntryViewModel entryViewModel : filteredTableItems) {
             if (entryViewModel != null) {
                 entryViewModel.refresh();
             }
@@ -69,9 +145,7 @@ public class TranslationTable extends TableView<TranslationEntryViewModel> {
     }
 
     public void refreshTableIndicatorsForKey(String translationKey) {
-        if (allTableItems.isEmpty())
-            return;
-        for (TranslationEntryViewModel item : allTableItems) {
+        for (TranslationEntryViewModel item : filteredTableItems) {
             if (item.getKey().equals(translationKey)) {
                 item.refresh();
                 refresh();

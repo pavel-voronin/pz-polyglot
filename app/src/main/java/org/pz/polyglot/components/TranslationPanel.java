@@ -17,8 +17,10 @@ import org.pz.polyglot.models.languages.PZLanguages;
 import org.pz.polyglot.models.sources.PZSource;
 import org.pz.polyglot.models.translations.PZTranslationType;
 import org.pz.polyglot.models.translations.PZTranslationVariant;
+import org.pz.polyglot.models.translations.PZTranslations;
 import org.pz.polyglot.viewModels.TranslationEntryViewModel;
 import org.pz.polyglot.viewModels.TranslationVariantViewModel;
+import org.pz.polyglot.viewModels.registries.TranslationEntryViewModelRegistry;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -86,6 +88,17 @@ public class TranslationPanel extends VBox {
         stateManager.getVisibleLanguages().addListener((ListChangeListener<String>) change -> {
             if (currentEntryViewModel != null) {
                 updateLanguageFields();
+            }
+        });
+
+        // Listen for changes to the selected translation key and update panel
+        stateManager.selectedTranslationKeyProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null && !newVal.isEmpty()) {
+                var entry = PZTranslations.getInstance().getOrCreateTranslation(newVal);
+                var entryViewModel = TranslationEntryViewModelRegistry.getViewModel(entry);
+                showTranslation(entryViewModel);
+            } else {
+                hidePanel();
             }
         });
     }

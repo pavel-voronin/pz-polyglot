@@ -1,16 +1,16 @@
 package org.pz.polyglot.models.translations;
 
-import java.util.HashMap;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableMap;
 
 public class PZTranslations {
     private static PZTranslations instance;
-    private HashMap<String, PZTranslationEntry> translations = new HashMap<>();
+    private final ObservableMap<String, PZTranslationEntry> translations = FXCollections.observableHashMap();
 
     public static PZTranslations getInstance() {
         if (instance == null) {
             instance = new PZTranslations();
         }
-
         return instance;
     }
 
@@ -18,7 +18,7 @@ public class PZTranslations {
         return this.translations.computeIfAbsent(key, k -> new PZTranslationEntry(k));
     }
 
-    public HashMap<String, PZTranslationEntry> getAllTranslations() {
+    public ObservableMap<String, PZTranslationEntry> getAllTranslations() {
         return translations;
     }
 }
