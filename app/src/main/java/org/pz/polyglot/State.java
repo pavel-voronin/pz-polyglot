@@ -5,6 +5,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 import org.pz.polyglot.models.translations.PZTranslationSession;
+import org.pz.polyglot.models.languages.PZLanguages;
 
 import java.util.Arrays;
 import java.util.List;
@@ -165,9 +166,18 @@ public class State {
             if (cfgLangs != null && cfgLangs.length > 0) {
                 visibleLanguages.setAll(Arrays.asList(cfgLangs));
             } else {
-                // Default to showing only EN if no languages are configured
-                // FIXME #18
-                visibleLanguages.setAll(Arrays.asList("EN"));
+                // Show all languages, but English first
+                var allCodes = PZLanguages.getInstance().getAllLanguageCodes();
+                var sortedCodes = allCodes.stream()
+                        .sorted((a, b) -> {
+                            if (a.equals("EN"))
+                                return -1;
+                            if (b.equals("EN"))
+                                return 1;
+                            return a.compareTo(b);
+                        })
+                        .toList();
+                visibleLanguages.setAll(sortedCodes);
             }
         } catch (Exception e) {
             // If config loading fails, default to showing only EN

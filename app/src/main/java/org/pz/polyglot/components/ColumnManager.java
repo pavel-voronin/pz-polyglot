@@ -73,12 +73,6 @@ public class ColumnManager {
         // truth
         List<String> visibleLanguagesInOrder = new ArrayList<>(stateManager.getVisibleLanguages());
 
-        // Fallback: if no visible languages configured, default to EN only
-        // TODO: must be fixed in #18
-        if (visibleLanguagesInOrder.isEmpty()) {
-            visibleLanguagesInOrder.add("EN");
-        }
-
         // First, create columns for visible languages in the saved order
         for (String lang : visibleLanguagesInOrder) {
             if (allLanguages.contains(lang)) {

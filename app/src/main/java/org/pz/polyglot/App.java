@@ -42,6 +42,9 @@ public class App extends Application {
         PZSources.getInstance();
         PZLanguageManager.load();
         PZTranslationManager.loadFilesFromSources();
+
+        // App state initialization
+
         State.getInstance().requestTableRebuild();
     }
 
