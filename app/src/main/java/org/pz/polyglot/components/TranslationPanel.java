@@ -124,7 +124,7 @@ public class TranslationPanel extends VBox {
 
         // Setup scroll pane - key fix here
         panelScrollPane.setFitToWidth(true);
-        panelScrollPane.setFitToHeight(true);
+        panelScrollPane.setFitToHeight(false);
         panelScrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         panelScrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         panelScrollPane.setContent(languageFieldsContainer);
