@@ -31,6 +31,7 @@ public class State {
     private final EnumSet<PZTranslationType> selectedTypes = EnumSet.noneOf(PZTranslationType.class);
     private final BooleanProperty selectedTypesChanged = new SimpleBooleanProperty(false);
     private final BooleanProperty typesPanelVisible = new SimpleBooleanProperty(false); // For TypesPanel visibility
+    private final BooleanProperty languagesPanelVisible = new SimpleBooleanProperty(false);
 
     private State() {
         // Initialize with current session state
@@ -86,6 +87,14 @@ public class State {
         return selectedTypesChanged;
     }
 
+    public BooleanProperty typesPanelVisibleProperty() {
+        return typesPanelVisible;
+    }
+
+    public BooleanProperty languagesPanelVisibleProperty() {
+        return languagesPanelVisible;
+    }
+
     public Set<PZTranslationType> getSelectedTypes() {
         return EnumSet.copyOf(selectedTypes);
     }
@@ -121,6 +130,11 @@ public class State {
 
     public void updateVisibleLanguages(List<String> languages) {
         visibleLanguages.setAll(languages);
+
+        // Save to configuration
+        AppConfig config = AppConfig.getInstance();
+        config.setPzLanguages(languages.toArray(new String[0]));
+        config.save();
     }
 
     public String getFilterText() {
@@ -149,8 +163,12 @@ public class State {
         typesPanelVisible.set(visible);
     }
 
-    public BooleanProperty typesPanelVisibleProperty() {
-        return typesPanelVisible;
+    public boolean isLanguagesPanelVisible() {
+        return languagesPanelVisible.get();
+    }
+
+    public void setLanguagesPanelVisible(boolean visible) {
+        languagesPanelVisible.set(visible);
     }
 
     /**

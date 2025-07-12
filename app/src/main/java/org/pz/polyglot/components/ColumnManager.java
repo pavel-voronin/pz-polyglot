@@ -20,6 +20,7 @@ public class ColumnManager {
     private final TableView<TranslationEntryViewModel> tableView;
     private final State stateManager;
     private TableColumn<TranslationEntryViewModel, String> keyColumn;
+    private boolean updatingColumnVisibility = false; // Flag to prevent circular updates
 
     public ColumnManager(TableView<TranslationEntryViewModel> tableView) {
         this.tableView = tableView;
@@ -49,6 +50,70 @@ public class ColumnManager {
 
         // Setup column reordering protection and listeners
         setupColumnOrderingProtection();
+
+        // Listen for changes in visible languages and update column visibility
+        setupVisibleLanguagesListener();
+    }
+
+    /**
+     * Sets up listener for visible languages changes to update column visibility.
+     */
+    private void setupVisibleLanguagesListener() {
+        stateManager.getVisibleLanguages().addListener((ListChangeListener<String>) change -> {
+            while (change.next()) {
+                // Update column visibility based on the new visible languages list
+                updateColumnVisibility();
+            }
+        });
+    }
+
+    /**
+     * Updates column visibility based on current visible languages state.
+     */
+    private void updateColumnVisibility() {
+        List<String> visibleLanguages = new ArrayList<>(stateManager.getVisibleLanguages());
+
+        // Set flag to prevent circular updates
+        updatingColumnVisibility = true;
+
+        try {
+            // Get existing language columns
+            Set<String> existingLanguageColumns = new HashSet<>();
+            for (TableColumn<TranslationEntryViewModel, ?> column : tableView.getColumns()) {
+                if (column != keyColumn) {
+                    existingLanguageColumns.add(column.getText());
+                }
+            }
+
+            // Update visibility for existing language columns
+            // Create a copy to avoid ConcurrentModificationException
+            List<TableColumn<TranslationEntryViewModel, ?>> columnsCopy = new ArrayList<>(tableView.getColumns());
+            for (TableColumn<TranslationEntryViewModel, ?> column : columnsCopy) {
+                if (column != keyColumn) {
+                    String languageCode = column.getText();
+                    boolean shouldBeVisible = visibleLanguages.contains(languageCode);
+                    if (column.isVisible() != shouldBeVisible) {
+                        column.setVisible(shouldBeVisible);
+
+                        // If column became visible, move it to the end
+                        if (shouldBeVisible) {
+                            tableView.getColumns().remove(column);
+                            tableView.getColumns().add(column);
+                        }
+                    }
+                }
+            }
+
+            // Add new columns for languages that don't have columns yet
+            // These will be added at the end in the order they appear in visibleLanguages
+            for (String languageCode : visibleLanguages) {
+                if (!existingLanguageColumns.contains(languageCode)) {
+                    createLanguageColumnAtEnd(languageCode, true);
+                }
+            }
+        } finally {
+            updatingColumnVisibility = false;
+        }
     }
 
     /**
@@ -119,37 +184,103 @@ public class ColumnManager {
 
         // Listen for visibility changes to update state and save config
         col.visibleProperty().addListener((obs, oldV, newV) -> {
-            updateVisibleLanguagesState();
-            saveLanguageOrderToConfig();
+            // Only update state if this change is not from our programmatic update
+            if (!updatingColumnVisibility) {
+                updateVisibleLanguagesState();
+                saveLanguageOrderToConfig();
+            }
         });
         tableView.getColumns().add(col);
+    }
+
+    /**
+     * Creates a single language column and adds it at the end without triggering
+     * reordering.
+     * This is used when dynamically adding new columns through the language panel.
+     */
+    private void createLanguageColumnAtEnd(String lang, boolean visible) {
+        TableColumn<TranslationEntryViewModel, String> col = new TableColumn<>(lang);
+        col.setCellValueFactory(param -> {
+            TranslationEntryViewModel entryViewModel = param.getValue();
+            if (entryViewModel == null) {
+                return new SimpleStringProperty("");
+            }
+
+            boolean present = entryViewModel.hasTranslationForLanguage(lang);
+            boolean hasChanges = entryViewModel.hasChangesForLanguage(lang);
+
+            String content = "";
+            if (present) {
+                content += "✔";
+            }
+            if (hasChanges) {
+                content += " ●"; // Bullet point to indicate changes
+            }
+            return new SimpleStringProperty(content);
+        });
+        col.setPrefWidth(60);
+        col.setReorderable(true);
+
+        // Set visibility based on parameter
+        col.setVisible(visible);
+
+        // Listen for visibility changes to update state and save config
+        // But only if this change is not from our programmatic update
+        col.visibleProperty().addListener((obs, oldV, newV) -> {
+            if (!updatingColumnVisibility) {
+                updateVisibleLanguagesState();
+                saveLanguageOrderToConfig();
+            }
+        });
+
+        // Calculate position for new column: after all currently visible columns
+        int targetPosition = 1; // Start after Key column
+        for (TableColumn<TranslationEntryViewModel, ?> column : tableView.getColumns()) {
+            if (column != keyColumn && column.isVisible()) {
+                targetPosition++;
+            }
+        }
+
+        // Add column at the calculated position
+        tableView.getColumns().add(targetPosition, col);
     }
 
     /**
      * Creates header context menu for toggling column visibility.
      */
     private void createHeaderContextMenu(List<String> allLanguages) {
-        ContextMenu headerMenu = new ContextMenu();
+        // Attach context menu to each language column individually
+        for (TableColumn<TranslationEntryViewModel, ?> column : tableView.getColumns()) {
+            if (column != keyColumn) {
+                ContextMenu headerMenu = new ContextMenu();
 
-        for (String lang : allLanguages) {
-            CheckMenuItem item = new CheckMenuItem(lang);
-            // Find corresponding column for this language
-            TableColumn<TranslationEntryViewModel, ?> langColumn = findLanguageColumn(lang);
+                for (String lang : allLanguages) {
+                    CheckMenuItem item = new CheckMenuItem(lang);
+                    TableColumn<TranslationEntryViewModel, ?> langColumn = findLanguageColumn(lang);
 
-            if (langColumn != null) {
-                item.setSelected(langColumn.isVisible());
-                // Sync column visibility with menu item
-                final TableColumn<TranslationEntryViewModel, ?> finalLangColumn = langColumn;
-                langColumn.visibleProperty().addListener((obs, oldV, newV) -> item.setSelected(newV));
-                item.selectedProperty().addListener((obs, oldV, newV) -> finalLangColumn.setVisible(newV));
+                    if (langColumn != null) {
+                        item.setSelected(langColumn.isVisible());
+                        // Sync column visibility with menu item
+                        final TableColumn<TranslationEntryViewModel, ?> finalLangColumn = langColumn;
+                        langColumn.visibleProperty().addListener((obs, oldV, newV) -> item.setSelected(newV));
+                        item.selectedProperty().addListener((obs, oldV, newV) -> {
+                            if (newV && !finalLangColumn.isVisible()) {
+                                // Column is being made visible - move it before the current column
+                                finalLangColumn.setVisible(true);
+                                int targetIndex = tableView.getColumns().indexOf(column);
+                                tableView.getColumns().remove(finalLangColumn);
+                                tableView.getColumns().add(targetIndex, finalLangColumn);
+                            } else {
+                                finalLangColumn.setVisible(newV);
+                            }
+                        });
+                    }
+                    headerMenu.getItems().add(item);
+                }
+
+                column.setContextMenu(headerMenu);
             }
-            headerMenu.getItems().add(item);
         }
-
-        // Attach context menu only to language column headers
-        tableView.getColumns().stream()
-                .filter(col -> col != keyColumn)
-                .forEach(col -> col.setContextMenu(headerMenu));
     }
 
     /**
@@ -176,8 +307,11 @@ public class ColumnManager {
                             }
 
                             // Save the new language column order to config and update state
-                            updateVisibleLanguagesState();
-                            saveLanguageOrderToConfig();
+                            // Only save state if this change is not from our programmatic update
+                            if (!updatingColumnVisibility) {
+                                updateVisibleLanguagesState();
+                                saveLanguageOrderToConfig();
+                            }
                         }
                     }
                 });

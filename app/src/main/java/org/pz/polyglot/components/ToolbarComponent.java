@@ -35,9 +35,12 @@ public class ToolbarComponent extends ToolBar {
     private Button saveAllToolbarButton;
     @FXML
     private ToggleButton typesButton;
+    @FXML
+    private ToggleButton languagesButton;
 
     private final State stateManager = State.getInstance();
     private final BooleanProperty typesPanelVisible = new SimpleBooleanProperty(false);
+    private final BooleanProperty languagesPanelVisible = new SimpleBooleanProperty(false);
 
     public ToolbarComponent() {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/toolbar.fxml"));
@@ -90,15 +93,32 @@ public class ToolbarComponent extends ToolBar {
             stateManager.setTypesPanelVisible(show);
         });
 
+        // Languages panel toggle logic
+        languagesButton.setOnAction(e -> {
+            boolean show = languagesButton.isSelected();
+            languagesPanelVisible.set(show);
+            // Show/hide LanguagesPanel in main UI via state or controller
+            stateManager.setLanguagesPanelVisible(show);
+        });
+
         // Listen for changes in selected types and update button text
         stateManager.selectedTypesChangedProperty().addListener((obs, oldVal, newVal) -> {
             updateTypesButtonText();
         });
         updateTypesButtonText();
 
+        // Listen for changes in visible languages and update button text
+        stateManager.getVisibleLanguages().addListener((javafx.collections.ListChangeListener<String>) change -> {
+            updateLanguagesButtonText();
+        });
+        updateLanguagesButtonText();
+
         // Listen for changes in panel visibility and update toggle state
         typesPanelVisible.addListener((obs, oldVal, newVal) -> {
             typesButton.setSelected(newVal);
+        });
+        languagesPanelVisible.addListener((obs, oldVal, newVal) -> {
+            languagesButton.setSelected(newVal);
         });
 
         // Listen to changes in the set of dirty variants
@@ -133,5 +153,10 @@ public class ToolbarComponent extends ToolBar {
     private void updateTypesButtonText() {
         int count = stateManager.getSelectedTypes().size();
         typesButton.setText("Types (" + count + ")");
+    }
+
+    private void updateLanguagesButtonText() {
+        int count = stateManager.getVisibleLanguages().size();
+        languagesButton.setText("Languages (" + count + ")");
     }
 }

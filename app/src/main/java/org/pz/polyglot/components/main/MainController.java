@@ -7,6 +7,7 @@ import javafx.application.HostServices;
 import org.pz.polyglot.State;
 import org.pz.polyglot.components.TranslationPanel;
 import org.pz.polyglot.components.TypesPanel;
+import org.pz.polyglot.components.LanguagesPanel;
 
 import javafx.scene.control.*;
 
@@ -27,6 +28,8 @@ public class MainController {
     private TranslationPanel translationPanel;
     @FXML
     private TypesPanel typesPanel;
+    @FXML
+    private LanguagesPanel languagesPanel;
     @FXML
     private SplitPane mainSplitPane;
     private final State stateManager = State.getInstance();
@@ -88,13 +91,31 @@ public class MainController {
                 mainSplitPane.getItems().remove(typesPanel);
             } else {
                 if (!mainSplitPane.getItems().contains(typesPanel)) {
+                    // Types panel should be first
                     mainSplitPane.getItems().add(0, typesPanel);
                     SplitPane.setResizableWithParent(typesPanel, false);
                 }
             }
         });
+        stateManager.languagesPanelVisibleProperty().addListener((obs, oldVal, newVal) -> {
+            languagesPanel.setVisible(newVal);
+            languagesPanel.setManaged(newVal);
+            if (!newVal) {
+                mainSplitPane.getItems().remove(languagesPanel);
+            } else {
+                if (!mainSplitPane.getItems().contains(languagesPanel)) {
+                    // Languages panel should be after types panel
+                    int insertIndex = stateManager.isTypesPanelVisible() ? 1 : 0;
+                    mainSplitPane.getItems().add(insertIndex, languagesPanel);
+                    SplitPane.setResizableWithParent(languagesPanel, false);
+                }
+            }
+        });
         // Ensure only visible panels are present
         Platform.runLater(() -> {
+            if (!stateManager.isLanguagesPanelVisible()) {
+                mainSplitPane.getItems().remove(languagesPanel);
+            }
             if (!stateManager.isTypesPanelVisible()) {
                 mainSplitPane.getItems().remove(typesPanel);
             }
