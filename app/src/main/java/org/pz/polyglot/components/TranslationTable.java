@@ -8,6 +8,8 @@ import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
+
+import org.pz.polyglot.Logger;
 import org.pz.polyglot.State;
 import org.pz.polyglot.models.translations.PZTranslationEntry;
 import org.pz.polyglot.viewModels.TranslationEntryViewModel;
@@ -43,6 +45,8 @@ public class TranslationTable extends TableView<TranslationEntryViewModel> {
         SystemMonitor.addHook(() -> "backing: " + backingList.size());
         SystemMonitor.addHook(() -> "filtered: " + filteredTableItems.size());
         SystemMonitor.addHook(() -> "sorted: " + sortedTableItems.size());
+
+        populateTranslationsTable();
     }
 
     private void setupTableVirtualization() {
@@ -99,6 +103,8 @@ public class TranslationTable extends TableView<TranslationEntryViewModel> {
         });
         stateManager.selectedTypesChangedProperty()
                 .addListener((obs, oldVal, newVal) -> applyFilter());
+        stateManager.enabledSourcesChangedProperty()
+                .addListener((obs, oldVal, newVal) -> applyFilter());
     }
 
     /**
@@ -127,10 +133,16 @@ public class TranslationTable extends TableView<TranslationEntryViewModel> {
     }
 
     private void applyFilter() {
+        Logger.info("Applying filter");
         var selectedTypes = stateManager.getSelectedTypes();
+        var enabledSources = stateManager.getEnabledSources();
+
         filteredTableItems.setPredicate(
                 item -> (filterText.isBlank() || item.getKey().toLowerCase().contains(filterText.toLowerCase()))
-                        && (item.getTypes().isEmpty() || selectedTypes.contains(item.getType())));
+                        && (item.getTypes().isEmpty() || selectedTypes.contains(item.getType()))
+                        && (item.getSources().isEmpty() ||
+                                (!enabledSources.isEmpty()
+                                        && item.getSources().stream().anyMatch(enabledSources::contains))));
     }
 
     public void populateTranslationsTable() {

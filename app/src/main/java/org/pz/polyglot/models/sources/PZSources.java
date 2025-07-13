@@ -6,14 +6,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
+import java.util.Set;
 
-import org.pz.polyglot.AppConfig;
+import org.pz.polyglot.Config;
+import org.pz.polyglot.Logger;
+import org.pz.polyglot.State;
 import org.pz.polyglot.structs.SemanticVersion;
-import org.pz.polyglot.util.FolderUtils;
+import org.pz.polyglot.utils.FolderUtils;
 
 public class PZSources {
-    private static final Logger logger = Logger.getLogger(PZSources.class.getName());
     private static PZSources instance;
 
     private ArrayList<PZSource> sources = new ArrayList<>();
@@ -28,7 +29,7 @@ public class PZSources {
     private PZSources() {
         this.parseSources();
 
-        logger.info("Parsed sources: " + this.sources.size());
+        Logger.info("Parsed sources: " + this.sources.size());
     }
 
     public List<PZSource> getSources() {
@@ -49,10 +50,25 @@ public class PZSources {
 
         // Game files
         FolderUtils.getGamePath().ifPresent(this::processGameFiles);
+
+        // Detect new sources and auto-enable them
+        List<String> currentSources = this.sources.stream()
+                .map(PZSource::getName)
+                .distinct()
+                .collect(java.util.stream.Collectors.toList());
+
+        State state = State.getInstance();
+        Set<String> knownSources = state.getAllKnownSources();
+
+        for (String sourceName : currentSources) {
+            if (!knownSources.contains(sourceName)) {
+                state.addNewSource(sourceName);
+            }
+        }
     }
 
     private void processSteamMods(Path steamPath) {
-        boolean editable = AppConfig.getInstance().isSteamModsPathEditable();
+        boolean editable = Config.getInstance().isSteamModsPathEditable();
         for (Path userFolder : listDirectories(steamPath)) {
             Path modsFolder = userFolder.resolve("mods");
             if (Files.isDirectory(modsFolder)) {
@@ -65,7 +81,7 @@ public class PZSources {
     }
 
     private void processWorkshopMods(Path workshopPath) {
-        boolean editable = AppConfig.getInstance().isCachePathEditable();
+        boolean editable = Config.getInstance().isCachePathEditable();
         for (Path workshopFolder : listDirectories(workshopPath)) {
             Path modsFolder = workshopFolder.resolve("Contents").resolve("mods");
             if (Files.isDirectory(modsFolder)) {
@@ -78,7 +94,7 @@ public class PZSources {
     }
 
     private void processLocalMods(Path modsPath) {
-        boolean editable = AppConfig.getInstance().isCachePathEditable();
+        boolean editable = Config.getInstance().isCachePathEditable();
         for (Path modFolder : listDirectories(modsPath)) {
             String modName = modFolder.getFileName().toString();
             addSourcesFromFolder(modName, modFolder, editable);
@@ -86,7 +102,7 @@ public class PZSources {
     }
 
     private void processGameFiles(Path gamePath) {
-        boolean editable = AppConfig.getInstance().isGamePathEditable();
+        boolean editable = Config.getInstance().isGamePathEditable();
         // Game files always use BUILD_42, regardless of detected structure
         for (Path translationPath : findTranslationPaths(gamePath)) {
             this.sources.add(createSource("Game Files", translationPath, new SemanticVersion("42"), editable));

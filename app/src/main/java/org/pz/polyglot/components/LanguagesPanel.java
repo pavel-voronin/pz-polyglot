@@ -3,7 +3,6 @@ package org.pz.polyglot.components;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListCell;
-import javafx.scene.control.ListView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -15,7 +14,7 @@ import java.util.List;
 
 public class LanguagesPanel extends VBox {
     private final State stateManager = State.getInstance();
-    private final ListView<String> languagesListView = new ListView<>();
+    private final DragSelectListView<String> languagesListView = new DragSelectListView<>();
     private final Button allButton = new Button("All");
     private final Button noneButton = new Button("None");
     private final HBox buttonsBox = new HBox(8, allButton, noneButton);
@@ -29,8 +28,6 @@ public class LanguagesPanel extends VBox {
         List<String> allLanguageCodes = new ArrayList<>(pzLanguages.getAllLanguageCodes());
 
         languagesListView.getItems().setAll(allLanguageCodes);
-        languagesListView.refresh();
-        languagesListView.setSelectionModel(null);
 
         languagesListView.setCellFactory(lv -> {
             ListCell<String> cell = new ListCell<>() {
@@ -41,46 +38,53 @@ public class LanguagesPanel extends VBox {
                         setText(null);
                         setStyle("");
                     } else {
-                        // Format: "CODE - Language Name"
                         pzLanguages.getLanguage(languageCode).ifPresentOrElse(
                                 language -> setText(language.getCode() + " - " + language.getName()),
                                 () -> setText(languageCode));
-                        // Check if this language is visible (selected)
-                        boolean isVisible = stateManager.getVisibleLanguages().contains(languageCode);
-                        setStyle(isVisible ? "-fx-background-color: #cce5ff;"
-                                : "-fx-background-color: transparent;");
+                        DragSelectListView<String> dragListView = (DragSelectListView<String>) getListView();
+                        boolean isDragged = dragListView.isDraggedIndex(getIndex());
+                        boolean isDragSelecting = dragListView.isDragSelecting();
+                        boolean isSelected = getListView().getSelectionModel().isSelected(getIndex());
+                        String style;
+                        if (isDragged) {
+                            style = isDragSelecting ? "-fx-background-color: #c8e6c9;"
+                                    : "-fx-background-color: #e0e0e0;";
+                        } else if (isSelected) {
+                            style = "-fx-background-color: #cce5ff;";
+                        } else {
+                            style = "-fx-background-color: transparent;";
+                        }
+                        setStyle(style);
                     }
                 }
             };
-            cell.setOnMouseClicked(event -> {
-                String languageCode = cell.getItem();
-                if (languageCode != null) {
-                    List<String> currentVisible = new ArrayList<>(stateManager.getVisibleLanguages());
-                    if (currentVisible.contains(languageCode)) {
-                        currentVisible.remove(languageCode);
-                    } else {
-                        currentVisible.add(languageCode);
-                    }
-                    stateManager.updateVisibleLanguages(currentVisible);
-                    languagesListView.refresh();
-                }
-            });
             return cell;
+        });
+
+        languagesListView.setOnSelectionChanged(selectedIndices -> {
+            List<String> selectedLanguages = new ArrayList<>();
+            for (Integer index : selectedIndices) {
+                if (index < languagesListView.getItems().size()) {
+                    selectedLanguages.add(languagesListView.getItems().get(index));
+                }
+            }
+            stateManager.updateVisibleLanguages(selectedLanguages);
         });
 
         languagesListView.setFocusTraversable(false);
 
         allButton.setOnAction(e -> {
-            // Set all languages as visible
-            List<String> allLanguages = new ArrayList<>(languagesListView.getItems());
-            stateManager.updateVisibleLanguages(allLanguages);
-            languagesListView.refresh();
+            java.util.Set<Integer> allIndices = new java.util.HashSet<>();
+            for (int i = 0; i < languagesListView.getItems().size(); i++) {
+                allIndices.add(i);
+            }
+            languagesListView.selectItems(allIndices);
+            stateManager.updateVisibleLanguages(new ArrayList<>(languagesListView.getItems()));
         });
 
         noneButton.setOnAction(e -> {
-            // Clear all visible languages
+            languagesListView.clearSelection();
             stateManager.updateVisibleLanguages(new ArrayList<>());
-            languagesListView.refresh();
         });
 
         buttonsBox.setPadding(new Insets(2));
@@ -91,9 +95,27 @@ public class LanguagesPanel extends VBox {
         getChildren().setAll(buttonsBox, languagesListView);
         VBox.setVgrow(languagesListView, Priority.ALWAYS);
 
-        // Listen for changes in visible languages to refresh the display
+        // Two-way binding: update ListView selection when State changes
         stateManager.getVisibleLanguages().addListener((javafx.collections.ListChangeListener<String>) change -> {
-            languagesListView.refresh();
+            syncSelectionFromState();
         });
+
+        // Initial sync - delay to ensure ListView is fully initialized
+        javafx.application.Platform.runLater(() -> {
+            javafx.application.Platform.runLater(() -> {
+                syncSelectionFromState();
+            });
+        });
+    }
+
+    private void syncSelectionFromState() {
+        List<String> visibleLanguages = stateManager.getVisibleLanguages();
+        java.util.Set<Integer> indicesToSelect = new java.util.HashSet<>();
+        for (int i = 0; i < languagesListView.getItems().size(); i++) {
+            if (visibleLanguages.contains(languagesListView.getItems().get(i))) {
+                indicesToSelect.add(i);
+            }
+        }
+        languagesListView.selectItems(indicesToSelect);
     }
 }

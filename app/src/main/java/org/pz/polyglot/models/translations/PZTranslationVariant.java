@@ -2,6 +2,7 @@ package org.pz.polyglot.models.translations;
 
 import java.nio.charset.Charset;
 
+import org.pz.polyglot.models.TranslationSession;
 import org.pz.polyglot.models.languages.PZLanguage;
 import org.pz.polyglot.models.sources.PZSource;
 
@@ -66,9 +67,9 @@ public class PZTranslationVariant {
     public void setEditedText(String editedText) {
         this.editedText = editedText;
         if (this.isChanged()) {
-            PZTranslationSession.getInstance().addVariant(this);
+            TranslationSession.getInstance().addVariant(this);
         } else {
-            PZTranslationSession.getInstance().removeVariant(this);
+            TranslationSession.getInstance().removeVariant(this);
         }
     }
 
@@ -82,6 +83,6 @@ public class PZTranslationVariant {
 
     public void markSaved() {
         this.originalText = editedText;
-        PZTranslationSession.getInstance().removeVariant(this);
+        TranslationSession.getInstance().removeVariant(this);
     }
 }

@@ -1,13 +1,13 @@
-package org.pz.polyglot.util;
+package org.pz.polyglot.utils;
 
 import java.nio.file.Path;
 import java.util.Optional;
 
-import org.pz.polyglot.AppConfig;
+import org.pz.polyglot.Config;
 
 public class FolderUtils {
     public static Optional<Path> getWorkshopPath() {
-        String cachePathStr = AppConfig.getInstance().getCachePath();
+        String cachePathStr = Config.getInstance().getCachePath();
 
         if (cachePathStr != null && !cachePathStr.isEmpty()) {
             Path path = Path.of(cachePathStr).resolve("Workshop");
@@ -20,7 +20,7 @@ public class FolderUtils {
     }
 
     public static Optional<Path> getSteamModsPath() {
-        String steamModsPathStr = AppConfig.getInstance().getSteamModsPath();
+        String steamModsPathStr = Config.getInstance().getSteamModsPath();
 
         if (steamModsPathStr != null && !steamModsPathStr.isEmpty()) {
             Path path = Path.of(steamModsPathStr);
@@ -33,7 +33,7 @@ public class FolderUtils {
     }
 
     public static Optional<Path> getModsPath() {
-        String cachePathStr = AppConfig.getInstance().getCachePath();
+        String cachePathStr = Config.getInstance().getCachePath();
 
         if (cachePathStr != null && !cachePathStr.isEmpty()) {
             Path path = Path.of(cachePathStr).resolve("mods");
@@ -46,7 +46,7 @@ public class FolderUtils {
     }
 
     public static Optional<Path> getGamePath() {
-        String gamePathStr = AppConfig.getInstance().getGamePath();
+        String gamePathStr = Config.getInstance().getGamePath();
 
         if (gamePathStr != null && !gamePathStr.isEmpty()) {
             Path path = Path.of(gamePathStr);

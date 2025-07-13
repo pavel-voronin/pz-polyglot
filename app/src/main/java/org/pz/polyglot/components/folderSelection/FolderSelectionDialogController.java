@@ -16,13 +16,10 @@ import java.io.File;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import org.pz.polyglot.AppConfig;
-import org.pz.polyglot.i18n.I18nManager;
-import org.pz.polyglot.util.OsUtils;
+import org.pz.polyglot.Config;
+import org.pz.polyglot.utils.OsUtils;
 
 public class FolderSelectionDialogController {
-    private static final I18nManager i18n = I18nManager.getInstance();
-
     @FXML
     private TextField gameField;
     @FXML
@@ -44,11 +41,11 @@ public class FolderSelectionDialogController {
     @FXML
     private Button okButton;
 
-    private AppConfig config;
+    private Config config;
     private Stage dialogStage;
     private boolean foldersSelected = false;
 
-    public void setConfig(AppConfig config) {
+    public void setConfig(Config config) {
         this.config = config;
         if (config.getGamePath() != null)
             gameField.setText(config.getGamePath());
@@ -68,9 +65,9 @@ public class FolderSelectionDialogController {
         this.dialogStage.setOnCloseRequest(e -> {
             if (!foldersSelected) {
                 Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-                alert.setTitle(i18n.getString("language-not-set-alert.exit.title"));
-                alert.setHeaderText(i18n.getString("language-not-set-alert.exit.header"));
-                alert.setContentText(i18n.getString("language-not-set-alert.exit.message"));
+                alert.setTitle("Exit Confirmation");
+                alert.setHeaderText("Folders not selected");
+                alert.setContentText("Are you sure you want to exit the application?");
                 Optional<ButtonType> result = alert.showAndWait();
                 if (result.isPresent() && result.get() == ButtonType.OK) {
                     Platform.exit();
@@ -84,9 +81,9 @@ public class FolderSelectionDialogController {
     @FXML
     private void initialize() {
         // Set tooltips for better user experience
-        gameField.setTooltip(new Tooltip(i18n.getString("language-dialog.choose.game.title")));
-        steamField.setTooltip(new Tooltip(i18n.getString("language-dialog.choose.steam.title")));
-        cacheField.setTooltip(new Tooltip(i18n.getString("language-dialog.choose.cache.title")));
+        gameField.setTooltip(new Tooltip("Select Project Zomboid game folder"));
+        steamField.setTooltip(new Tooltip("Select Steam mods folder"));
+        cacheField.setTooltip(new Tooltip("Select cache folder"));
 
         // Set initial path guesses
         if (gameField.getText().isEmpty()) {
@@ -111,22 +108,22 @@ public class FolderSelectionDialogController {
 
     @FXML
     private void onGameBrowse(ActionEvent e) {
-        chooseDirectory(gameField, "language-dialog.choose.game.title");
+        chooseDirectory(gameField, "Select Project Zomboid game folder");
     }
 
     @FXML
     private void onSteamBrowse(ActionEvent e) {
-        chooseDirectory(steamField, "language-dialog.choose.steam.title");
+        chooseDirectory(steamField, "Select Steam mods folder");
     }
 
     @FXML
     private void onCacheBrowse(ActionEvent e) {
-        chooseDirectory(cacheField, "language-dialog.choose.cache.title");
+        chooseDirectory(cacheField, "Select cache folder");
     }
 
-    private void chooseDirectory(TextField field, String key) {
+    private void chooseDirectory(TextField field, String title) {
         DirectoryChooser dc = new DirectoryChooser();
-        dc.setTitle(i18n.getString(key));
+        dc.setTitle(title);
         String path = field.getText().trim();
         if (!path.isEmpty()) {
             File initial = new File(path);
@@ -149,7 +146,6 @@ public class FolderSelectionDialogController {
         config.setSteamModsPathEditable(steamEditableCheckBox.isSelected());
         config.setCachePathEditable(cacheEditableCheckBox.isSelected());
 
-        config.save();
         foldersSelected = true;
         dialogStage.close();
     }

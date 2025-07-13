@@ -91,6 +91,13 @@ public class TranslationPanel extends VBox {
             }
         });
 
+        // Listen for changes in enabled sources
+        stateManager.enabledSourcesChangedProperty().addListener((obs, oldVal, newVal) -> {
+            if (currentEntryViewModel != null) {
+                updateLanguageFields();
+            }
+        });
+
         // Listen for changes to the selected translation key and update panel
         stateManager.selectedTranslationKeyProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null && !newVal.isEmpty()) {
@@ -185,11 +192,13 @@ public class TranslationPanel extends VBox {
         // Get visible languages from state manager
         List<String> visibleLanguageCodes = new ArrayList<>(stateManager.getVisibleLanguages());
 
-        // Collect all variants for visible languages
+        // Collect all variants for visible languages from enabled sources only
         List<TranslationVariantViewModel> allVariants = new ArrayList<>();
+        Set<String> enabledSources = stateManager.getEnabledSources();
+
         for (String langCode : visibleLanguageCodes) {
             List<TranslationVariantViewModel> languageVariantViewModels = currentEntryViewModel
-                    .getVariantViewModelsForLanguage(langCode);
+                    .getVariantViewModelsForLanguageFromEnabledSources(langCode, enabledSources);
             allVariants.addAll(languageVariantViewModels);
         }
 
@@ -430,11 +439,6 @@ public class TranslationPanel extends VBox {
             // Refresh the view model and UI
             currentEntryViewModel.refresh();
             updateLanguageFields();
-
-            System.out.println("Created new translation variant: Language=" + language.getCode() +
-                    ", Source=" + source.getName() +
-                    ", Type=" + type.name());
-
         } catch (Exception e) {
             System.err.println("Failed to create new translation variant: " + e.getMessage());
             e.printStackTrace();

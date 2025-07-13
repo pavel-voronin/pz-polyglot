@@ -85,6 +85,18 @@ public class TranslationEntryViewModel {
     }
 
     /**
+     * Gets variant ViewModels for a specific language code filtered by enabled
+     * sources.
+     */
+    public List<TranslationVariantViewModel> getVariantViewModelsForLanguageFromEnabledSources(String languageCode,
+            Set<String> enabledSources) {
+        return variantViewModels.stream()
+                .filter(vm -> vm.getLanguage() != null && languageCode.equals(vm.getLanguage().getCode()))
+                .filter(vm -> enabledSources.isEmpty() || enabledSources.contains(vm.getSource()))
+                .collect(Collectors.toList());
+    }
+
+    /**
      * Gets variant ViewModels for the specified language codes in the given order.
      */
     public List<TranslationVariantViewModel> getVariantViewModelsForLanguages(List<String> languageCodes) {
@@ -193,6 +205,15 @@ public class TranslationEntryViewModel {
         return entry.getVariants().stream()
                 .map(PZTranslationVariant::getType)
                 .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+    }
+
+    /**
+     * Returns all sources present in this entry (from its variants).
+     */
+    public Set<String> getSources() {
+        return entry.getVariants().stream()
+                .map(variant -> variant.getSource().getName())
                 .collect(Collectors.toSet());
     }
 

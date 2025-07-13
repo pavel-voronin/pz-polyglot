@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
+import org.pz.polyglot.models.TranslationSession;
 import org.pz.polyglot.models.languages.PZLanguage;
 import org.pz.polyglot.models.languages.PZLanguages;
 import org.pz.polyglot.models.sources.PZSource;
@@ -18,7 +19,6 @@ public class PZTranslationManager {
         for (PZSource source : PZSources.getInstance().getSources()) {
             loadFilesFromSource(source);
         }
-        System.out.println("Loaded translations from all sources");
     }
 
     // Loads all translation files of known types from the given source to the
@@ -196,7 +196,7 @@ public class PZTranslationManager {
     public static void saveAll() {
         // Create a copy of the collection to avoid ConcurrentModificationException
         // since saveVariant() calls markSaved() which modifies the original collection
-        var variantsCopy = new ArrayList<>(PZTranslationSession.getInstance().getVariants());
+        var variantsCopy = new ArrayList<>(TranslationSession.getInstance().getVariants());
         variantsCopy.forEach(PZTranslationManager::saveVariant);
     }
 }

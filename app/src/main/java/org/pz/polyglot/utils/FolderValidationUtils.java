@@ -1,8 +1,8 @@
-package org.pz.polyglot.util;
+package org.pz.polyglot.utils;
 
 import java.io.File;
 
-import org.pz.polyglot.AppConfig;
+import org.pz.polyglot.Config;
 
 /**
  * Utility class for folder validation logic.
@@ -15,7 +15,7 @@ public class FolderValidationUtils {
      * @param config the AppConfig instance
      * @return true if all folders are valid, false otherwise
      */
-    public static boolean hasValidFolders(AppConfig config) {
+    public static boolean hasValidFolders(Config config) {
         return isValidFolder(config.getGamePath()) &&
                 isValidFolder(config.getSteamModsPath()) &&
                 isValidFolder(config.getCachePath());

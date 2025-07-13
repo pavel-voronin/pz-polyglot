@@ -7,6 +7,7 @@ import javafx.application.HostServices;
 import org.pz.polyglot.State;
 import org.pz.polyglot.components.TranslationPanel;
 import org.pz.polyglot.components.TypesPanel;
+import org.pz.polyglot.components.SourcesPanel;
 import org.pz.polyglot.components.LanguagesPanel;
 
 import javafx.scene.control.*;
@@ -28,6 +29,8 @@ public class MainController {
     private TranslationPanel translationPanel;
     @FXML
     private TypesPanel typesPanel;
+    @FXML
+    private SourcesPanel sourcesPanel;
     @FXML
     private LanguagesPanel languagesPanel;
     @FXML
@@ -97,6 +100,23 @@ public class MainController {
                 }
             }
         });
+        stateManager.sourcesPanelVisibleProperty().addListener((obs, oldVal, newVal) -> {
+            sourcesPanel.setVisible(newVal);
+            sourcesPanel.setManaged(newVal);
+            if (!newVal) {
+                mainSplitPane.getItems().remove(sourcesPanel);
+            } else {
+                if (!mainSplitPane.getItems().contains(sourcesPanel)) {
+                    // Sources panel should be after types panel but before languages panel
+                    int insertIndex = 0;
+                    if (stateManager.isTypesPanelVisible())
+                        insertIndex++;
+                    // Don't count languages panel since sources should be before it
+                    mainSplitPane.getItems().add(insertIndex, sourcesPanel);
+                    SplitPane.setResizableWithParent(sourcesPanel, false);
+                }
+            }
+        });
         stateManager.languagesPanelVisibleProperty().addListener((obs, oldVal, newVal) -> {
             languagesPanel.setVisible(newVal);
             languagesPanel.setManaged(newVal);
@@ -104,8 +124,12 @@ public class MainController {
                 mainSplitPane.getItems().remove(languagesPanel);
             } else {
                 if (!mainSplitPane.getItems().contains(languagesPanel)) {
-                    // Languages panel should be after types panel
-                    int insertIndex = stateManager.isTypesPanelVisible() ? 1 : 0;
+                    // Languages panel should be after types and sources panels
+                    int insertIndex = 0;
+                    if (stateManager.isTypesPanelVisible())
+                        insertIndex++;
+                    if (stateManager.isSourcesPanelVisible())
+                        insertIndex++;
                     mainSplitPane.getItems().add(insertIndex, languagesPanel);
                     SplitPane.setResizableWithParent(languagesPanel, false);
                 }
@@ -113,14 +137,21 @@ public class MainController {
         });
         // Ensure only visible panels are present
         Platform.runLater(() -> {
-            if (!stateManager.isLanguagesPanelVisible()) {
-                mainSplitPane.getItems().remove(languagesPanel);
-            }
-            if (!stateManager.isTypesPanelVisible()) {
+            // Clear all panel visibility
+            if (typesPanel != null) {
+                typesPanel.setVisible(false);
+                typesPanel.setManaged(false);
                 mainSplitPane.getItems().remove(typesPanel);
             }
-            if (!stateManager.isRightPanelVisible()) {
-                mainSplitPane.getItems().remove(translationPanel);
+            if (sourcesPanel != null) {
+                sourcesPanel.setVisible(false);
+                sourcesPanel.setManaged(false);
+                mainSplitPane.getItems().remove(sourcesPanel);
+            }
+            if (languagesPanel != null) {
+                languagesPanel.setVisible(false);
+                languagesPanel.setManaged(false);
+                mainSplitPane.getItems().remove(languagesPanel);
             }
         });
     }

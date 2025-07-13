@@ -1,4 +1,4 @@
-package org.pz.polyglot.util;
+package org.pz.polyglot.utils;
 
 import java.io.File;
 import java.util.Optional;

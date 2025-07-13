@@ -6,13 +6,13 @@ import javafx.scene.Scene;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import org.pz.polyglot.App;
+import org.pz.polyglot.Logger;
 import org.pz.polyglot.models.sources.PZSources;
-import org.pz.polyglot.util.FolderUtils;
+import org.pz.polyglot.utils.FolderUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.logging.Logger;
 
 /**
  * Manager for the Add Mod dialog.
@@ -20,8 +20,6 @@ import java.util.logging.Logger;
  * directory structure.
  */
 public class AddModDialogManager {
-
-    private static final Logger logger = Logger.getLogger(AddModDialogManager.class.getName());
     private static final int DIALOG_WIDTH = 380;
     private static final int DIALOG_HEIGHT = 250;
 
@@ -54,7 +52,7 @@ public class AddModDialogManager {
             return false;
 
         } catch (IOException e) {
-            logger.severe("Error opening add mod dialog: " + e.getMessage());
+            Logger.error("Error opening add mod dialog: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
@@ -71,7 +69,7 @@ public class AddModDialogManager {
         try {
             var workshopPath = FolderUtils.getWorkshopPath();
             if (workshopPath.isEmpty()) {
-                logger.severe("Workshop path is not available");
+                Logger.error("Workshop path is not available");
                 return false;
             }
 
@@ -96,16 +94,16 @@ public class AddModDialogManager {
             // Create mod.info file
             createModInfoFile(modBasePath, modName, version);
 
-            logger.info("Created mod structure for '" + modName + "' (version " + version + ") at: " + translationPath);
+            Logger.info("Created mod structure for '" + modName + "' (version " + version + ") at: " + translationPath);
 
             // Rescan sources to include the new mod
             PZSources.getInstance().parseSources();
-            logger.info("Sources rescanned after mod creation");
+            Logger.info("Sources rescanned after mod creation");
 
             return true;
 
         } catch (IOException e) {
-            logger.severe("Failed to create mod structure: " + e.getMessage());
+            Logger.error("Failed to create mod structure: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
@@ -146,6 +144,6 @@ public class AddModDialogManager {
 
         // Write the file
         Files.writeString(modInfoPath, modInfoContent);
-        logger.info("Created mod.info file at: " + modInfoPath);
+        Logger.info("Created mod.info file at: " + modInfoPath);
     }
 }

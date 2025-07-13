@@ -77,14 +77,42 @@ public class DynamicContextMenu extends ContextMenu {
 
         // Get all available languages
         PZLanguages pzLanguages = PZLanguages.getInstance();
+        var visibleLanguages = org.pz.polyglot.State.getInstance().getVisibleLanguages();
 
-        // Add language menu items
+        // Split languages into visible and hidden
+        List<String> enabledLanguagesList = new java.util.ArrayList<>();
+        List<String> disabledLanguagesList = new java.util.ArrayList<>();
+
         for (String languageCode : pzLanguages.getAllLanguageCodes()) {
+            if (visibleLanguages.contains(languageCode)) {
+                enabledLanguagesList.add(languageCode);
+            } else {
+                disabledLanguagesList.add(languageCode);
+            }
+        }
+
+        // Add visible languages as regular menu items
+        for (String languageCode : enabledLanguagesList) {
             pzLanguages.getLanguage(languageCode).ifPresent(language -> {
                 MenuItem languageItem = new MenuItem(language.getCode() + " - " + language.getName());
                 languageItem.setOnAction(e -> buildSourceMenu(language));
                 getItems().add(languageItem);
             });
+        }
+
+        // Add hidden languages submenu if there are any hidden languages
+        if (!disabledLanguagesList.isEmpty()) {
+            Menu disabledLanguagesMenu = new Menu("Disabled Languages");
+
+            for (String languageCode : disabledLanguagesList) {
+                pzLanguages.getLanguage(languageCode).ifPresent(language -> {
+                    MenuItem languageItem = new MenuItem(language.getCode() + " - " + language.getName());
+                    languageItem.setOnAction(e -> buildSourceMenu(language));
+                    disabledLanguagesMenu.getItems().add(languageItem);
+                });
+            }
+
+            getItems().add(disabledLanguagesMenu);
         }
     }
 
@@ -94,29 +122,85 @@ public class DynamicContextMenu extends ContextMenu {
     private void buildSourceMenu(PZLanguage selectedLanguage) {
         getItems().clear();
 
-        // Get all available sources - only show editable ones
-        List<PZSource> editableSources = PZSources.getInstance().getSources().stream()
+        var enabledSources = org.pz.polyglot.State.getInstance().getEnabledSources();
+
+        // Get all editable sources and split them into enabled and disabled
+        List<PZSource> allEditableSources = PZSources.getInstance().getSources().stream()
                 .filter(PZSource::isEditable)
                 .toList();
 
-        // Add each editable source as a submenu
-        for (PZSource source : editableSources) {
-            Menu sourceMenu = new Menu(source.toString());
+        List<PZSource> enabledSourcesList = allEditableSources.stream()
+                .filter(source -> enabledSources.contains(source.getName()))
+                .toList();
 
-            // Add all translation types to this source submenu
-            for (PZTranslationType type : PZTranslationType.values()) {
+        List<PZSource> disabledSourcesList = allEditableSources.stream()
+                .filter(source -> !enabledSources.contains(source.getName()))
+                .toList();
+
+        // Add enabled sources as regular menu items
+        for (PZSource source : enabledSourcesList) {
+            Menu sourceMenu = new Menu(source.toString());
+            addTypeSubmenu(sourceMenu, selectedLanguage, source);
+            getItems().add(sourceMenu);
+        }
+
+        // Add disabled sources submenu if there are any disabled sources
+        if (!disabledSourcesList.isEmpty()) {
+            Menu disabledSourcesMenu = new Menu("Disabled Sources");
+
+            for (PZSource source : disabledSourcesList) {
+                Menu sourceMenu = new Menu(source.toString());
+                addTypeSubmenu(sourceMenu, selectedLanguage, source);
+                disabledSourcesMenu.getItems().add(sourceMenu);
+            }
+
+            getItems().add(disabledSourcesMenu);
+        }
+    }
+
+    /**
+     * Adds type submenu to a source menu.
+     */
+    private void addTypeSubmenu(Menu sourceMenu, PZLanguage selectedLanguage, PZSource source) {
+        var selectedTypes = org.pz.polyglot.State.getInstance().getSelectedTypes();
+
+        // Split types into enabled and disabled
+        List<PZTranslationType> enabledTypesList = java.util.Arrays.stream(PZTranslationType.values())
+                .filter(type -> selectedTypes.contains(type))
+                .toList();
+
+        List<PZTranslationType> disabledTypesList = java.util.Arrays.stream(PZTranslationType.values())
+                .filter(type -> !selectedTypes.contains(type))
+                .toList();
+
+        // Add enabled types as regular menu items
+        for (PZTranslationType type : enabledTypesList) {
+            MenuItem typeItem = new MenuItem(type.name());
+            typeItem.setOnAction(e -> {
+                TranslationVariantSelection selection = new TranslationVariantSelection(
+                        selectedLanguage, source, type);
+                onSelectionComplete.accept(selection);
+                hide();
+            });
+            sourceMenu.getItems().add(typeItem);
+        }
+
+        // Add disabled types submenu if there are any disabled types
+        if (!disabledTypesList.isEmpty()) {
+            Menu disabledTypesMenu = new Menu("Disabled Types");
+
+            for (PZTranslationType type : disabledTypesList) {
                 MenuItem typeItem = new MenuItem(type.name());
                 typeItem.setOnAction(e -> {
-                    // Complete selection - call the callback
                     TranslationVariantSelection selection = new TranslationVariantSelection(
                             selectedLanguage, source, type);
                     onSelectionComplete.accept(selection);
-                    hide(); // Close the context menu
+                    hide();
                 });
-                sourceMenu.getItems().add(typeItem);
+                disabledTypesMenu.getItems().add(typeItem);
             }
 
-            getItems().add(sourceMenu);
+            sourceMenu.getItems().add(disabledTypesMenu);
         }
     }
 

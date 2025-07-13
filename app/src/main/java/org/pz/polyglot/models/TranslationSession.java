@@ -1,16 +1,18 @@
-package org.pz.polyglot.models.translations;
+package org.pz.polyglot.models;
+
+import org.pz.polyglot.models.translations.PZTranslationVariant;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableSet;
 
-public class PZTranslationSession {
-    private static final PZTranslationSession INSTANCE = new PZTranslationSession();
+public class TranslationSession {
+    private static final TranslationSession INSTANCE = new TranslationSession();
     private final ObservableSet<PZTranslationVariant> variants = FXCollections.observableSet();
 
-    private PZTranslationSession() {
+    private TranslationSession() {
     }
 
-    public static PZTranslationSession getInstance() {
+    public static TranslationSession getInstance() {
         return INSTANCE;
     }
 

@@ -16,21 +16,25 @@
 <?import org.pz.polyglot.components.TranslationTable?>
 <?import javafx.scene.control.SplitPane?>
 <?import org.pz.polyglot.components.TypesPanel?>
+<?import org.pz.polyglot.components.SourcesPanel?>
 <?import org.pz.polyglot.components.LanguagesPanel?>
 
-<BorderPane prefHeight="600.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.pz.polyglot.components.main.MainController">
+<BorderPane
+  xmlns="http://javafx.com/javafx/21"
+  xmlns:fx="http://javafx.com/fxml/1"
+  fx:controller="org.pz.polyglot.components.main.MainController">
   <top>
     <MenuBar fx:id="menuBar">
       <menus>
-        <Menu fx:id="fileMenu" mnemonicParsing="false" text="%menu.file">
+        <Menu fx:id="fileMenu" mnemonicParsing="false" text="File">
           <items>
-            <MenuItem fx:id="quitMenuItem" mnemonicParsing="false" text="%menu.quit" />
+            <MenuItem fx:id="quitMenuItem" mnemonicParsing="false" text="Quit" />
           </items>
         </Menu>
-        <Menu fx:id="helpMenu" mnemonicParsing="false" text="%menu.help">
+        <Menu fx:id="helpMenu" mnemonicParsing="false" text="Help">
           <items>
-            <MenuItem fx:id="githubMenuItem" mnemonicParsing="false" text="%menu.github" />
-            <MenuItem fx:id="discordMenuItem" mnemonicParsing="false" text="%menu.discord" />
+            <MenuItem fx:id="githubMenuItem" mnemonicParsing="false" text="Github" />
+            <MenuItem fx:id="discordMenuItem" mnemonicParsing="false" text="Discord" />
           </items>
         </Menu>
       </menus>
@@ -41,13 +45,13 @@
       <ToolbarComponent fx:id="toolbarComponent" />
       <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 8 10;">
         <children>
-          <Label text="Filter by key:" style="-fx-font-size: 12px;" />
           <TextField fx:id="filterField" promptText="Filter by key..." prefWidth="200" style="-fx-font-size: 12px;" />
         </children>
       </HBox>
       <HBox spacing="0" VBox.vgrow="ALWAYS">
         <children>
           <TypesPanel fx:id="typesPanel" visible="false" managed="false" minWidth="150" maxWidth="150" prefWidth="150" />
+          <SourcesPanel fx:id="sourcesPanel" visible="false" managed="false" minWidth="200" maxWidth="200" prefWidth="200" />
           <LanguagesPanel fx:id="languagesPanel" visible="false" managed="false" minWidth="250" maxWidth="250" prefWidth="250" />
           <VBox spacing="0" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
             <children>

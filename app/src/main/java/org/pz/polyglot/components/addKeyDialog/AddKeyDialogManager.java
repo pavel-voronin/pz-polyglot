@@ -6,17 +6,15 @@ import javafx.scene.Scene;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import org.pz.polyglot.App;
+import org.pz.polyglot.Logger;
 
 import java.io.IOException;
-import java.util.logging.Logger;
 
 /**
  * Manager for the Add Key dialog.
  * Handles showing the modal dialog for adding new translation keys.
  */
 public class AddKeyDialogManager {
-
-    private static final Logger logger = Logger.getLogger(AddKeyDialogManager.class.getName());
     private static final int DIALOG_WIDTH = 350;
     private static final int DIALOG_HEIGHT = 200;
 
@@ -49,7 +47,7 @@ public class AddKeyDialogManager {
             return null;
 
         } catch (IOException e) {
-            logger.severe("Error opening add key dialog: " + e.getMessage());
+            Logger.error("Error opening add key dialog: " + e.getMessage());
             e.printStackTrace();
             return null;
         }

@@ -10,15 +10,15 @@
         <!-- Game Folder Section -->
         <VBox styleClass="folder-section">
             <children>
-                <Label text="%language-dialog.game.label" styleClass="section-label" />
+                <Label text="Project Zomboid game folder:" styleClass="section-label" />
                 <HBox styleClass="path-container">
                     <children>
                         <TextField fx:id="gameField" styleClass="path-field" />
-                        <Button text="%language-dialog.browse.button" fx:id="gameBrowse" 
+                        <Button text="Browse..." fx:id="gameBrowse" 
                                 onAction="#onGameBrowse" styleClass="browse-button" />
                     </children>
                 </HBox>
-                <CheckBox text="%language-dialog.editable.checkbox" fx:id="gameEditableCheckBox" 
+                <CheckBox text="Enable editing" fx:id="gameEditableCheckBox" 
                           styleClass="editable-checkbox" />
             </children>
         </VBox>
@@ -26,15 +26,15 @@
         <!-- Steam Mods Folder Section -->
         <VBox styleClass="folder-section">
             <children>
-                <Label text="%language-dialog.steam.label" styleClass="section-label" />
+                <Label text="Steam mods folder:" styleClass="section-label" />
                 <HBox styleClass="path-container">
                     <children>
                         <TextField fx:id="steamField" styleClass="path-field" />
-                        <Button text="%language-dialog.browse.button" fx:id="steamBrowse" 
+                        <Button text="Browse..." fx:id="steamBrowse" 
                                 onAction="#onSteamBrowse" styleClass="browse-button" />
                     </children>
                 </HBox>
-                <CheckBox text="%language-dialog.editable.checkbox" fx:id="steamEditableCheckBox" 
+                <CheckBox text="Enable editing" fx:id="steamEditableCheckBox" 
                           styleClass="editable-checkbox" />
             </children>
         </VBox>
@@ -42,15 +42,15 @@
         <!-- Cache Folder Section -->
         <VBox styleClass="folder-section">
             <children>
-                <Label text="%language-dialog.cache.label" styleClass="section-label" />
+                <Label text="Cache folder:" styleClass="section-label" />
                 <HBox styleClass="path-container">
                     <children>
                         <TextField fx:id="cacheField" styleClass="path-field" />
-                        <Button text="%language-dialog.browse.button" fx:id="cacheBrowse" 
+                        <Button text="Browse..." fx:id="cacheBrowse" 
                                 onAction="#onCacheBrowse" styleClass="browse-button" />
                     </children>
                 </HBox>
-                <CheckBox text="%language-dialog.editable.checkbox" fx:id="cacheEditableCheckBox" 
+                <CheckBox text="Enable editing" fx:id="cacheEditableCheckBox" 
                           styleClass="editable-checkbox" />
             </children>
         </VBox>
@@ -58,8 +58,7 @@
         <!-- OK Button -->
         <HBox styleClass="button-container">
             <children>
-                <Button text="%language-dialog.ok.button" fx:id="okButton" 
-                        onAction="#onOk" styleClass="ok-button" />
+                <Button text="OK" fx:id="okButton" onAction="#onOk" styleClass="ok-button" />
             </children>
         </HBox>
     </children>

@@ -4,7 +4,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.ListChangeListener;
 import javafx.scene.control.*;
 
-import org.pz.polyglot.AppConfig;
+import org.pz.polyglot.Config;
 import org.pz.polyglot.State;
 import org.pz.polyglot.models.languages.PZLanguages;
 import org.pz.polyglot.viewModels.TranslationEntryViewModel;
@@ -357,9 +357,8 @@ public class ColumnManager {
             }
         }
 
-        AppConfig cfg = AppConfig.getInstance();
+        Config cfg = Config.getInstance();
         cfg.setPzLanguages(visibleLanguagesInOrder.toArray(new String[0]));
-        cfg.save();
     }
 
     /**

@@ -1,20 +1,26 @@
 package org.pz.polyglot;
 
-import javafx.beans.property.*;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import org.pz.polyglot.models.translations.PZTranslationSession;
+import javafx.collections.ObservableSet;
+
 import org.pz.polyglot.models.translations.PZTranslationType;
+import org.pz.polyglot.components.SystemMonitor;
+import org.pz.polyglot.models.TranslationSession;
 import org.pz.polyglot.models.languages.PZLanguages;
 
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 /**
  * Centralized Observable state manager for UI components.
- * Replaces callback-based communication with reactive Properties.
  */
 public class State {
     private static State instance;
@@ -32,6 +38,10 @@ public class State {
     private final BooleanProperty selectedTypesChanged = new SimpleBooleanProperty(false);
     private final BooleanProperty typesPanelVisible = new SimpleBooleanProperty(false); // For TypesPanel visibility
     private final BooleanProperty languagesPanelVisible = new SimpleBooleanProperty(false);
+    private final ObservableSet<String> enabledSources = FXCollections.observableSet(new HashSet<>());
+    private final ObservableSet<String> disabledSources = FXCollections.observableSet(new HashSet<>());
+    private final BooleanProperty enabledSourcesChanged = new SimpleBooleanProperty(false);
+    private final BooleanProperty sourcesPanelVisible = new SimpleBooleanProperty(false);
 
     private State() {
         // Initialize with current session state
@@ -41,12 +51,18 @@ public class State {
         initializeVisibleLanguagesFromConfig();
 
         initializeSelectedTypesFromConfig();
+
+        // Initialize sources from config
+        initializeSourcesFromConfig();
     }
 
     public static State getInstance() {
         if (instance == null) {
             instance = new State();
+            SystemMonitor.addHook(() -> String.format("Sources count: %d/%d", instance.enabledSources.size(),
+                    instance.disabledSources.size()));
         }
+
         return instance;
     }
 
@@ -95,6 +111,22 @@ public class State {
         return languagesPanelVisible;
     }
 
+    public BooleanProperty enabledSourcesChangedProperty() {
+        return enabledSourcesChanged;
+    }
+
+    public BooleanProperty sourcesPanelVisibleProperty() {
+        return sourcesPanelVisible;
+    }
+
+    public ObservableSet<String> getEnabledSources() {
+        return enabledSources;
+    }
+
+    public ObservableSet<String> getDisabledSources() {
+        return disabledSources;
+    }
+
     public Set<PZTranslationType> getSelectedTypes() {
         return EnumSet.copyOf(selectedTypes);
     }
@@ -132,9 +164,7 @@ public class State {
         visibleLanguages.setAll(languages);
 
         // Save to configuration
-        AppConfig config = AppConfig.getInstance();
-        config.setPzLanguages(languages.toArray(new String[0]));
-        config.save();
+        Config.getInstance().setPzLanguages(languages.toArray(new String[0]));
     }
 
     public String getFilterText() {
@@ -148,10 +178,8 @@ public class State {
     public void setSelectedTypes(Set<PZTranslationType> types) {
         selectedTypes.clear();
         selectedTypes.addAll(types);
-        AppConfig config = AppConfig.getInstance();
         String[] typeNames = selectedTypes.stream().map(Enum::name).toArray(String[]::new);
-        config.setPzTranslationTypes(typeNames);
-        config.save();
+        Config.getInstance().setPzTranslationTypes(typeNames);
         selectedTypesChanged.set(!selectedTypesChanged.get()); // Notify listeners once
     }
 
@@ -171,11 +199,49 @@ public class State {
         languagesPanelVisible.set(visible);
     }
 
+    public Set<String> getAllKnownSources() {
+        Set<String> allSources = new HashSet<>();
+        allSources.addAll(enabledSources);
+        allSources.addAll(disabledSources);
+        return allSources;
+    }
+
+    public void setEnabledSources(Set<String> sources) {
+        // Calculate all known sources BEFORE mutating enabledSources
+        Set<String> allSources = new HashSet<>(enabledSources);
+        allSources.addAll(disabledSources);
+        enabledSources.clear();
+        enabledSources.addAll(sources);
+        disabledSources.clear();
+        disabledSources.addAll(allSources);
+        disabledSources.removeAll(sources);
+        Config.getInstance().setEnabledSources(enabledSources.toArray(new String[0]));
+        Config.getInstance().setDisabledSources(disabledSources.toArray(new String[0]));
+        enabledSourcesChanged.set(!enabledSourcesChanged.get());
+    }
+
+    public void addNewSource(String sourceName) {
+        if (!getAllKnownSources().contains(sourceName)) {
+            enabledSources.add(sourceName);
+            Config.getInstance().setEnabledSources(enabledSources.toArray(new String[0]));
+            Config.getInstance().setDisabledSources(disabledSources.toArray(new String[0]));
+            enabledSourcesChanged.set(!enabledSourcesChanged.get());
+        }
+    }
+
+    public boolean isSourcesPanelVisible() {
+        return sourcesPanelVisible.get();
+    }
+
+    public void setSourcesPanelVisible(boolean visible) {
+        sourcesPanelVisible.set(visible);
+    }
+
     /**
      * Updates hasChanges property based on current PZTranslationSession state.
      */
     public void updateHasChangesFromSession() {
-        PZTranslationSession session = PZTranslationSession.getInstance();
+        TranslationSession session = TranslationSession.getInstance();
         boolean sessionHasChanges = !session.getVariants().isEmpty();
         setHasChanges(sessionHasChanges);
     }
@@ -216,8 +282,7 @@ public class State {
      */
     private void initializeVisibleLanguagesFromConfig() {
         try {
-            AppConfig config = AppConfig.getInstance();
-            String[] cfgLangs = config.getPzLanguages();
+            String[] cfgLangs = Config.getInstance().getPzLanguages();
             if (cfgLangs != null && cfgLangs.length > 0) {
                 visibleLanguages.setAll(Arrays.asList(cfgLangs));
             } else {
@@ -241,11 +306,25 @@ public class State {
     }
 
     private void initializeSelectedTypesFromConfig() {
-        AppConfig config = AppConfig.getInstance();
-        String[] cfgTypes = config.getPzTranslationTypes();
+        String[] cfgTypes = Config.getInstance().getPzTranslationTypes();
         selectedTypes.clear();
         for (String typeName : cfgTypes) {
             PZTranslationType.fromString(typeName).ifPresent(selectedTypes::add);
+        }
+    }
+
+    private void initializeSourcesFromConfig() {
+        enabledSources.clear();
+        disabledSources.clear();
+
+        String[] enabled = Config.getInstance().getEnabledSources();
+        String[] disabled = Config.getInstance().getDisabledSources();
+
+        if (enabled != null) {
+            enabledSources.addAll(Arrays.asList(enabled));
+        }
+        if (disabled != null) {
+            disabledSources.addAll(Arrays.asList(disabled));
         }
     }
 }

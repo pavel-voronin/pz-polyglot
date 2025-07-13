@@ -6,14 +6,12 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.logging.Logger;
 
+import org.pz.polyglot.Logger;
 import org.pz.polyglot.models.sources.PZSources;
 import org.pz.polyglot.structs.SemanticVersion;
 
 public class PZLanguageManager {
-    private static final Logger logger = Logger.getLogger(PZLanguages.class.getName());
-
     public static void load() {
         PZSources.getInstance().getSources().forEach(source -> {
             // Use SemanticVersion directly from source
@@ -26,7 +24,7 @@ public class PZLanguageManager {
         try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(folder, filter)) {
             directoryStream.forEach(languagePath -> loadLanguage(languagePath, version));
         } catch (IOException | DirectoryIteratorException exception) {
-            logger.warning("Failed to load language directory: " + folder.toString());
+            Logger.warning("Failed to load language directory: " + folder.toString());
         }
     }
 
@@ -40,7 +38,7 @@ public class PZLanguageManager {
             });
 
         } catch (IOException e) {
-            logger.warning("Failed to read language file: " + path.toString());
+            Logger.warning("Failed to read language file: " + path.toString());
         }
     }
 }

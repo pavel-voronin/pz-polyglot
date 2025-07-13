@@ -9,11 +9,10 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Spliterator;
 import java.util.Spliterators;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import org.pz.polyglot.Logger;
 import org.pz.polyglot.models.languages.PZLanguage;
 import org.pz.polyglot.models.sources.PZSource;
 
@@ -26,8 +25,6 @@ import org.pz.polyglot.models.sources.PZSource;
  * cleaning lines.
  */
 public class PZTranslationParser implements AutoCloseable, Iterable<PZTranslationParser.Pair> {
-    private static final Logger LOGGER = Logger.getLogger(PZTranslationParser.class.getName());
-
     public record Pair(String key, String value, int startLine, int endLine) {
     }
 
@@ -62,8 +59,8 @@ public class PZTranslationParser implements AutoCloseable, Iterable<PZTranslatio
                 continue;
             }
         }
-        LOGGER.log(Level.WARNING, "Failed to read file with any available charset: " + path
-                + ". Tried charsets: " + availableCharsets);
+        Logger.warning(
+                "Failed to read file with any available charset: " + path + ". Tried charsets: " + availableCharsets);
         return new ReadResult(List.of(), null); // Return empty list if no charset works
     }
 

@@ -13,11 +13,11 @@ import javafx.stage.Stage;
 import org.pz.polyglot.State;
 import org.pz.polyglot.components.addKeyDialog.AddKeyDialogManager;
 import org.pz.polyglot.components.addModDialog.AddModDialogManager;
+import org.pz.polyglot.models.TranslationSession;
 import org.pz.polyglot.models.translations.PZTranslationManager;
-import org.pz.polyglot.models.translations.PZTranslationSession;
 import org.pz.polyglot.models.translations.PZTranslationVariant;
 import org.pz.polyglot.models.translations.PZTranslations;
-import org.pz.polyglot.util.FolderUtils;
+import org.pz.polyglot.utils.FolderUtils;
 
 import java.io.IOException;
 
@@ -36,10 +36,13 @@ public class ToolbarComponent extends ToolBar {
     @FXML
     private ToggleButton typesButton;
     @FXML
+    private ToggleButton sourcesButton;
+    @FXML
     private ToggleButton languagesButton;
 
     private final State stateManager = State.getInstance();
     private final BooleanProperty typesPanelVisible = new SimpleBooleanProperty(false);
+    private final BooleanProperty sourcesPanelVisible = new SimpleBooleanProperty(false);
     private final BooleanProperty languagesPanelVisible = new SimpleBooleanProperty(false);
 
     public ToolbarComponent() {
@@ -93,6 +96,13 @@ public class ToolbarComponent extends ToolBar {
             stateManager.setTypesPanelVisible(show);
         });
 
+        // Sources panel toggle logic
+        sourcesButton.setOnAction(e -> {
+            boolean show = sourcesButton.isSelected();
+            sourcesPanelVisible.set(show);
+            stateManager.setSourcesPanelVisible(show);
+        });
+
         // Languages panel toggle logic
         languagesButton.setOnAction(e -> {
             boolean show = languagesButton.isSelected();
@@ -107,6 +117,12 @@ public class ToolbarComponent extends ToolBar {
         });
         updateTypesButtonText();
 
+        // Listen for changes in enabled sources and update button text
+        stateManager.enabledSourcesChangedProperty().addListener((obs, oldVal, newVal) -> {
+            updateSourcesButtonText();
+        });
+        updateSourcesButtonText();
+
         // Listen for changes in visible languages and update button text
         stateManager.getVisibleLanguages().addListener((javafx.collections.ListChangeListener<String>) change -> {
             updateLanguagesButtonText();
@@ -117,12 +133,15 @@ public class ToolbarComponent extends ToolBar {
         typesPanelVisible.addListener((obs, oldVal, newVal) -> {
             typesButton.setSelected(newVal);
         });
+        sourcesPanelVisible.addListener((obs, oldVal, newVal) -> {
+            sourcesButton.setSelected(newVal);
+        });
         languagesPanelVisible.addListener((obs, oldVal, newVal) -> {
             languagesButton.setSelected(newVal);
         });
 
         // Listen to changes in the set of dirty variants
-        PZTranslationSession.getInstance().getVariants()
+        TranslationSession.getInstance().getVariants()
                 .addListener((SetChangeListener<PZTranslationVariant>) change -> updateSaveAllButtonState());
 
         // Initial state
@@ -135,7 +154,7 @@ public class ToolbarComponent extends ToolBar {
      * variants.
      */
     private void updateSaveAllButtonState() {
-        var variants = PZTranslationSession.getInstance().getVariants();
+        var variants = TranslationSession.getInstance().getVariants();
         int count = variants.size();
         saveAllToolbarButton.setText("Save All" + (count > 0 ? " (" + count + ")" : ""));
         saveAllToolbarButton.setDisable(count == 0);
@@ -153,6 +172,11 @@ public class ToolbarComponent extends ToolBar {
     private void updateTypesButtonText() {
         int count = stateManager.getSelectedTypes().size();
         typesButton.setText("Types (" + count + ")");
+    }
+
+    private void updateSourcesButtonText() {
+        int count = stateManager.getEnabledSources().size();
+        sourcesButton.setText("Sources (" + count + ")");
     }
 
     private void updateLanguagesButtonText() {

@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
+import org.pz.polyglot.Logger;
+
 public class SystemMonitor extends HBox {
 
     private static final List<Supplier<String>> hooks = new ArrayList<>();
@@ -25,6 +27,11 @@ public class SystemMonitor extends HBox {
 
         memoryLabel.getStyleClass().add("memory-label");
         getChildren().addAll(memoryLabel);
+
+        memoryLabel.setOnMouseClicked(event -> {
+            System.gc();
+            Logger.info("Manual garbage collection triggered");
+        });
 
         initializeMemoryMonitor();
     }
