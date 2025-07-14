@@ -14,6 +14,7 @@
 <?import org.pz.polyglot.components.TranslationPanel?>
 <?import org.pz.polyglot.components.ToolbarComponent?>
 <?import org.pz.polyglot.components.TranslationTable?>
+<?import org.pz.polyglot.components.TablePanel?>
 <?import javafx.scene.control.SplitPane?>
 <?import org.pz.polyglot.components.TypesPanel?>
 <?import org.pz.polyglot.components.SourcesPanel?>
@@ -43,26 +44,17 @@
   <center>
     <VBox>
       <ToolbarComponent fx:id="toolbarComponent" />
-      <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 8 10;">
-        <children>
-          <TextField fx:id="filterField" promptText="Filter by key..." prefWidth="200" style="-fx-font-size: 12px;" />
-        </children>
-      </HBox>
       <HBox spacing="0" VBox.vgrow="ALWAYS">
         <children>
-          <TypesPanel fx:id="typesPanel" visible="false" managed="false" minWidth="150" maxWidth="150" prefWidth="150" />
-          <SourcesPanel fx:id="sourcesPanel" visible="false" managed="false" minWidth="200" maxWidth="200" prefWidth="200" />
-          <LanguagesPanel fx:id="languagesPanel" visible="false" managed="false" minWidth="250" maxWidth="250" prefWidth="250" />
-          <VBox spacing="0" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
-            <children>
-              <SplitPane orientation="HORIZONTAL" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS" fx:id="mainSplitPane" dividerPositions="0.0">
-                <items>
-                  <TranslationTable fx:id="translationTable" />
-                  <TranslationPanel fx:id="translationPanel" visible="false" managed="false" maxWidth="400" prefWidth="400" minWidth="300" />
-                </items>
-              </SplitPane>
-            </children>
-          </VBox>
+          <SplitPane orientation="HORIZONTAL" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS" fx:id="mainSplitPane" dividerPositions="0.0">
+            <items>
+              <TypesPanel fx:id="typesPanel" visible="false" managed="false"  minWidth="150" prefWidth="150" />
+              <SourcesPanel fx:id="sourcesPanel" visible="false" managed="false" prefWidth="200" />
+              <LanguagesPanel fx:id="languagesPanel" visible="false" managed="false" prefWidth="250" />
+              <TablePanel />
+              <TranslationPanel fx:id="translationPanel" visible="false" managed="false" minWidth="290" prefWidth="400" />
+            </items>
+          </SplitPane>
         </children>
       </HBox>
     </VBox>

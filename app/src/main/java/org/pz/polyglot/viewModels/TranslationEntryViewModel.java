@@ -19,6 +19,17 @@ import java.util.stream.Collectors;
  * and manages the list of variant ViewModels.
  */
 public class TranslationEntryViewModel {
+    /**
+     * Returns all language codes for which this entry has a translation.
+     */
+    public Set<String> getLanguages() {
+        return getVariantViewModels().stream()
+                .map(vm -> vm.getLanguage())
+                .filter(java.util.Objects::nonNull)
+                .map(lang -> lang.getCode())
+                .collect(java.util.stream.Collectors.toSet());
+    }
+
     private final PZTranslationEntry entry;
 
     private final StringProperty key = new SimpleStringProperty();
@@ -113,9 +124,7 @@ public class TranslationEntryViewModel {
     public boolean hasTranslationForLanguage(String languageCode) {
         return variantViewModels.stream()
                 .anyMatch(vm -> vm.getLanguage() != null &&
-                        languageCode.equals(vm.getLanguage().getCode()) &&
-                        vm.getVariant().getOriginalText() != null &&
-                        !vm.getVariant().getOriginalText().isEmpty());
+                        languageCode.equals(vm.getLanguage().getCode()));
     }
 
     /**

@@ -9,12 +9,14 @@ public class PZSource {
     private final SemanticVersion version;
     private final Path path;
     private final boolean editable;
+    private final int priority;
 
-    public PZSource(String name, SemanticVersion version, Path path, boolean editable) {
+    public PZSource(String name, SemanticVersion version, Path path, boolean editable, int priority) {
         this.name = name;
         this.version = version;
         this.path = path;
         this.editable = editable;
+        this.priority = priority;
     }
 
     public String getName() {
@@ -31,6 +33,10 @@ public class PZSource {
 
     public boolean isEditable() {
         return editable;
+    }
+
+    public int getPriority() {
+        return priority;
     }
 
     @Override

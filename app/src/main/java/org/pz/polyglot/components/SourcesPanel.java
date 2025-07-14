@@ -37,18 +37,30 @@ public class SourcesPanel extends VBox {
                     super.updateItem(sourceName, empty);
                     if (empty || sourceName == null) {
                         setText(null);
+                        setGraphic(null);
                         setStyle("");
                     } else {
-                        setText(sourceName);
-                        
+                        boolean isLocked = false;
+                        var sources = org.pz.polyglot.models.sources.PZSources.getInstance().getSources();
+                        for (var src : sources) {
+                            if (src.getName().equals(sourceName) && !src.isEditable()) {
+                                isLocked = true;
+                                break;
+                            }
+                        }
+                        // Just prepend lock emoji to text if locked
+                        String displayText = isLocked ? "🔒 " + sourceName : sourceName;
+                        setText(displayText);
+                        setGraphic(null);
+
                         // Check if this cell is being dragged
                         DragSelectListView<String> dragListView = (DragSelectListView<String>) getListView();
                         boolean isDragged = dragListView.isDraggedIndex(getIndex());
                         boolean isDragSelecting = dragListView.isDragSelecting();
-                        
+
                         // Regular selection state
                         boolean isSelected = getListView().getSelectionModel().isSelected(getIndex());
-                        
+
                         String style;
                         if (isDragged) {
                             // Show drag preview with softer colors
@@ -62,12 +74,11 @@ public class SourcesPanel extends VBox {
                         } else {
                             style = "-fx-background-color: transparent;";
                         }
-                        
+
                         setStyle(style);
                     }
                 }
             };
-            
             return cell;
         });
 
@@ -92,7 +103,7 @@ public class SourcesPanel extends VBox {
                 allIndices.add(i);
             }
             sourcesListView.selectItems(allIndices);
-            
+
             // Update state
             var allSources = new HashSet<>(sourcesListView.getItems());
             stateManager.setEnabledSources(allSources);
@@ -118,7 +129,7 @@ public class SourcesPanel extends VBox {
             updateLocalState();
             syncSelectionFromState();
         });
-        
+
         // Initial sync - delay to ensure ListView is fully initialized
         Platform.runLater(() -> {
             Platform.runLater(() -> {
@@ -126,25 +137,25 @@ public class SourcesPanel extends VBox {
             });
         });
     }
-    
+
     private void syncSelectionFromState() {
         Set<Integer> indicesToSelect = new HashSet<>();
         Set<String> enabledSources = stateManager.getEnabledSources();
-        
+
         for (int i = 0; i < sourcesListView.getItems().size(); i++) {
             if (enabledSources.contains(sourcesListView.getItems().get(i))) {
                 indicesToSelect.add(i);
             }
         }
-        
+
         sourcesListView.selectItems(indicesToSelect);
     }
 
     private void updateSourcesList() {
+        // Sources are already sorted by priority in PZSources.getSources()
         List<String> allSources = PZSources.getInstance().getSources().stream()
                 .map(source -> source.getName())
                 .distinct()
-                .sorted()
                 .toList();
         sourcesListView.getItems().setAll(allSources);
     }

@@ -18,8 +18,6 @@ import javafx.scene.control.*;
  */
 public class MainController {
     @FXML
-    private TextField filterField;
-    @FXML
     private MenuItem quitMenuItem;
     @FXML
     private MenuItem githubMenuItem;
@@ -45,13 +43,6 @@ public class MainController {
     private void initialize() {
         initializeMenuActions();
         setupObservableBindings();
-        setupFilterField();
-
-        Platform.runLater(() -> {
-            if (!translationPanel.isVisible() && mainSplitPane.getItems().size() == 2) {
-                mainSplitPane.getItems().remove(1);
-            }
-        });
     }
 
     private void initializeMenuActions() {
@@ -66,10 +57,6 @@ public class MainController {
                 hostServices.showDocument("https://discord.gg/byCBHwpa");
             }
         });
-    }
-
-    private void setupFilterField() {
-        stateManager.filterTextProperty().bind(filterField.textProperty());
     }
 
     /**
@@ -138,6 +125,11 @@ public class MainController {
         // Ensure only visible panels are present
         Platform.runLater(() -> {
             // Clear all panel visibility
+            if (translationPanel != null) {
+                translationPanel.setVisible(false);
+                translationPanel.setManaged(false);
+                mainSplitPane.getItems().remove(translationPanel);
+            }
             if (typesPanel != null) {
                 typesPanel.setVisible(false);
                 typesPanel.setManaged(false);

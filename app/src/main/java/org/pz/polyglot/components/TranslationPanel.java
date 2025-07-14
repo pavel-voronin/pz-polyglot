@@ -7,7 +7,6 @@ import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.scene.layout.HBox;
 import javafx.util.Duration;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.FlowPane;
 
@@ -114,20 +113,45 @@ public class TranslationPanel extends VBox {
         // Set main container style class
         getStyleClass().add("translation-panel");
 
-        // Create header with title and close button
-        BorderPane header = new BorderPane();
+        // Create header with title and close button using HBox
+        HBox header = new HBox();
         header.getStyleClass().add("translation-panel-header");
+        header.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
 
         // Setup title label styling
         panelTitleLabel.getStyleClass().add("translation-panel-title");
-        header.setLeft(panelTitleLabel);
+        panelTitleLabel.setMaxWidth(Double.MAX_VALUE);
+        panelTitleLabel.setEllipsisString("...");
+        HBox.setHgrow(panelTitleLabel, Priority.ALWAYS);
+
+        // Add context menu for copying key, with default style
+        ContextMenu keyContextMenu = new ContextMenu();
+        MenuItem copyKeyItem = new MenuItem("Copy key");
+        copyKeyItem.setStyle("-fx-font-size: 12px;");
+        keyContextMenu.setStyle("-fx-font-size: 12px;");
+        copyKeyItem.setOnAction(e -> {
+            String keyText = panelTitleLabel.getText();
+            if (keyText != null && !keyText.isEmpty()) {
+                var clipboard = javafx.scene.input.Clipboard.getSystemClipboard();
+                var content = new javafx.scene.input.ClipboardContent();
+                content.putString(keyText);
+                clipboard.setContent(content);
+            }
+        });
+        keyContextMenu.getItems().add(copyKeyItem);
+        panelTitleLabel.setOnContextMenuRequested(event -> {
+            keyContextMenu.show(panelTitleLabel, event.getScreenX(), event.getScreenY());
+            event.consume();
+        });
 
         // Setup close button
         closePanelButton.getStyleClass().add("translation-panel-close-button");
         closePanelButton.setOnAction(e -> {
             stateManager.closeRightPanel();
         });
-        header.setRight(closePanelButton);
+
+        // Add label and button to header
+        header.getChildren().addAll(panelTitleLabel, closePanelButton);
 
         // Setup scroll pane - key fix here
         panelScrollPane.setFitToWidth(true);

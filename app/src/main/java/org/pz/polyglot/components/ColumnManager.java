@@ -77,11 +77,11 @@ public class ColumnManager {
         updatingColumnVisibility = true;
 
         try {
-            // Get existing language columns
+            // Get existing language columns by id
             Set<String> existingLanguageColumns = new HashSet<>();
             for (TableColumn<TranslationEntryViewModel, ?> column : tableView.getColumns()) {
-                if (column != keyColumn) {
-                    existingLanguageColumns.add(column.getText());
+                if (column != keyColumn && column.getId() != null) {
+                    existingLanguageColumns.add(column.getId());
                 }
             }
 
@@ -89,8 +89,8 @@ public class ColumnManager {
             // Create a copy to avoid ConcurrentModificationException
             List<TableColumn<TranslationEntryViewModel, ?>> columnsCopy = new ArrayList<>(tableView.getColumns());
             for (TableColumn<TranslationEntryViewModel, ?> column : columnsCopy) {
-                if (column != keyColumn) {
-                    String languageCode = column.getText();
+                if (column != keyColumn && column.getId() != null) {
+                    String languageCode = column.getId();
                     boolean shouldBeVisible = visibleLanguages.contains(languageCode);
                     if (column.isVisible() != shouldBeVisible) {
                         column.setVisible(shouldBeVisible);
@@ -158,6 +158,7 @@ public class ColumnManager {
      */
     private void createLanguageColumn(String lang, boolean visible) {
         TableColumn<TranslationEntryViewModel, String> col = new TableColumn<>(lang);
+        col.setId(lang);
         col.setCellValueFactory(param -> {
             TranslationEntryViewModel entryViewModel = param.getValue();
             if (entryViewModel == null) {
@@ -177,10 +178,15 @@ public class ColumnManager {
             return new SimpleStringProperty(content);
         });
         col.setPrefWidth(60);
+        col.setMinWidth(48);
         col.setReorderable(true);
 
         // Set visibility based on parameter
         col.setVisible(visible);
+
+        // Custom header: label always centered, button pinned right
+        col.setGraphic(createLanguageHeaderBox(lang));
+        col.setText(""); // Remove text header
 
         // Listen for visibility changes to update state and save config
         col.visibleProperty().addListener((obs, oldV, newV) -> {
@@ -200,6 +206,7 @@ public class ColumnManager {
      */
     private void createLanguageColumnAtEnd(String lang, boolean visible) {
         TableColumn<TranslationEntryViewModel, String> col = new TableColumn<>(lang);
+        col.setId(lang);
         col.setCellValueFactory(param -> {
             TranslationEntryViewModel entryViewModel = param.getValue();
             if (entryViewModel == null) {
@@ -219,10 +226,15 @@ public class ColumnManager {
             return new SimpleStringProperty(content);
         });
         col.setPrefWidth(60);
+        col.setMinWidth(48);
         col.setReorderable(true);
 
         // Set visibility based on parameter
         col.setVisible(visible);
+
+        // Custom header: label always centered, button pinned right
+        col.setGraphic(createLanguageHeaderBox(lang));
+        col.setText(""); // Remove text header
 
         // Listen for visibility changes to update state and save config
         // But only if this change is not from our programmatic update
@@ -336,7 +348,7 @@ public class ColumnManager {
      */
     private TableColumn<TranslationEntryViewModel, ?> findLanguageColumn(String lang) {
         for (TableColumn<TranslationEntryViewModel, ?> col : tableView.getColumns()) {
-            if (col != keyColumn && col.getText().equals(lang)) {
+            if (col != keyColumn && lang.equals(col.getId())) {
                 return col;
             }
         }
@@ -352,8 +364,8 @@ public class ColumnManager {
 
         for (TableColumn<TranslationEntryViewModel, ?> column : tableView.getColumns()) {
             // Skip the key column, only process language columns
-            if (column != keyColumn && column.isVisible()) {
-                visibleLanguagesInOrder.add(column.getText());
+            if (column != keyColumn && column.isVisible() && column.getId() != null) {
+                visibleLanguagesInOrder.add(column.getId());
             }
         }
 
@@ -366,8 +378,8 @@ public class ColumnManager {
      */
     private void updateVisibleLanguagesState() {
         List<String> visibleLanguageCodes = tableView.getColumns().stream()
-                .filter(col -> col != keyColumn && col.isVisible())
-                .map(TableColumn::getText)
+                .filter(col -> col != keyColumn && col.isVisible() && col.getId() != null)
+                .map(TableColumn::getId)
                 .collect(Collectors.toList());
 
         stateManager.updateVisibleLanguages(visibleLanguageCodes);
@@ -378,5 +390,48 @@ public class ColumnManager {
      */
     public TableColumn<TranslationEntryViewModel, String> getKeyColumn() {
         return keyColumn;
+    }
+
+    /**
+     * Creates header box for a language column: label + filter button.
+     */
+    private javafx.scene.layout.HBox createLanguageHeaderBox(String lang) {
+        javafx.scene.control.Label headerLabel = new javafx.scene.control.Label(lang);
+        headerLabel.setAlignment(javafx.geometry.Pos.CENTER);
+        headerLabel.setMaxWidth(Double.MAX_VALUE);
+
+        javafx.scene.control.ToggleButton filterButton = new javafx.scene.control.ToggleButton("F");
+        filterButton.setMaxSize(20, 20);
+        filterButton.setMinSize(20, 20);
+        filterButton.setFocusTraversable(false);
+        filterButton.setPadding(javafx.geometry.Insets.EMPTY);
+        filterButton.setTooltip(new javafx.scene.control.Tooltip("Filter: show only rows with values in this column"));
+
+        // Set initial state from State.filteredLanguages
+        filterButton.setSelected(stateManager.getFilteredLanguages().contains(lang));
+
+        // Listen for toggle changes and update State.filteredLanguages
+        filterButton.selectedProperty().addListener((obs, oldV, newV) -> {
+            var filtered = new java.util.ArrayList<>(stateManager.getFilteredLanguages());
+            if (newV) {
+                if (!filtered.contains(lang) && stateManager.getVisibleLanguages().contains(lang)) {
+                    filtered.add(lang);
+                }
+            } else {
+                filtered.remove(lang);
+            }
+            stateManager.updateFilteredLanguages(filtered);
+        });
+
+        // Listen for filteredLanguages changes to update button state
+        stateManager.getFilteredLanguages().addListener((javafx.collections.ListChangeListener<String>) change -> {
+            filterButton.setSelected(stateManager.getFilteredLanguages().contains(lang));
+        });
+
+        javafx.scene.layout.HBox headerBox = new javafx.scene.layout.HBox(5);
+        headerBox.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        javafx.scene.layout.HBox.setHgrow(headerLabel, javafx.scene.layout.Priority.ALWAYS);
+        headerBox.getChildren().addAll(headerLabel, filterButton);
+        return headerBox;
     }
 }

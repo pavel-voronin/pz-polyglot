@@ -17,7 +17,6 @@
     -fx-font-weight: bold;
     -fx-text-overrun: ELLIPSIS;
     -fx-padding: 0 0 0 9;
-    -fx-max-width: 340;
 }
 
 .translation-panel-close-button {

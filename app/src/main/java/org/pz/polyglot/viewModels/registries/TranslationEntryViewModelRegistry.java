@@ -4,7 +4,6 @@ import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.function.Function;
 
-import org.pz.polyglot.components.SystemMonitor;
 import org.pz.polyglot.models.translations.PZTranslationEntry;
 import org.pz.polyglot.viewModels.TranslationEntryViewModel;
 
@@ -17,9 +16,6 @@ import org.pz.polyglot.viewModels.TranslationEntryViewModel;
 public class TranslationEntryViewModelRegistry {
     private static final Map<PZTranslationEntry, TranslationEntryViewModel> cache = new WeakHashMap<>();
     private static Function<PZTranslationEntry, TranslationEntryViewModel> factory = TranslationEntryViewModel::new;
-    static {
-        SystemMonitor.addHook(() -> "EntryViewModel cache size: " + cache.size());
-    }
 
     private TranslationEntryViewModelRegistry() {
     }

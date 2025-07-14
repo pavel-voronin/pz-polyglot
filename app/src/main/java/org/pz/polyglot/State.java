@@ -9,7 +9,6 @@ import javafx.collections.ObservableList;
 import javafx.collections.ObservableSet;
 
 import org.pz.polyglot.models.translations.PZTranslationType;
-import org.pz.polyglot.components.SystemMonitor;
 import org.pz.polyglot.models.TranslationSession;
 import org.pz.polyglot.models.languages.PZLanguages;
 
@@ -18,6 +17,7 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.Objects;
 
 /**
  * Centralized Observable state manager for UI components.
@@ -33,6 +33,7 @@ public class State {
     private final BooleanProperty saveAllTriggered = new SimpleBooleanProperty(false); // For save all events
     private final BooleanProperty tableRebuildRequired = new SimpleBooleanProperty(false); // For full table rebuild
     private final ObservableList<String> visibleLanguages = FXCollections.observableArrayList();
+    private final ObservableList<String> filteredLanguages = FXCollections.observableArrayList();
     private final StringProperty filterText = new SimpleStringProperty(""); // For global filter management
     private final EnumSet<PZTranslationType> selectedTypes = EnumSet.noneOf(PZTranslationType.class);
     private final BooleanProperty selectedTypesChanged = new SimpleBooleanProperty(false);
@@ -59,8 +60,6 @@ public class State {
     public static State getInstance() {
         if (instance == null) {
             instance = new State();
-            SystemMonitor.addHook(() -> String.format("Sources count: %d/%d", instance.enabledSources.size(),
-                    instance.disabledSources.size()));
         }
 
         return instance;
@@ -93,6 +92,10 @@ public class State {
 
     public ObservableList<String> getVisibleLanguages() {
         return visibleLanguages;
+    }
+
+    public ObservableList<String> getFilteredLanguages() {
+        return filteredLanguages;
     }
 
     public StringProperty filterTextProperty() {
@@ -141,7 +144,9 @@ public class State {
     }
 
     public void setSelectedTranslationKey(String key) {
-        selectedTranslationKey.set(key);
+        if (!Objects.equals(selectedTranslationKey.get(), key)) {
+            selectedTranslationKey.set(key);
+        }
     }
 
     public String getSelectedTranslationKey() {
@@ -161,10 +166,23 @@ public class State {
     }
 
     public void updateVisibleLanguages(List<String> languages) {
-        visibleLanguages.setAll(languages);
+        // Always use a modifiable list for setAll
+        var modifiableVisible = FXCollections.observableArrayList(languages);
+        visibleLanguages.setAll(modifiableVisible);
 
         // Save to configuration
         Config.getInstance().setPzLanguages(languages.toArray(new String[0]));
+
+        // Filter filteredLanguages to only those present in visibleLanguages
+        var filtered = filteredLanguages.stream().filter(modifiableVisible::contains).toList();
+        filteredLanguages.setAll(FXCollections.observableArrayList(filtered));
+    }
+
+    public void updateFilteredLanguages(List<String> languages) {
+        // Only allow filtered languages that are present in visibleLanguages
+        var modifiableFiltered = FXCollections
+                .observableArrayList(languages.stream().filter(visibleLanguages::contains).toList());
+        filteredLanguages.setAll(modifiableFiltered);
     }
 
     public String getFilterText() {

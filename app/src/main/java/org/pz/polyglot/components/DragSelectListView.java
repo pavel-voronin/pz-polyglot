@@ -93,6 +93,9 @@ public class DragSelectListView<T> extends ListView<T> {
             return; // Let scrollbar handle the event
         }
 
+        // Force layout update before calculating index
+        this.layout();
+
         int index = getIndexAt(event);
 
         if (index >= 0 && index < getItems().size()) {
@@ -121,9 +124,11 @@ public class DragSelectListView<T> extends ListView<T> {
             return;
         }
 
+        // Force layout update before calculating index
+        this.layout();
+
         int currentIndex = getIndexAt(event);
         if (currentIndex >= 0 && currentIndex < getItems().size()) {
-
             // Update min/max range
             minDraggedIndex = Math.min(minDraggedIndex, currentIndex);
             maxDraggedIndex = Math.max(maxDraggedIndex, currentIndex);
@@ -184,22 +189,40 @@ public class DragSelectListView<T> extends ListView<T> {
     }
 
     private int getIndexAt(MouseEvent event) {
+        // Robust index calculation: find the cell under the mouse Y coordinate
+        try {
+            var virtualFlow = lookup(".virtual-flow");
+            if (virtualFlow != null) {
+                var visibleCells = virtualFlow.lookupAll(".list-cell");
+                for (var cell : visibleCells) {
+                    if (cell instanceof ListCell) {
+                        ListCell<?> listCell = (ListCell<?>) cell;
+                        if (listCell.getIndex() >= 0 && listCell.isVisible()) {
+                            var bounds = listCell.getBoundsInParent();
+                            if (event.getY() >= bounds.getMinY() && event.getY() <= bounds.getMaxY()) {
+                                return listCell.getIndex();
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // Ignore and fallback
+        }
+
+        // Fallback: use previous logic
         double y = event.getY();
         double cellHeight = getCellHeight();
-
-        // Get scroll position
         double scrollOffset = 0;
         try {
             var virtualFlow = lookup(".virtual-flow");
             if (virtualFlow != null) {
-                // Get the first visible cell to calculate scroll offset
                 var visibleCells = virtualFlow.lookupAll(".list-cell");
                 if (!visibleCells.isEmpty()) {
                     for (var cell : visibleCells) {
                         if (cell instanceof ListCell) {
                             ListCell<?> listCell = (ListCell<?>) cell;
                             if (listCell.getIndex() >= 0) {
-                                // Calculate how much we've scrolled
                                 double cellY = listCell.getBoundsInParent().getMinY();
                                 scrollOffset = -cellY + (listCell.getIndex() * cellHeight);
                                 break;
@@ -210,11 +233,8 @@ public class DragSelectListView<T> extends ListView<T> {
             }
         } catch (Exception e) {
         }
-
-        // Calculate actual index with scroll offset
         int index = (int) ((y + scrollOffset) / cellHeight);
         int boundedIndex = Math.max(0, Math.min(index, getItems().size() - 1));
-
         return boundedIndex;
     }
 

@@ -6,6 +6,8 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
 
@@ -14,6 +16,8 @@ import org.pz.polyglot.State;
 import org.pz.polyglot.models.translations.PZTranslationEntry;
 import org.pz.polyglot.viewModels.TranslationEntryViewModel;
 import org.pz.polyglot.viewModels.registries.TranslationEntryViewModelRegistry;
+
+import java.util.Set;
 
 import java.io.IOException;
 
@@ -42,10 +46,6 @@ public class TranslationTable extends TableView<TranslationEntryViewModel> {
         subscribeToState();
         setupTableVirtualization();
 
-        SystemMonitor.addHook(() -> "backing: " + backingList.size());
-        SystemMonitor.addHook(() -> "filtered: " + filteredTableItems.size());
-        SystemMonitor.addHook(() -> "sorted: " + sortedTableItems.size());
-
         populateTranslationsTable();
     }
 
@@ -54,11 +54,45 @@ public class TranslationTable extends TableView<TranslationEntryViewModel> {
         sortedTableItems = new SortedList<>(filteredTableItems);
         sortedTableItems.comparatorProperty().bind(comparatorProperty());
         setItems(sortedTableItems);
-        setRowFactory(tableView -> new TableRow<>() {
-            @Override
-            protected void updateItem(TranslationEntryViewModel item, boolean empty) {
-                super.updateItem(item, empty);
-                // ...custom row logic if needed...
+        setRowFactory(tableView -> {
+            TableRow<TranslationEntryViewModel> row = new TableRow<>() {
+                @Override
+                protected void updateItem(TranslationEntryViewModel item, boolean empty) {
+                    super.updateItem(item, empty);
+                }
+            };
+
+            // Context menu for copying key
+            ContextMenu contextMenu = new ContextMenu();
+            MenuItem copyKeyItem = new MenuItem("Copy key");
+            copyKeyItem.setOnAction(event -> {
+                TranslationEntryViewModel item = row.getItem();
+                if (item != null) {
+                    var clipboard = javafx.scene.input.Clipboard.getSystemClipboard();
+                    var content = new javafx.scene.input.ClipboardContent();
+                    content.putString(item.getKey());
+                    clipboard.setContent(content);
+                }
+            });
+            contextMenu.getItems().add(copyKeyItem);
+
+            row.setOnMouseClicked(event -> {
+                if (!row.isEmpty() && event.getButton() == javafx.scene.input.MouseButton.SECONDARY) {
+                    row.setContextMenu(contextMenu);
+                    contextMenu.show(row, event.getScreenX(), event.getScreenY());
+                    event.consume();
+                }
+            });
+
+            return row;
+        });
+
+        // Listen for selection changes to support keyboard navigation
+        getSelectionModel().selectedItemProperty().addListener((obs, oldItem, newItem) -> {
+            if (newItem != null) {
+                String newKey = newItem.getKey();
+                stateManager.setSelectedTranslationKey(newKey);
+                stateManager.setRightPanelVisible(true);
             }
         });
     }
@@ -67,12 +101,6 @@ public class TranslationTable extends TableView<TranslationEntryViewModel> {
     private void initialize() {
         columnManager = new ColumnManager(this);
         columnManager.createColumns();
-        getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
-            if (newSelection != null) {
-                stateManager.setSelectedTranslationKey(newSelection.getKey());
-                stateManager.setRightPanelVisible(true);
-            }
-        });
     }
 
     private void subscribeToState() {
@@ -89,10 +117,13 @@ public class TranslationTable extends TableView<TranslationEntryViewModel> {
             if (newVal == null || newVal.isEmpty()) {
                 getSelectionModel().clearSelection();
             } else {
-                for (var item : filteredTableItems) {
-                    if (item.getKey().equals(newVal)) {
-                        getSelectionModel().select(item);
-                        break;
+                var selectedItem = getSelectionModel().getSelectedItem();
+                if (selectedItem == null || !java.util.Objects.equals(selectedItem.getKey(), newVal)) {
+                    for (var item : filteredTableItems) {
+                        if (item.getKey().equals(newVal)) {
+                            getSelectionModel().select(item);
+                            break;
+                        }
                     }
                 }
             }
@@ -105,6 +136,8 @@ public class TranslationTable extends TableView<TranslationEntryViewModel> {
                 .addListener((obs, oldVal, newVal) -> applyFilter());
         stateManager.enabledSourcesChangedProperty()
                 .addListener((obs, oldVal, newVal) -> applyFilter());
+        stateManager.getFilteredLanguages()
+                .addListener((javafx.collections.ListChangeListener<? super String>) change -> applyFilter());
     }
 
     /**
@@ -123,26 +156,34 @@ public class TranslationTable extends TableView<TranslationEntryViewModel> {
         applyFilter();
     }
 
-    /**
-     * Deprecated: use State.filterTextProperty instead.
-     */
-    @Deprecated
-    public void setFilterText(String filterText) {
-        this.filterText = filterText == null ? "" : filterText;
-        applyFilter();
-    }
-
     private void applyFilter() {
         Logger.info("Applying filter");
         var selectedTypes = stateManager.getSelectedTypes();
         var enabledSources = stateManager.getEnabledSources();
 
+        // Filter by filteredLanguages (subset of visibleLanguages)
+        var filteredLanguages = stateManager.getFilteredLanguages();
         filteredTableItems.setPredicate(
-                item -> (filterText.isBlank() || item.getKey().toLowerCase().contains(filterText.toLowerCase()))
-                        && (item.getTypes().isEmpty() || selectedTypes.contains(item.getType()))
-                        && (item.getSources().isEmpty() ||
-                                (!enabledSources.isEmpty()
-                                        && item.getSources().stream().anyMatch(enabledSources::contains))));
+                item -> {
+                    boolean matchesText = filterText.isBlank()
+                            || item.getKey().toLowerCase().contains(filterText.toLowerCase());
+                    boolean matchesType = item.getTypes().isEmpty() || selectedTypes.contains(item.getType());
+                    boolean matchesSource = item.getSources().isEmpty() ||
+                            (!enabledSources.isEmpty()
+                                    && item.getSources().stream().anyMatch(enabledSources::contains));
+
+                    // New key: no variants at all
+                    boolean isNewKey = item.getVariantViewModels().isEmpty();
+
+                    if (filteredLanguages.isEmpty()) {
+                        return matchesText && matchesType && matchesSource;
+                    }
+
+                    // If any filtered language is missing, exclude unless new key
+                    Set<String> presentLanguages = item.getLanguages();
+                    boolean hasAllFiltered = filteredLanguages.stream().allMatch(presentLanguages::contains);
+                    return (matchesText && matchesType && matchesSource && (hasAllFiltered || isNewKey));
+                });
     }
 
     public void populateTranslationsTable() {

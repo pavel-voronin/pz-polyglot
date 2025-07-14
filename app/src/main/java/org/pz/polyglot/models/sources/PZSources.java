@@ -33,7 +33,9 @@ public class PZSources {
     }
 
     public List<PZSource> getSources() {
-        return this.sources;
+        return this.sources.stream()
+                .sorted(java.util.Comparator.comparingInt(PZSource::getPriority))
+                .toList();
     }
 
     public void parseSources() {
@@ -69,12 +71,13 @@ public class PZSources {
 
     private void processSteamMods(Path steamPath) {
         boolean editable = Config.getInstance().isSteamModsPathEditable();
+        int priority = 3;
         for (Path userFolder : listDirectories(steamPath)) {
             Path modsFolder = userFolder.resolve("mods");
             if (Files.isDirectory(modsFolder)) {
                 for (Path modFolder : listDirectories(modsFolder)) {
                     String modName = modFolder.getFileName().toString();
-                    addSourcesFromFolder(modName, modFolder, editable);
+                    addSourcesFromFolder(modName, modFolder, editable, priority);
                 }
             }
         }
@@ -82,12 +85,13 @@ public class PZSources {
 
     private void processWorkshopMods(Path workshopPath) {
         boolean editable = Config.getInstance().isCachePathEditable();
+        int priority = 1;
         for (Path workshopFolder : listDirectories(workshopPath)) {
             Path modsFolder = workshopFolder.resolve("Contents").resolve("mods");
             if (Files.isDirectory(modsFolder)) {
                 for (Path modFolder : listDirectories(modsFolder)) {
                     String modName = modFolder.getFileName().toString();
-                    addSourcesFromFolder(modName, modFolder, editable);
+                    addSourcesFromFolder(modName, modFolder, editable, priority);
                 }
             }
         }
@@ -95,28 +99,32 @@ public class PZSources {
 
     private void processLocalMods(Path modsPath) {
         boolean editable = Config.getInstance().isCachePathEditable();
+        int priority = 2;
         for (Path modFolder : listDirectories(modsPath)) {
             String modName = modFolder.getFileName().toString();
-            addSourcesFromFolder(modName, modFolder, editable);
+            addSourcesFromFolder(modName, modFolder, editable, priority);
         }
     }
 
     private void processGameFiles(Path gamePath) {
         boolean editable = Config.getInstance().isGamePathEditable();
+        int priority = 0;
         // Game files always use BUILD_42, regardless of detected structure
         for (Path translationPath : findTranslationPaths(gamePath)) {
-            this.sources.add(createSource("Game Files", translationPath, new SemanticVersion("42"), editable));
+            this.sources
+                    .add(createSource("Game Files", translationPath, new SemanticVersion("42"), editable, priority));
         }
     }
 
-    private void addSourcesFromFolder(String sourceName, Path sourceFolder, boolean editable) {
+    private void addSourcesFromFolder(String sourceName, Path sourceFolder, boolean editable, int priority) {
         for (Path translationPath : findTranslationPaths(sourceFolder)) {
             SemanticVersion version = detectBuildType(translationPath);
             // todo: 42-common, 42.9, etc.
             // So current BUILD implementation is not enough
             // Easy to fix but Languages management will need to be reworked
             this.sources.add(
-                    createSource(sourceName + " [" + version.getMajor() + "]", translationPath, version, editable));
+                    createSource(sourceName + " [" + version.getMajor() + "]", translationPath, version, editable,
+                            priority));
         }
     }
 
@@ -207,7 +215,8 @@ public class PZSources {
     /**
      * Creates a new PZSource with the given parameters.
      */
-    private PZSource createSource(String name, Path translationPath, SemanticVersion version, boolean editable) {
-        return new PZSource(name, version, translationPath, editable);
+    private PZSource createSource(String name, Path translationPath, SemanticVersion version, boolean editable,
+            int priority) {
+        return new PZSource(name, version, translationPath, editable, priority);
     }
 }
