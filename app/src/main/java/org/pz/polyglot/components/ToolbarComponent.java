@@ -46,7 +46,7 @@ public class ToolbarComponent extends ToolBar {
     private final BooleanProperty languagesPanelVisible = new SimpleBooleanProperty(false);
 
     public ToolbarComponent() {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/toolbar.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/Toolbar.fxml"));
         loader.setRoot(this);
         loader.setController(this);
 

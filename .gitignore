@@ -31,3 +31,5 @@ build
 
 app/config.json
 app/bin
+app/dist
+app/pz-polyglot

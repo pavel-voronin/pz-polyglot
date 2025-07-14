@@ -9,6 +9,8 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.control.Label?>
+<?import org.pz.polyglot.components.Version?>
+<?import javafx.scene.layout.Pane?>
 <?import javafx.scene.control.TextField?>
 <?import org.pz.polyglot.components.SystemMonitor?>
 <?import org.pz.polyglot.components.TranslationPanel?>
@@ -63,6 +65,8 @@
     <HBox fx:id="statusBar" spacing="10" alignment="CENTER_LEFT" style="-fx-background-color: #e0e0e0; -fx-padding: 4 8;">
       <children>
         <SystemMonitor />
+        <Pane HBox.hgrow="ALWAYS" />
+        <Version />
       </children>
     </HBox>
   </bottom>
