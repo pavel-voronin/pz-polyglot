@@ -5,12 +5,14 @@ import java.util.function.Consumer;
 import org.pz.polyglot.models.languages.PZLanguage;
 
 /**
- * A tag component specialized for displaying a language.
+ * Represents a tag component specialized for displaying a language.
  * Accepts a domain language model and displays its code and name.
  */
 public class LanguageTag extends Tag {
+
     /**
-     * Creates a new LanguageTag with the specified language.
+     * Constructs a LanguageTag for the specified language.
+     * This constructor does not set a click callback.
      *
      * @param language the language to display
      */
@@ -19,10 +21,11 @@ public class LanguageTag extends Tag {
     }
 
     /**
-     * Creates a new LanguageTag with the specified language and click callback.
+     * Constructs a LanguageTag for the specified language and click callback.
      *
      * @param language        the language to display
-     * @param onClickCallback optional callback to execute when the tag is clicked
+     * @param onClickCallback the callback to execute when the tag is clicked, or
+     *                        {@code null} if no callback is needed
      */
     public LanguageTag(PZLanguage language, Consumer<Tag> onClickCallback) {
         super(language.getCode(), language.getName(), onClickCallback);

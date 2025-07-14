@@ -1,41 +1,55 @@
 package org.pz.polyglot.initialization;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.pz.polyglot.Config;
 import org.pz.polyglot.Logger;
 import org.pz.polyglot.models.languages.PZLanguages;
 import org.pz.polyglot.models.sources.PZSources;
 import org.pz.polyglot.models.translations.PZTranslationType;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
 /**
- * Validates and synchronizes configuration with domain models.
- * Ensures config contains all necessary data with proper defaults.
+ * Responsible for validating and synchronizing configuration with domain
+ * models.
+ * Ensures the configuration contains all required data and applies proper
+ * defaults when necessary.
  */
 public class ConfigValidator {
+    /**
+     * The configuration instance to validate and update.
+     */
     private final Config config;
 
+    /**
+     * Constructs a ConfigValidator for the provided configuration.
+     * 
+     * @param config the configuration to validate and update
+     */
     public ConfigValidator(Config config) {
         this.config = config;
     }
 
     /**
-     * Validates and updates sources in configuration.
-     * Ensures all discovered sources are properly categorized as enabled/disabled.
+     * Validates and updates the sources in the configuration.
+     * <p>
+     * Ensures all discovered sources are categorized as enabled or disabled. Adds
+     * new sources to enabled,
+     * and removes obsolete sources from both enabled and disabled lists.
      */
     public void validateAndUpdateSources() {
         Logger.info("Validating sources configuration");
 
         try {
+            // Discover all sources from the domain model
             Set<String> discoveredSources = PZSources.getInstance().getSources().stream()
                     .map(source -> source.getName())
                     .collect(java.util.stream.Collectors.toSet());
             Set<String> enabledSources = new HashSet<>(Arrays.asList(config.getEnabledSources()));
             Set<String> disabledSources = new HashSet<>(Arrays.asList(config.getDisabledSources()));
 
-            // Find sources that are not in either enabled or disabled
+            // Identify sources not present in either enabled or disabled lists
             Set<String> newSources = new HashSet<>(discoveredSources);
             newSources.removeAll(enabledSources);
             newSources.removeAll(disabledSources);
@@ -46,7 +60,7 @@ public class ConfigValidator {
                 config.setEnabledSources(enabledSources.toArray(new String[0]));
             }
 
-            // Remove sources that no longer exist
+            // Remove sources that no longer exist in the domain model
             Set<String> obsoleteEnabled = new HashSet<>(enabledSources);
             obsoleteEnabled.removeAll(discoveredSources);
 
@@ -70,8 +84,10 @@ public class ConfigValidator {
     }
 
     /**
-     * Validates and updates languages in configuration.
-     * Ensures all supported languages are available if config is empty.
+     * Validates and updates the languages in the configuration.
+     * <p>
+     * If no languages are configured, sets all available languages with English
+     * (EN) as the first entry.
      */
     public void validateAndUpdateLanguages() {
         Logger.info("Validating languages configuration");
@@ -79,7 +95,7 @@ public class ConfigValidator {
         try {
             String[] configLanguages = config.getPzLanguages();
 
-            // If no languages configured, set all available languages with EN first
+            // If no languages are configured, set all available languages with EN first
             if (configLanguages == null || configLanguages.length == 0) {
                 var allCodes = PZLanguages.getInstance().getAllLanguageCodes();
                 var sortedCodes = allCodes.stream()
@@ -102,8 +118,10 @@ public class ConfigValidator {
     }
 
     /**
-     * Validates and updates translation types in configuration.
-     * Ensures all supported translation types are available if config is empty.
+     * Validates and updates the translation types in the configuration.
+     * <p>
+     * If no translation types are configured, sets all available types from the
+     * domain model.
      */
     public void validateAndUpdateTranslationTypes() {
         Logger.info("Validating translation types configuration");
@@ -111,7 +129,7 @@ public class ConfigValidator {
         try {
             String[] configTypes = config.getPzTranslationTypes();
 
-            // If no types configured, set all available types
+            // If no types are configured, set all available types
             if (configTypes == null || configTypes.length == 0) {
                 String[] allTypes = Arrays.stream(PZTranslationType.values())
                         .map(Enum::name)

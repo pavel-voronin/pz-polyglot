@@ -1,12 +1,15 @@
 package org.pz.polyglot.components;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.function.Consumer;
+
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 
-import java.util.List;
-import java.util.function.Consumer;
-
+import org.pz.polyglot.State;
 import org.pz.polyglot.models.languages.PZLanguage;
 import org.pz.polyglot.models.languages.PZLanguages;
 import org.pz.polyglot.models.sources.PZSource;
@@ -24,11 +27,27 @@ import org.pz.polyglot.models.translations.PZTranslationType;
  * The menu can be entered at any level if previous selections are already
  * known.
  */
+/**
+ * Dynamic multi-level context menu for creating new translation variants.
+ * <p>
+ * The menu structure is:
+ * <ul>
+ * <li>Level 1: Language selection</li>
+ * <li>Level 2: Source selection</li>
+ * <li>Level 3: Translation Type selection</li>
+ * </ul>
+ * The menu can be entered at any level if previous selections are already
+ * known.
+ */
 public class DynamicContextMenu extends ContextMenu {
 
     /**
-     * Represents the complete selection state for creating a new translation
-     * variant.
+     * Immutable record representing the complete selection state for creating a new
+     * translation variant.
+     *
+     * @param language        the selected language
+     * @param source          the selected source
+     * @param translationType the selected translation type
      */
     public record TranslationVariantSelection(
             PZLanguage language,
@@ -37,18 +56,21 @@ public class DynamicContextMenu extends ContextMenu {
     }
 
     /**
-     * Callback interface for when a complete selection is made.
+     * Callback interface for handling a completed selection of translation variant.
      */
     @FunctionalInterface
     public interface SelectionCallback extends Consumer<TranslationVariantSelection> {
     }
 
+    /**
+     * Callback to execute when a complete selection is made.
+     */
     private final SelectionCallback onSelectionComplete;
 
     /**
-     * Creates a new dynamic context menu starting from language selection (level
+     * Constructs a new dynamic context menu starting from language selection (level
      * 1).
-     * 
+     *
      * @param onSelectionComplete callback to execute when a complete selection is
      *                            made
      */
@@ -58,8 +80,9 @@ public class DynamicContextMenu extends ContextMenu {
     }
 
     /**
-     * Creates a new dynamic context menu starting from source selection (level 2).
-     * 
+     * Constructs a new dynamic context menu starting from source selection (level
+     * 2).
+     *
      * @param preselectedLanguage the already selected language
      * @param onSelectionComplete callback to execute when a complete selection is
      *                            made
@@ -71,17 +94,18 @@ public class DynamicContextMenu extends ContextMenu {
 
     /**
      * Builds the language selection menu (level 1).
+     * Populates the menu with enabled and disabled languages.
      */
     private void buildLanguageMenu() {
         getItems().clear();
 
-        // Get all available languages
+        // Retrieve all available languages
         PZLanguages pzLanguages = PZLanguages.getInstance();
-        var visibleLanguages = org.pz.polyglot.State.getInstance().getVisibleLanguages();
+        var visibleLanguages = State.getInstance().getVisibleLanguages();
 
-        // Split languages into visible and hidden
-        List<String> enabledLanguagesList = new java.util.ArrayList<>();
-        List<String> disabledLanguagesList = new java.util.ArrayList<>();
+        // Split languages into enabled (visible) and disabled (hidden)
+        List<String> enabledLanguagesList = new ArrayList<>();
+        List<String> disabledLanguagesList = new ArrayList<>();
 
         for (String languageCode : pzLanguages.getAllLanguageCodes()) {
             if (visibleLanguages.contains(languageCode)) {
@@ -91,7 +115,7 @@ public class DynamicContextMenu extends ContextMenu {
             }
         }
 
-        // Add visible languages as regular menu items
+        // Add enabled languages as regular menu items
         for (String languageCode : enabledLanguagesList) {
             pzLanguages.getLanguage(languageCode).ifPresent(language -> {
                 MenuItem languageItem = new MenuItem(language.getCode() + " - " + language.getName());
@@ -100,7 +124,7 @@ public class DynamicContextMenu extends ContextMenu {
             });
         }
 
-        // Add hidden languages submenu if there are any hidden languages
+        // Add disabled languages submenu if there are any disabled languages
         if (!disabledLanguagesList.isEmpty()) {
             Menu disabledLanguagesMenu = new Menu("Disabled Languages");
 
@@ -118,11 +142,15 @@ public class DynamicContextMenu extends ContextMenu {
 
     /**
      * Builds the source selection menu (level 2).
+     * Populates the menu with enabled and disabled sources for the selected
+     * language.
+     *
+     * @param selectedLanguage the language selected in the previous menu level
      */
     private void buildSourceMenu(PZLanguage selectedLanguage) {
         getItems().clear();
 
-        var enabledSources = org.pz.polyglot.State.getInstance().getEnabledSources();
+        var enabledSources = State.getInstance().getEnabledSources();
 
         // Get all editable sources and split them into enabled and disabled
         List<PZSource> allEditableSources = PZSources.getInstance().getSources().stream()
@@ -159,17 +187,23 @@ public class DynamicContextMenu extends ContextMenu {
     }
 
     /**
-     * Adds type submenu to a source menu.
+     * Adds translation type submenu to a source menu.
+     * Populates the menu with enabled and disabled translation types for the given
+     * source and language.
+     *
+     * @param sourceMenu       the menu to which type submenus are added
+     * @param selectedLanguage the selected language
+     * @param source           the selected source
      */
     private void addTypeSubmenu(Menu sourceMenu, PZLanguage selectedLanguage, PZSource source) {
-        var selectedTypes = org.pz.polyglot.State.getInstance().getSelectedTypes();
+        var selectedTypes = State.getInstance().getSelectedTypes();
 
         // Split types into enabled and disabled
-        List<PZTranslationType> enabledTypesList = java.util.Arrays.stream(PZTranslationType.values())
+        List<PZTranslationType> enabledTypesList = Arrays.stream(PZTranslationType.values())
                 .filter(type -> selectedTypes.contains(type))
                 .toList();
 
-        List<PZTranslationType> disabledTypesList = java.util.Arrays.stream(PZTranslationType.values())
+        List<PZTranslationType> disabledTypesList = Arrays.stream(PZTranslationType.values())
                 .filter(type -> !selectedTypes.contains(type))
                 .toList();
 
@@ -177,6 +211,7 @@ public class DynamicContextMenu extends ContextMenu {
         for (PZTranslationType type : enabledTypesList) {
             MenuItem typeItem = new MenuItem(type.name());
             typeItem.setOnAction(e -> {
+                // Notify callback with the completed selection and hide menu
                 TranslationVariantSelection selection = new TranslationVariantSelection(
                         selectedLanguage, source, type);
                 onSelectionComplete.accept(selection);
@@ -192,6 +227,7 @@ public class DynamicContextMenu extends ContextMenu {
             for (PZTranslationType type : disabledTypesList) {
                 MenuItem typeItem = new MenuItem(type.name());
                 typeItem.setOnAction(e -> {
+                    // Notify callback with the completed selection and hide menu
                     TranslationVariantSelection selection = new TranslationVariantSelection(
                             selectedLanguage, source, type);
                     onSelectionComplete.accept(selection);

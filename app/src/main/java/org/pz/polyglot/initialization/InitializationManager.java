@@ -2,6 +2,7 @@ package org.pz.polyglot.initialization;
 
 import javafx.application.Platform;
 import javafx.stage.Stage;
+
 import org.pz.polyglot.Config;
 import org.pz.polyglot.Logger;
 import org.pz.polyglot.State;
@@ -17,11 +18,34 @@ import org.pz.polyglot.utils.FolderValidationUtils;
  * Ensures proper dependency order and clear separation of concerns.
  */
 public class InitializationManager {
+    /**
+     * The primary JavaFX stage for the application main window.
+     */
     private final Stage primaryStage;
+
+    /**
+     * The manager for the initialization window UI.
+     */
     private final InitializationWindowManager initWindow;
+
+    /**
+     * Application configuration, loaded and validated during initialization.
+     */
     private Config config;
+
+    /**
+     * Application state, initialized after configuration and domain models are
+     * loaded.
+     */
     private State state;
 
+    /**
+     * Constructs an InitializationManager for orchestrating the application startup
+     * sequence.
+     *
+     * @param primaryStage the main JavaFX stage for the application window
+     * @param initWindow   the manager for the initialization window UI
+     */
     public InitializationManager(Stage primaryStage, InitializationWindowManager initWindow) {
         this.primaryStage = primaryStage;
         this.initWindow = initWindow;
@@ -102,7 +126,7 @@ public class InitializationManager {
         Platform.runLater(() -> initWindow.addStatusLine("Validating folders"));
 
         try {
-            // Check if we need folder configuration
+            // Folder configuration is required if no valid folders are present in config
             if (!FolderValidationUtils.hasValidFolders(config)) {
                 Logger.info("Invalid folders detected, showing folder selection dialog");
                 Platform.runLater(() -> {
@@ -127,6 +151,7 @@ public class InitializationManager {
                     }
                 });
 
+                // Wait for folder selection dialog to complete
                 synchronized (this) {
                     while (!dialogCompleted[0]) {
                         this.wait();
@@ -162,17 +187,16 @@ public class InitializationManager {
         Logger.info("Phase 3: Initializing domain models");
 
         try {
-            // Initialize PZ sources (requires valid folders)
+            // Sources, languages, and translations must be loaded in this order due to
+            // dependencies
             Platform.runLater(() -> initWindow.addStatusLine("Loading sources"));
             PZSources.getInstance();
             Platform.runLater(() -> initWindow.updateCurrentStatus("done", false));
 
-            // Load language definitions
             Platform.runLater(() -> initWindow.addStatusLine("Loading language definitions"));
             PZLanguageManager.load();
             Platform.runLater(() -> initWindow.updateCurrentStatus("done", false));
 
-            // Load translation files from sources
             Platform.runLater(() -> initWindow.addStatusLine("Loading translation files"));
             PZTranslationManager.loadFilesFromSources();
             Platform.runLater(() -> initWindow.updateCurrentStatus("done", false));
@@ -197,13 +221,9 @@ public class InitializationManager {
         try {
             ConfigValidator validator = new ConfigValidator(config);
 
-            // Validate and update sources
+            // Ensure config is consistent with loaded domain models
             validator.validateAndUpdateSources();
-
-            // Validate and update languages
             validator.validateAndUpdateLanguages();
-
-            // Validate and update translation types
             validator.validateAndUpdateTranslationTypes();
 
             Platform.runLater(() -> initWindow.updateCurrentStatus("done", false));
@@ -225,10 +245,9 @@ public class InitializationManager {
         Platform.runLater(() -> initWindow.addStatusLine("Initializing application state"));
 
         try {
-            // Initialize state with validated config
+            // State is the single source of truth after initialization
             state = State.getInstance();
 
-            // State constructor already loads from config, but we need to ensure it's fresh
             // Request initial table rebuild to populate UI
             state.requestTableRebuild();
 

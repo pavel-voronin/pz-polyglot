@@ -14,11 +14,29 @@ import org.pz.polyglot.State;
 import org.pz.polyglot.structs.SemanticVersion;
 import org.pz.polyglot.utils.FolderUtils;
 
+/**
+ * Singleton class responsible for discovering and managing all available
+ * Project Zomboid sources (mods and game files).
+ * <p>
+ * Sources are parsed from Steam, Workshop, local mods, and game files. New
+ * sources are auto-enabled in the state.
+ */
 public class PZSources {
+    /**
+     * Singleton instance of PZSources.
+     */
     private static PZSources instance;
 
-    private ArrayList<PZSource> sources = new ArrayList<>();
+    /**
+     * List of all discovered sources, unsorted.
+     */
+    private final ArrayList<PZSource> sources = new ArrayList<>();
 
+    /**
+     * Returns the singleton instance of PZSources.
+     * 
+     * @return the singleton instance
+     */
     public static PZSources getInstance() {
         if (instance == null) {
             instance = new PZSources();
@@ -26,34 +44,45 @@ public class PZSources {
         return instance;
     }
 
+    /**
+     * Private constructor. Parses sources on instantiation.
+     */
     private PZSources() {
         this.parseSources();
-
         Logger.info("Parsed sources: " + this.sources.size());
     }
 
+    /**
+     * Returns all sources sorted by priority.
+     * 
+     * @return sorted list of sources
+     */
     public List<PZSource> getSources() {
         return this.sources.stream()
                 .sorted(java.util.Comparator.comparingInt(PZSource::getPriority))
                 .toList();
     }
 
+    /**
+     * Discovers and parses all available sources (mods and game files).
+     * Also auto-enables new sources in the state.
+     */
     public void parseSources() {
         this.sources.clear();
 
-        // Steam mods: [SteamItemId]/<mods>/[ModName]/
+        // Discover Steam mods: [SteamItemId]/<mods>/[ModName]/
         FolderUtils.getSteamModsPath().ifPresent(this::processSteamMods);
 
-        // Workshop mods: [WorkshopProject]/<Contents>/<mods>/[ModName]/
+        // Discover Workshop mods: [WorkshopProject]/<Contents>/<mods>/[ModName]/
         FolderUtils.getWorkshopPath().ifPresent(this::processWorkshopMods);
 
-        // Local mods: [ModName]/
+        // Discover local mods: [ModName]/
         FolderUtils.getModsPath().ifPresent(this::processLocalMods);
 
-        // Game files
+        // Discover game files
         FolderUtils.getGamePath().ifPresent(this::processGameFiles);
 
-        // Detect new sources and auto-enable them
+        // Detect new sources and auto-enable them in the state
         List<String> currentSources = this.sources.stream()
                 .map(PZSource::getName)
                 .distinct()
@@ -69,6 +98,11 @@ public class PZSources {
         }
     }
 
+    /**
+     * Processes Steam mods and adds them as sources.
+     * 
+     * @param steamPath path to Steam mods root
+     */
     private void processSteamMods(Path steamPath) {
         boolean editable = Config.getInstance().isSteamModsPathEditable();
         int priority = 3;
@@ -83,6 +117,11 @@ public class PZSources {
         }
     }
 
+    /**
+     * Processes Workshop mods and adds them as sources.
+     * 
+     * @param workshopPath path to Workshop mods root
+     */
     private void processWorkshopMods(Path workshopPath) {
         boolean editable = Config.getInstance().isCachePathEditable();
         int priority = 1;
@@ -97,6 +136,11 @@ public class PZSources {
         }
     }
 
+    /**
+     * Processes local mods and adds them as sources.
+     * 
+     * @param modsPath path to local mods root
+     */
     private void processLocalMods(Path modsPath) {
         boolean editable = Config.getInstance().isCachePathEditable();
         int priority = 2;
@@ -106,6 +150,12 @@ public class PZSources {
         }
     }
 
+    /**
+     * Processes game files and adds them as sources. Game files always use
+     * BUILD_42.
+     * 
+     * @param gamePath path to game files root
+     */
     private void processGameFiles(Path gamePath) {
         boolean editable = Config.getInstance().isGamePathEditable();
         int priority = 0;
@@ -116,12 +166,20 @@ public class PZSources {
         }
     }
 
+    /**
+     * Adds sources discovered in a mod or game folder.
+     * 
+     * @param sourceName   name of the source
+     * @param sourceFolder folder containing the source
+     * @param editable     whether the source is editable
+     * @param priority     priority of the source
+     */
     private void addSourcesFromFolder(String sourceName, Path sourceFolder, boolean editable, int priority) {
         for (Path translationPath : findTranslationPaths(sourceFolder)) {
             SemanticVersion version = detectBuildType(translationPath);
             // todo: 42-common, 42.9, etc.
-            // So current BUILD implementation is not enough
-            // Easy to fix but Languages management will need to be reworked
+            // Current BUILD implementation is not enough for all cases.
+            // Easy to fix but Languages management will need to be reworked.
             this.sources.add(
                     createSource(sourceName + " [" + version.getMajor() + "]", translationPath, version, editable,
                             priority));
@@ -129,8 +187,11 @@ public class PZSources {
     }
 
     /**
-     * Returns all subdirectories of the given path, or empty list if not a
+     * Returns all subdirectories of the given path, or an empty list if not a
      * directory.
+     * 
+     * @param path the path to list directories from
+     * @return list of subdirectories
      */
     private List<Path> listDirectories(Path path) {
         List<Path> result = new ArrayList<>();
@@ -142,13 +203,18 @@ public class PZSources {
                 result.add(dir);
             }
         } catch (IOException ignored) {
+            // Directory listing failed, return empty result
         }
         return result;
     }
 
     /**
      * Finds all translation paths within a source folder.
-     * Looks for both BUILD_41 and BUILD_42 structures.
+     * Looks for both BUILD_41 and BUILD_42 structures, and version-specific
+     * subfolders.
+     * 
+     * @param sourcePath the source folder to search
+     * @return list of translation paths
      */
     private List<Path> findTranslationPaths(Path sourcePath) {
         List<Path> translationPaths = new ArrayList<>();
@@ -178,6 +244,7 @@ public class PZSources {
                 }
             }
         } catch (IOException ignored) {
+            // Subdirectory listing failed, return what was found
         }
 
         return translationPaths;
@@ -185,14 +252,18 @@ public class PZSources {
 
     /**
      * Detects the build type based on the translation path structure.
-     * BUILD_41: .../media/lua/shared/Translate (without common/ and without version
-     * 42)
-     * BUILD_42: .../common/media/lua/shared/Translate or
-     * .../42[.x.x]/media/lua/shared/Translate
-     * 
+     * <ul>
+     * <li>BUILD_41: .../media/lua/shared/Translate (without common/ and without
+     * version 42)</li>
+     * <li>BUILD_42: .../common/media/lua/shared/Translate or
+     * .../42[.x.x]/media/lua/shared/Translate</li>
+     * </ul>
      * <p>
-     * Note: This method should NOT be used for game files directory -
-     * game files always use BUILD_42 regardless of structure.
+     * Note: This method should NOT be used for game files directory - game files
+     * always use BUILD_42 regardless of structure.
+     * 
+     * @param translationPath path to translation folder
+     * @return detected build version
      */
     SemanticVersion detectBuildType(Path translationPath) {
         String pathString = translationPath.toString().replace('\\', '/');
@@ -214,6 +285,13 @@ public class PZSources {
 
     /**
      * Creates a new PZSource with the given parameters.
+     * 
+     * @param name            source name
+     * @param translationPath path to translation folder
+     * @param version         semantic version
+     * @param editable        whether the source is editable
+     * @param priority        source priority
+     * @return new PZSource instance
      */
     private PZSource createSource(String name, Path translationPath, SemanticVersion version, boolean editable,
             int priority) {

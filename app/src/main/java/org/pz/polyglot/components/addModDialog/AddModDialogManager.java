@@ -1,31 +1,41 @@
 package org.pz.polyglot.components.addModDialog;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+
 import org.pz.polyglot.App;
 import org.pz.polyglot.Logger;
 import org.pz.polyglot.models.sources.PZSources;
 import org.pz.polyglot.utils.FolderUtils;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-
 /**
  * Manager for the Add Mod dialog.
- * Handles showing the modal dialog for adding new mods and creating their
- * directory structure.
+ * <p>
+ * Responsible for displaying the modal dialog to add new mods and for creating
+ * their directory structure in the workshop folder.
  */
 public class AddModDialogManager {
+
+    /**
+     * The width of the Add Mod dialog window in pixels.
+     */
     private static final int DIALOG_WIDTH = 380;
+
+    /**
+     * The height of the Add Mod dialog window in pixels.
+     */
     private static final int DIALOG_HEIGHT = 250;
 
     /**
      * Shows the Add Mod dialog and creates the mod structure if successful.
-     * 
+     *
      * @param owner the parent stage
      * @return true if mod was created successfully, false if cancelled or failed
      */
@@ -59,8 +69,16 @@ public class AddModDialogManager {
     }
 
     /**
-     * Creates the mod directory structure in the workshop folder.
-     * 
+     * Creates the mod directory structure in the workshop folder for the specified
+     * mod and version.
+     * <p>
+     * The structure differs depending on the version:
+     * <ul>
+     * <li>Version 42: Workshop/{modname}/common/media/lua/shared/Translate/</li>
+     * <li>Version 41: Workshop/{modname}/media/lua/shared/Translate/</li>
+     * </ul>
+     * After creation, the sources are rescanned to include the new mod.
+     *
      * @param modName the name of the mod
      * @param version the version ("41" or "42")
      * @return true if structure was created successfully
@@ -79,19 +97,15 @@ public class AddModDialogManager {
                     .resolve(modName);
             Path translationPath;
 
-            // Create different structures based on version
+            // Select translation path based on mod version
             if ("42".equals(version)) {
-                // Version 42: Workshop/{modname}/common/media/lua/shared/Translate/
                 translationPath = modBasePath.resolve("common/media/lua/shared/Translate");
             } else {
-                // Version 41: Workshop/{modname}/media/lua/shared/Translate/
                 translationPath = modBasePath.resolve("media/lua/shared/Translate");
             }
 
-            // Create all directories in the path recursively
             Files.createDirectories(translationPath);
 
-            // Create mod.info file
             createModInfoFile(modBasePath, modName, version);
 
             Logger.info("Created mod structure for '" + modName + "' (version " + version + ") at: " + translationPath);
@@ -110,8 +124,11 @@ public class AddModDialogManager {
     }
 
     /**
-     * Creates the mod.info file with the required content.
-     * 
+     * Creates the mod.info file with the required content for the mod.
+     * <p>
+     * For version 42, the file is placed in the '42/' folder next to 'common/'.
+     * For version 41, the file is placed next to the 'media/' folder.
+     *
      * @param modBasePath the base path of the mod
      * @param modName     the name of the mod
      * @param version     the version ("41" or "42")
@@ -121,16 +138,13 @@ public class AddModDialogManager {
         Path modInfoPath;
 
         if ("42".equals(version)) {
-            // For version 42: place in 42/ folder next to common/
             modInfoPath = modBasePath.resolve("42/mod.info");
-            // Ensure the 42/ directory exists
             Files.createDirectories(modBasePath.resolve("42"));
         } else {
-            // For version 41: place next to media/ folder
             modInfoPath = modBasePath.resolve("mod.info");
         }
 
-        // Create mod.info content
+        // Compose mod.info file content
         String modInfoContent = String.format(
                 "name=%s%n" +
                         "id=%s%n" +
@@ -142,7 +156,6 @@ public class AddModDialogManager {
                 modName.trim(),
                 modName.trim().toLowerCase().replace(" ", "_"));
 
-        // Write the file
         Files.writeString(modInfoPath, modInfoContent);
         Logger.info("Created mod.info file at: " + modInfoPath);
     }

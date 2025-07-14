@@ -1,5 +1,9 @@
 package org.pz.polyglot.components;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
@@ -7,29 +11,59 @@ import javafx.scene.control.ListCell;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+
 import org.pz.polyglot.State;
 import org.pz.polyglot.models.translations.PZTranslationType;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
+/**
+ * Panel for selecting translation types in the UI.
+ * Displays a list of {@link PZTranslationType} and allows selection via drag or
+ * buttons.
+ */
 public class TypesPanel extends VBox {
+    /**
+     * The set of currently selected translation types.
+     */
     private final Set<PZTranslationType> selectedTypes = new HashSet<>();
+
+    /**
+     * Reference to the application state manager.
+     */
     private final State stateManager = State.getInstance();
+
+    /**
+     * List view for displaying and selecting translation types.
+     */
     private final DragSelectListView<PZTranslationType> typesListView = new DragSelectListView<>();
+
+    /**
+     * Button to select all translation types.
+     */
     private final Button allButton = new Button("All");
+
+    /**
+     * Button to deselect all translation types.
+     */
     private final Button noneButton = new Button("None");
+
+    /**
+     * Container for selection buttons.
+     */
     private final HBox buttonsBox = new HBox(8, allButton, noneButton);
 
+    /**
+     * Constructs the TypesPanel and initializes UI components and event handlers.
+     */
     public TypesPanel() {
         setSpacing(0);
         setPadding(Insets.EMPTY);
 
+        // Populate the list view with all translation types
         typesListView.getItems().setAll(Arrays.asList(PZTranslationType.values()));
         selectedTypes.clear();
         selectedTypes.addAll(stateManager.getSelectedTypes());
 
+        // Custom cell factory for coloring and displaying type names
         typesListView.setCellFactory(lv -> {
             ListCell<PZTranslationType> cell = new ListCell<>() {
                 @Override
@@ -45,6 +79,7 @@ public class TypesPanel extends VBox {
                         boolean isDragSelecting = dragListView.isDragSelecting();
                         boolean isSelected = getListView().getSelectionModel().isSelected(getIndex());
                         String style;
+                        // Apply background color based on drag/select state
                         if (isDragged) {
                             style = isDragSelecting ? "-fx-background-color: #c8e6c9;"
                                     : "-fx-background-color: #e0e0e0;";
@@ -60,6 +95,7 @@ public class TypesPanel extends VBox {
             return cell;
         });
 
+        // Update state when selection changes in the list view
         typesListView.setOnSelectionChanged(selectedIndices -> {
             Set<PZTranslationType> selected = new HashSet<>();
             for (Integer index : selectedIndices) {
@@ -73,6 +109,7 @@ public class TypesPanel extends VBox {
 
         typesListView.setFocusTraversable(false);
 
+        // Select all types when 'All' button is pressed
         allButton.setOnAction(e -> {
             Set<Integer> allIndices = new HashSet<>();
             for (int i = 0; i < typesListView.getItems().size(); i++) {
@@ -84,6 +121,7 @@ public class TypesPanel extends VBox {
             updateLocalState();
         });
 
+        // Deselect all types when 'None' button is pressed
         noneButton.setOnAction(e -> {
             typesListView.clearSelection();
             stateManager.setSelectedTypes(Set.of());
@@ -98,11 +136,13 @@ public class TypesPanel extends VBox {
         getChildren().setAll(buttonsBox, typesListView);
         VBox.setVgrow(typesListView, Priority.ALWAYS);
 
-        Platform.runLater(() -> {
-            syncSelectionFromState();
-        });
+        // Ensure UI selection matches state after initialization
+        Platform.runLater(this::syncSelectionFromState);
     }
 
+    /**
+     * Synchronizes the selection in the UI list view with the current state.
+     */
     private void syncSelectionFromState() {
         Set<Integer> indicesToSelect = new HashSet<>();
         Set<PZTranslationType> selected = stateManager.getSelectedTypes();
@@ -114,6 +154,9 @@ public class TypesPanel extends VBox {
         typesListView.selectItems(indicesToSelect);
     }
 
+    /**
+     * Updates the local selectedTypes set from the state manager.
+     */
     private void updateLocalState() {
         selectedTypes.clear();
         selectedTypes.addAll(stateManager.getSelectedTypes());

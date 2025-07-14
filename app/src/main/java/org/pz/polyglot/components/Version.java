@@ -1,15 +1,26 @@
 package org.pz.polyglot.components;
 
+import java.io.IOException;
+
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.geometry.Pos;
 import javafx.scene.text.Font;
 
-import java.io.IOException;
-
+/**
+ * UI component for displaying the application version.
+ * Reads the version from the resource file and shows it in a label.
+ */
 public class Version extends HBox {
+
+    /**
+     * Label displaying the version string.
+     */
     private final Label versionLabel;
 
+    /**
+     * Constructs the Version component and initializes the label.
+     */
     public Version() {
         setAlignment(Pos.CENTER_RIGHT);
         setSpacing(0);
@@ -20,6 +31,10 @@ public class Version extends HBox {
         setVersionText();
     }
 
+    /**
+     * Loads the version string from the resource file and updates the label.
+     * If the file is missing or an error occurs, sets a fallback message.
+     */
     private void setVersionText() {
         try (var is = getClass().getResourceAsStream("/version.txt")) {
             if (is != null) {

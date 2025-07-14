@@ -1,13 +1,27 @@
 package org.pz.polyglot.components;
 
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.collections.ListChangeListener;
-import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.scene.layout.HBox;
 import javafx.util.Duration;
 import javafx.scene.layout.Priority;
+import javafx.scene.control.Button;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Label;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.FlowPane;
 
 import org.pz.polyglot.State;
@@ -21,11 +35,6 @@ import org.pz.polyglot.viewModels.TranslationEntryViewModel;
 import org.pz.polyglot.viewModels.TranslationVariantViewModel;
 import org.pz.polyglot.viewModels.registries.TranslationEntryViewModelRegistry;
 
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.stream.Collectors;
-
 /**
  * Component for displaying and editing translation details for a selected
  * translation key.
@@ -35,6 +44,12 @@ public class TranslationPanel extends VBox {
 
     /**
      * Represents a group of translation variants from the same source.
+     * Used for grouping UI elements and logic per translation source.
+     * 
+     * @param sourceName    the name of the source
+     * @param sourceHeader  the header label for the source
+     * @param container     the VBox container for the group's UI
+     * @param variantFields the list of variant fields for this source
      */
     private record SourceGroup(
             String sourceName,
@@ -43,27 +58,37 @@ public class TranslationPanel extends VBox {
             List<TranslationVariantField> variantFields) {
     }
 
-    // UI components
+    /** Title label for the panel header. */
     private final Label panelTitleLabel;
+    /** Button to close the translation panel. */
     private final Button closePanelButton;
+    /** Scroll pane containing the language fields. */
     private final ScrollPane panelScrollPane;
+    /** Container for all language fields and source groups. */
     private final VBox languageFieldsContainer;
 
-    // Internal state
+    /** Map of source name to SourceGroup for currently displayed variants. */
     private final Map<String, SourceGroup> sourceGroups = new LinkedHashMap<>();
+    /** List of all variant fields currently displayed. */
     private final List<TranslationVariantField> allVariantFields = new ArrayList<>();
+    /** Timer for delayed table refresh. */
     private Timeline tableRefreshTimer;
+    /** Set of translation keys needing refresh. */
     private final Set<String> keysNeedingRefresh = new HashSet<>();
 
-    // State manager
+    /** Reference to the global state manager. */
     private final State stateManager = State.getInstance();
 
-    // Current data
+    /** Currently displayed translation key. */
     private String currentTranslationKey;
+    /** View model for the currently displayed translation entry. */
     private TranslationEntryViewModel currentEntryViewModel;
 
+    /**
+     * Constructs a new TranslationPanel and initializes UI components and state
+     * bindings.
+     */
     public TranslationPanel() {
-        // Initialize UI components
         this.panelTitleLabel = new Label();
         this.closePanelButton = new Button("✕");
         this.panelScrollPane = new ScrollPane();
@@ -77,7 +102,7 @@ public class TranslationPanel extends VBox {
     }
 
     /**
-     * Sets up bindings to state manager for automatic updates.
+     * Sets up bindings to state manager for automatic updates of the panel UI.
      */
     private void setupStateBindings() {
         stateManager.saveAllTriggeredProperty().addListener((obs, oldVal, newVal) -> {
@@ -109,6 +134,9 @@ public class TranslationPanel extends VBox {
         });
     }
 
+    /**
+     * Initializes and lays out all UI components for the translation panel.
+     */
     private void setupComponent() {
         // Set main container style class
         getStyleClass().add("translation-panel");
@@ -177,6 +205,8 @@ public class TranslationPanel extends VBox {
 
     /**
      * Shows the translation panel with details for the given translation entry.
+     * 
+     * @param entryViewModel the view model for the translation entry to display
      */
     public void showTranslation(TranslationEntryViewModel entryViewModel) {
         // Stop any existing timer
@@ -201,7 +231,9 @@ public class TranslationPanel extends VBox {
     }
 
     /**
-     * Updates the language fields based on current visible languages.
+     * Updates the language fields based on current visible languages and enabled
+     * sources.
+     * Rebuilds the UI for all source groups and active languages.
      */
     private void updateLanguageFields() {
         if (currentEntryViewModel == null) {
@@ -254,7 +286,11 @@ public class TranslationPanel extends VBox {
     }
 
     /**
-     * Creates a source group with header and variant fields.
+     * Creates a source group with header and variant fields for a given source.
+     * 
+     * @param sourceName     the name of the source
+     * @param sourceVariants the list of variant view models for this source
+     * @return a SourceGroup containing UI elements for the source
      */
     private SourceGroup createSourceGroup(String sourceName, List<TranslationVariantViewModel> sourceVariants) {
         // Check if source is editable (all variants from same source should have same
@@ -312,8 +348,10 @@ public class TranslationPanel extends VBox {
 
     /**
      * Creates a section showing active languages (languages that are currently
-     * selected
-     * in the state manager) for adding new translation variants.
+     * selected in the state manager)
+     * for adding new translation variants.
+     * 
+     * @return VBox containing UI for adding new variants for active languages
      */
     private VBox createActiveLanguagesSection() {
         VBox sectionContainer = new VBox();
@@ -363,6 +401,7 @@ public class TranslationPanel extends VBox {
 
     /**
      * Hides the translation panel and cleans up resources.
+     * Resets internal state and stops any running timers.
      */
     public void hidePanel() {
         // Stop the table refresh timer
@@ -380,7 +419,8 @@ public class TranslationPanel extends VBox {
     }
 
     /**
-     * Updates the state of individual variant save/reset buttons.
+     * Updates the state of individual variant save/reset buttons for all displayed
+     * variant fields.
      */
     public void updateVariantButtons() {
         for (TranslationVariantField variantField : allVariantFields) {
@@ -391,6 +431,8 @@ public class TranslationPanel extends VBox {
     /**
      * Schedules a key for table indicator refresh.
      * The actual refresh will happen after a short delay to avoid frequent updates.
+     * 
+     * @param translationKey the translation key to refresh
      */
     private void scheduleTableRefresh(String translationKey) {
         keysNeedingRefresh.add(translationKey);
@@ -414,6 +456,8 @@ public class TranslationPanel extends VBox {
 
     /**
      * Returns the currently displayed translation key.
+     * 
+     * @return the current translation key, or null if none is displayed
      */
     public String getCurrentTranslationKey() {
         return currentTranslationKey;
@@ -421,13 +465,17 @@ public class TranslationPanel extends VBox {
 
     /**
      * Returns whether the panel is currently showing a translation.
+     * 
+     * @return true if a translation is displayed and the panel is visible
      */
     public boolean isShowingTranslation() {
         return currentTranslationKey != null && isVisible();
     }
 
     /**
-     * Creates a new translation variant based on the provided selection.
+     * Creates a new translation variant based on the provided selection from the
+     * dynamic context menu.
+     * Adds the new variant to the current entry and refreshes the UI.
      * 
      * @param selection the complete selection from the dynamic context menu
      */
@@ -464,6 +512,7 @@ public class TranslationPanel extends VBox {
             currentEntryViewModel.refresh();
             updateLanguageFields();
         } catch (Exception e) {
+            // Log error if variant creation fails
             System.err.println("Failed to create new translation variant: " + e.getMessage());
             e.printStackTrace();
         }

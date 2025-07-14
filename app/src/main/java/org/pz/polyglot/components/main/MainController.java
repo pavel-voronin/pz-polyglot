@@ -2,6 +2,8 @@ package org.pz.polyglot.components.main;
 
 import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.SplitPane;
 import javafx.application.HostServices;
 
 import org.pz.polyglot.State;
@@ -10,34 +12,70 @@ import org.pz.polyglot.components.TypesPanel;
 import org.pz.polyglot.components.SourcesPanel;
 import org.pz.polyglot.components.LanguagesPanel;
 
-import javafx.scene.control.*;
-
 /**
  * Main controller for the Polyglot application.
- * Handles initialization and configuration of the main TableView.
  */
 public class MainController {
+    /**
+     * Menu item for quitting the application.
+     */
     @FXML
     private MenuItem quitMenuItem;
+
+    /**
+     * Menu item for opening the GitHub repository.
+     */
     @FXML
     private MenuItem githubMenuItem;
+
+    /**
+     * Menu item for joining the Discord community.
+     */
     @FXML
     private MenuItem discordMenuItem;
+
+    /**
+     * Panel displaying translation data.
+     */
     @FXML
     private TranslationPanel translationPanel;
+
+    /**
+     * Panel displaying types information.
+     */
     @FXML
     private TypesPanel typesPanel;
+
+    /**
+     * Panel displaying sources information.
+     */
     @FXML
     private SourcesPanel sourcesPanel;
+
+    /**
+     * Panel displaying languages information.
+     */
     @FXML
     private LanguagesPanel languagesPanel;
+
+    /**
+     * Main split pane containing all panels.
+     */
     @FXML
     private SplitPane mainSplitPane;
+
+    /**
+     * Application state manager singleton.
+     */
     private final State stateManager = State.getInstance();
+
+    /**
+     * Host services for opening external links.
+     */
     private HostServices hostServices;
 
     /**
-     * Initializes the TableView and its columns with translation data.
+     * Initializes the controller and sets up menu actions and panel bindings.
      */
     @FXML
     private void initialize() {
@@ -45,6 +83,9 @@ public class MainController {
         setupObservableBindings();
     }
 
+    /**
+     * Sets up actions for menu items: quit, GitHub, and Discord.
+     */
     private void initializeMenuActions() {
         quitMenuItem.setOnAction(event -> Platform.exit());
         githubMenuItem.setOnAction(event -> {
@@ -60,7 +101,9 @@ public class MainController {
     }
 
     /**
-     * Sets up Observable bindings to replace callbacks.
+     * Sets up observable bindings for panel visibility and layout management.
+     * Ensures panels are added/removed from the split pane according to state
+     * changes.
      */
     private void setupObservableBindings() {
         stateManager.rightPanelVisibleProperty().addListener((obs, oldVal, newVal) -> {
@@ -81,7 +124,7 @@ public class MainController {
                 mainSplitPane.getItems().remove(typesPanel);
             } else {
                 if (!mainSplitPane.getItems().contains(typesPanel)) {
-                    // Types panel should be first
+                    // Types panel should always be the first in the split pane
                     mainSplitPane.getItems().add(0, typesPanel);
                     SplitPane.setResizableWithParent(typesPanel, false);
                 }
@@ -96,9 +139,9 @@ public class MainController {
                 if (!mainSplitPane.getItems().contains(sourcesPanel)) {
                     // Sources panel should be after types panel but before languages panel
                     int insertIndex = 0;
-                    if (stateManager.isTypesPanelVisible())
+                    if (stateManager.isTypesPanelVisible()) {
                         insertIndex++;
-                    // Don't count languages panel since sources should be before it
+                    }
                     mainSplitPane.getItems().add(insertIndex, sourcesPanel);
                     SplitPane.setResizableWithParent(sourcesPanel, false);
                 }
@@ -113,18 +156,19 @@ public class MainController {
                 if (!mainSplitPane.getItems().contains(languagesPanel)) {
                     // Languages panel should be after types and sources panels
                     int insertIndex = 0;
-                    if (stateManager.isTypesPanelVisible())
+                    if (stateManager.isTypesPanelVisible()) {
                         insertIndex++;
-                    if (stateManager.isSourcesPanelVisible())
+                    }
+                    if (stateManager.isSourcesPanelVisible()) {
                         insertIndex++;
+                    }
                     mainSplitPane.getItems().add(insertIndex, languagesPanel);
                     SplitPane.setResizableWithParent(languagesPanel, false);
                 }
             }
         });
-        // Ensure only visible panels are present
+        // Ensure only visible panels are present in the split pane after initialization
         Platform.runLater(() -> {
-            // Clear all panel visibility
             if (translationPanel != null) {
                 translationPanel.setVisible(false);
                 translationPanel.setManaged(false);
@@ -148,6 +192,11 @@ public class MainController {
         });
     }
 
+    /**
+     * Sets the HostServices instance for opening external links.
+     *
+     * @param hostServices the HostServices instance to use
+     */
     public void setHostServices(HostServices hostServices) {
         this.hostServices = hostServices;
     }

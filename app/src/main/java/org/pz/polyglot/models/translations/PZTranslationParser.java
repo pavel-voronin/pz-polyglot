@@ -17,26 +17,47 @@ import org.pz.polyglot.models.languages.PZLanguage;
 import org.pz.polyglot.models.sources.PZSource;
 
 /**
- * Reads a file and returns a stream of non-comment lines, skipping
- * the first line (header).
- * Handles block and line comments, and supports fallback charset if decoding
- * fails.
- * This class is not responsible for domain parsing, only for reading and
- * cleaning lines.
+ * Parses translation files and provides an iterator over translation key-value
+ * pairs.
+ * Handles charset detection, comment skipping, and multiline values.
  */
 public class PZTranslationParser implements AutoCloseable, Iterable<PZTranslationParser.Pair> {
-    public record Pair(String key, String value, int startLine, int endLine) {
+    /**
+     * Represents a translation entry with its key, value.
+     * 
+     * @param key   the translation key
+     * @param value the translation value
+     */
+    public record Pair(String key, String value) {
     }
 
+    /**
+     * Holds the result of reading lines from a file, including the charset used.
+     * 
+     * @param lines   the lines read from the file
+     * @param charset the charset used to decode the file
+     */
     private record ReadResult(List<String> lines, Charset charset) {
     }
 
+    /** Path to the translation file. */
     private Path path;
+    /** Charsets to try for reading the file, in order of preference. */
     private final LinkedHashSet<Charset> availableCharsets;
+    /** All lines read from the file. */
     private final List<String> allLines;
+    /** The charset that was successfully used to read the file. */
     private final Charset usedCharset;
+    /** Indicates whether the parser has been closed. */
     private boolean closed;
 
+    /**
+     * Constructs a parser for the given file, language, and source.
+     * 
+     * @param path     the path to the translation file
+     * @param language the language configuration
+     * @param source   the source configuration
+     */
     public PZTranslationParser(Path path, PZLanguage language, PZSource source) {
         this.path = path;
         this.availableCharsets = language.getCharsetsDownFrom(source.getVersion());
@@ -47,7 +68,10 @@ public class PZTranslationParser implements AutoCloseable, Iterable<PZTranslatio
     }
 
     /**
-     * Reads all lines from the file using the first available charset that works
+     * Reads all lines from the file using the first available charset that works.
+     * If no charset works, returns an empty list and null charset.
+     * 
+     * @return the result containing lines and charset
      */
     private ReadResult readAllLinesWithCorrectCharset() {
         for (Charset charset : availableCharsets) {
@@ -55,7 +79,7 @@ public class PZTranslationParser implements AutoCloseable, Iterable<PZTranslatio
                 List<String> lines = Files.readAllLines(path, charset);
                 return new ReadResult(lines, charset);
             } catch (IOException e) {
-                // Try next charset
+                // Try next charset if reading fails
                 continue;
             }
         }
@@ -64,6 +88,12 @@ public class PZTranslationParser implements AutoCloseable, Iterable<PZTranslatio
         return new ReadResult(List.of(), null); // Return empty list if no charset works
     }
 
+    /**
+     * Returns an iterator over translation pairs in the file.
+     * Skips comments and header, supports multiline values.
+     * 
+     * @return iterator over translation pairs
+     */
     @Override
     public Iterator<Pair> iterator() {
         return new Iterator<Pair>() {
@@ -73,9 +103,12 @@ public class PZTranslationParser implements AutoCloseable, Iterable<PZTranslatio
             private StringBuilder currentValue = new StringBuilder();
             private Pair nextPair = null;
             private boolean hasNextCalled = false;
-            private int currentStartLine = 0; // Track start line of current translation
-            private int currentEndLine = 0; // Track end line of current translation
 
+            /**
+             * Finds the next translation pair in the file.
+             * 
+             * @return true if a next pair is available
+             */
             @Override
             public boolean hasNext() {
                 if (closed)
@@ -87,16 +120,17 @@ public class PZTranslationParser implements AutoCloseable, Iterable<PZTranslatio
                     String line = allLines.get(currentLineIndex++);
                     String trimmed = line.trim();
 
+                    // Skip empty lines and comment lines
                     if (trimmed.isEmpty() || trimmed.startsWith("--")) {
                         multiline = false;
                         continue;
                     }
+                    // Skip lines that do not look like translation entries
                     if (!multiline && (!trimmed.contains("=") || !trimmed.contains("\""))) {
                         multiline = false;
                         continue;
                     }
                     if (!multiline) {
-                        currentStartLine = currentLineIndex; // Mark start of new translation
                         String[] parts = trimmed.split("=", 2);
                         currentKey = parts[0].trim();
                         String valuePart = parts[1].trim();
@@ -104,6 +138,7 @@ public class PZTranslationParser implements AutoCloseable, Iterable<PZTranslatio
                             multiline = false;
                             continue;
                         }
+                        // Multiline value starts with '..' at the end
                         if (trimmed.endsWith("..")) {
                             multiline = true;
                             valuePart = valuePart.substring(0, valuePart.length() - 2).trim();
@@ -125,13 +160,12 @@ public class PZTranslationParser implements AutoCloseable, Iterable<PZTranslatio
                             }
                             currentValue.setLength(0);
                             currentValue.append(valuePart.substring(firstQuote + 1, lastQuote));
-                            currentEndLine = currentLineIndex; // Mark end of single-line translation
-                            nextPair = new Pair(currentKey, currentValue.toString(), currentStartLine, currentEndLine);
+                            nextPair = new Pair(currentKey, currentValue.toString());
                             hasNextCalled = true;
                             return true;
                         }
                     } else {
-                        // Multiline value
+                        // Multiline value continuation
                         String valuePart = trimmed;
                         if (valuePart.isEmpty() || valuePart.indexOf('"') == -1) {
                             continue;
@@ -153,8 +187,7 @@ public class PZTranslationParser implements AutoCloseable, Iterable<PZTranslatio
                                 continue;
                             }
                             currentValue.append(valuePart.substring(firstQuote + 1, lastQuote));
-                            currentEndLine = currentLineIndex; // Mark end of multiline translation
-                            nextPair = new Pair(currentKey, currentValue.toString(), currentStartLine, currentEndLine);
+                            nextPair = new Pair(currentKey, currentValue.toString());
                             hasNextCalled = true;
                             multiline = false;
                             return true;
@@ -166,6 +199,11 @@ public class PZTranslationParser implements AutoCloseable, Iterable<PZTranslatio
                 return false;
             }
 
+            /**
+             * Returns the next translation pair.
+             * 
+             * @return the next Pair
+             */
             @Override
             public Pair next() {
                 if (!hasNextCalled)
@@ -177,7 +215,10 @@ public class PZTranslationParser implements AutoCloseable, Iterable<PZTranslatio
     }
 
     /**
-     * Returns a stream of non-comment lines (skipping header).
+     * Returns a stream of translation pairs (skipping header and comments).
+     * The stream is closed when finished.
+     * 
+     * @return stream of translation pairs
      */
     public Stream<Pair> stream() {
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(this.iterator(), Spliterator.ORDERED), false)
@@ -185,12 +226,17 @@ public class PZTranslationParser implements AutoCloseable, Iterable<PZTranslatio
     }
 
     /**
-     * Returns the charset that was successfully used to read the file
+     * Returns the charset that was successfully used to read the file.
+     * 
+     * @return the used charset, or null if none worked
      */
     public Charset getUsedCharset() {
         return usedCharset;
     }
 
+    /**
+     * Closes the parser and releases resources.
+     */
     @Override
     public void close() {
         closed = true;

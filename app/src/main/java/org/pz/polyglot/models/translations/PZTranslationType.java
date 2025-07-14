@@ -2,6 +2,12 @@ package org.pz.polyglot.models.translations;
 
 import java.util.Optional;
 
+/**
+ * Represents the various translation types used in Project Zomboid localization
+ * files.
+ * Each enum constant corresponds to a specific domain or category of
+ * translation data.
+ */
 public enum PZTranslationType {
     Attributes,
     BodyParts,
@@ -33,9 +39,13 @@ public enum PZTranslationType {
     UI;
 
     /**
-     * Returns an Optional containing the enum constant of this type with the
-     * specified name,
-     * or an empty Optional if no such constant exists.
+     * Attempts to resolve a {@link PZTranslationType} from the given string.
+     * <p>
+     * The comparison is case-sensitive and matches the enum constant name exactly.
+     *
+     * @param name the name of the enum constant to resolve
+     * @return an {@link Optional} containing the matching
+     *         {@code PZTranslationType}, or empty if not found
      */
     public static Optional<PZTranslationType> fromString(String name) {
         for (PZTranslationType type : values()) {

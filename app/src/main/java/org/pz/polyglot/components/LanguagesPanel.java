@@ -1,34 +1,66 @@
 package org.pz.polyglot.components;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListCell;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+
 import org.pz.polyglot.State;
 import org.pz.polyglot.models.languages.PZLanguages;
 
-import java.util.ArrayList;
-import java.util.List;
-
+/**
+ * Panel for displaying and managing the selection of available languages.
+ * Provides controls to select all or none, and synchronizes selection with
+ * application state.
+ */
 public class LanguagesPanel extends VBox {
+    /**
+     * Reference to the application state manager for synchronizing visible
+     * languages.
+     */
     private final State stateManager = State.getInstance();
+
+    /**
+     * ListView for displaying available language codes with drag-select capability.
+     */
     private final DragSelectListView<String> languagesListView = new DragSelectListView<>();
+
+    /**
+     * Button to select all languages.
+     */
     private final Button allButton = new Button("All");
+
+    /**
+     * Button to clear all language selections.
+     */
     private final Button noneButton = new Button("None");
+
+    /**
+     * Container for selection control buttons.
+     */
     private final HBox buttonsBox = new HBox(8, allButton, noneButton);
 
+    /**
+     * Constructs the LanguagesPanel and initializes UI components and bindings.
+     */
     public LanguagesPanel() {
         setSpacing(0);
         setPadding(Insets.EMPTY);
 
-        // Get all available languages in order (EN first, then alphabetical)
+        // Retrieve all available languages (EN first, then alphabetical)
         PZLanguages pzLanguages = PZLanguages.getInstance();
         List<String> allLanguageCodes = new ArrayList<>(pzLanguages.getAllLanguageCodes());
 
+        // Populate the ListView with language codes
         languagesListView.getItems().setAll(allLanguageCodes);
 
+        // Custom cell factory to display language code and name, and apply
+        // selection/drag styles
         languagesListView.setCellFactory(lv -> {
             ListCell<String> cell = new ListCell<>() {
                 @Override
@@ -38,6 +70,7 @@ public class LanguagesPanel extends VBox {
                         setText(null);
                         setStyle("");
                     } else {
+                        // Show code and name if available, otherwise just code
                         pzLanguages.getLanguage(languageCode).ifPresentOrElse(
                                 language -> setText(language.getCode() + " - " + language.getName()),
                                 () -> setText(languageCode));
@@ -61,6 +94,7 @@ public class LanguagesPanel extends VBox {
             return cell;
         });
 
+        // Update state when selection changes in the ListView
         languagesListView.setOnSelectionChanged(selectedIndices -> {
             List<String> selectedLanguages = new ArrayList<>();
             for (Integer index : selectedIndices) {
@@ -73,6 +107,7 @@ public class LanguagesPanel extends VBox {
 
         languagesListView.setFocusTraversable(false);
 
+        // Select all languages when 'All' button is pressed
         allButton.setOnAction(e -> {
             java.util.Set<Integer> allIndices = new java.util.HashSet<>();
             for (int i = 0; i < languagesListView.getItems().size(); i++) {
@@ -82,6 +117,7 @@ public class LanguagesPanel extends VBox {
             stateManager.updateVisibleLanguages(new ArrayList<>(languagesListView.getItems()));
         });
 
+        // Clear selection when 'None' button is pressed
         noneButton.setOnAction(e -> {
             languagesListView.clearSelection();
             stateManager.updateVisibleLanguages(new ArrayList<>());
@@ -100,7 +136,7 @@ public class LanguagesPanel extends VBox {
             syncSelectionFromState();
         });
 
-        // Initial sync - delay to ensure ListView is fully initialized
+        // Initial sync: ensure ListView selection matches state after initialization
         javafx.application.Platform.runLater(() -> {
             javafx.application.Platform.runLater(() -> {
                 syncSelectionFromState();
@@ -108,6 +144,11 @@ public class LanguagesPanel extends VBox {
         });
     }
 
+    /**
+     * Synchronizes the ListView selection with the current visible languages in the
+     * state.
+     * Called when the state changes or on initialization.
+     */
     private void syncSelectionFromState() {
         List<String> visibleLanguages = stateManager.getVisibleLanguages();
         java.util.Set<Integer> indicesToSelect = new java.util.HashSet<>();

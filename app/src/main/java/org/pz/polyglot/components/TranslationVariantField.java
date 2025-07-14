@@ -1,5 +1,8 @@
 package org.pz.polyglot.components;
 
+import java.io.IOException;
+import java.util.function.Consumer;
+
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -14,39 +17,57 @@ import javafx.scene.Cursor;
 import org.pz.polyglot.models.translations.PZTranslationManager;
 import org.pz.polyglot.viewModels.TranslationVariantViewModel;
 
-import java.io.IOException;
-import java.util.function.Consumer;
-
 /**
- * Component for displaying and editing a single translation variant.
+ * JavaFX component for displaying and editing a single translation variant.
+ * Handles UI logic, bindings, and user interactions for a translation variant.
  */
 public class TranslationVariantField extends VBox {
 
+    /**
+     * ViewModel representing the translation variant data and state.
+     */
     private final TranslationVariantViewModel viewModel;
 
-    // FXML components
+    // FXML-injected UI components
+    /** Container for the label elements. */
     @FXML
     private HBox labelContainer;
+    /** Container for language and type tags. */
     @FXML
     private HBox tagsContainer;
+    /** Hyperlink for resetting the variant to its original value. */
     @FXML
     private Hyperlink resetLink;
+    /** Hyperlink for saving the variant. */
     @FXML
     private Hyperlink saveLink;
+    /** Container for the text area. */
     @FXML
     private StackPane textAreaContainer;
+    /** Text area for editing the translation variant. */
     @FXML
     private TextArea textArea;
+    /** Polygon used as the resize handle for the text area. */
     @FXML
     private Polygon resizeHandle;
+    /** Rectangle area for mouse hit detection for resizing. */
     @FXML
     private javafx.scene.shape.Rectangle hitArea;
 
+    /** Indicates if the text area has been manually resized by the user. */
     private boolean manuallyResized = false;
 
+    /** Callback invoked when the variant changes. */
     private Consumer<String> onVariantChanged;
+    /** Callback invoked when the state changes. */
     private Runnable onStateChanged;
 
+    /**
+     * Constructs a TranslationVariantField for the given ViewModel.
+     * Loads FXML, applies styles, and sets up component logic.
+     *
+     * @param viewModel the ViewModel for this translation variant
+     */
     public TranslationVariantField(TranslationVariantViewModel viewModel) {
         this.viewModel = viewModel;
 
@@ -66,6 +87,9 @@ public class TranslationVariantField extends VBox {
         setupComponent();
     }
 
+    /**
+     * Initializes and configures the UI components, bindings, and event handlers.
+     */
     private void setupComponent() {
         LanguageTag langTag = new LanguageTag(viewModel.getLanguage());
         TypeTag typeTag = new TypeTag(viewModel.getVariant().getType());
@@ -101,6 +125,9 @@ public class TranslationVariantField extends VBox {
         setupResizeHandlers();
     }
 
+    /**
+     * Configures event handlers for UI actions and property changes.
+     */
     private void setupEventHandlers() {
         // Set up reset functionality
         resetLink.setOnAction(e -> {
@@ -148,8 +175,15 @@ public class TranslationVariantField extends VBox {
         resizeTextArea(textArea.getText());
     }
 
+    /**
+     * Dynamically resizes the text area based on its content, unless manually
+     * resized.
+     * Uses a pixel-based estimation for line wrapping and height calculation.
+     *
+     * @param text the current text in the text area
+     */
     private void resizeTextArea(String text) {
-        // Don't auto-resize if manually resized
+        // Prevent auto-resize if user has manually resized the text area
         if (manuallyResized) {
             return;
         }
@@ -159,10 +193,8 @@ public class TranslationVariantField extends VBox {
                 textArea.setPrefHeight(28);
                 textArea.setMaxHeight(28);
             } else {
-                // Calculate height based on text content
+                // Estimate height based on line breaks and wrapped lines
                 int lineBreaks = text.split("\n", -1).length;
-
-                // Estimate wrapped lines based on character count and width
                 double charWidth = 7.5;
                 double availableWidth = 410;
                 int charsPerLine = (int) (availableWidth / charWidth);
@@ -183,6 +215,10 @@ public class TranslationVariantField extends VBox {
         });
     }
 
+    /**
+     * Sets up mouse event handlers for manual resizing of the text area.
+     * Allows the user to drag the resize handle to adjust the text area size.
+     */
     private void setupResizeHandlers() {
         final double[] dragAnchor = new double[2];
 
@@ -214,7 +250,9 @@ public class TranslationVariantField extends VBox {
     }
 
     /**
-     * Updates the state of the variant buttons based on current changes.
+     * Forces a UI update for the variant buttons by triggering a text area change
+     * event.
+     * This is a workaround to refresh button states when needed.
      */
     public void updateVariantButtons() {
         Platform.runLater(() -> {
@@ -225,14 +263,18 @@ public class TranslationVariantField extends VBox {
     }
 
     /**
-     * Sets the callback for when variant changes occur.
+     * Sets the callback to be invoked when the variant changes.
+     *
+     * @param callback the callback accepting the translation key
      */
     public void setOnVariantChanged(Consumer<String> callback) {
         this.onVariantChanged = callback;
     }
 
     /**
-     * Sets the callback for when the state changes.
+     * Sets the callback to be invoked when the state changes.
+     *
+     * @param callback the callback to run on state change
      */
     public void setOnStateChanged(Runnable callback) {
         this.onStateChanged = callback;

@@ -1,23 +1,45 @@
 package org.pz.polyglot.components;
 
+import java.util.HashSet;
+import java.util.Set;
+import java.util.function.Consumer;
+
 import javafx.application.Platform;
 import javafx.scene.control.ListView;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.control.ListCell;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.function.Consumer;
 
+/**
+ * A ListView supporting drag selection of multiple items, similar to desktop
+ * file managers.
+ * 
+ * @param <T> the type of the items contained within the ListView
+ */
 public class DragSelectListView<T> extends ListView<T> {
+    /** Indicates if a drag selection is in progress. */
     private boolean isDragging = false;
+
+    /** Stores the initial selection state of the dragged item. */
     private boolean initialSelectionState = false;
+
+    /** The index where the drag selection started. */
     public int startIndex = -1;
+
+    /** True if mouse event filters have been set up. */
     private boolean setupDone = false;
-    private Set<Integer> draggedIndices = new HashSet<>();
+
+    /** Indices currently being dragged over for selection preview. */
+    private final Set<Integer> draggedIndices = new HashSet<>();
+
+    /** Callback invoked when selection changes. */
     private Consumer<Set<Integer>> onSelectionChanged = null;
+
+    /** Minimum index in the current drag selection. */
     private int minDraggedIndex = Integer.MAX_VALUE;
+
+    /** Maximum index in the current drag selection. */
     private int maxDraggedIndex = Integer.MIN_VALUE;
 
     public DragSelectListView() {
@@ -43,11 +65,20 @@ public class DragSelectListView<T> extends ListView<T> {
         });
     }
 
+    /**
+     * Sets a callback to be invoked when the selection changes.
+     * 
+     * @param callback a Consumer receiving the set of selected indices
+     */
     public void setOnSelectionChanged(Consumer<Set<Integer>> callback) {
         this.onSelectionChanged = callback;
     }
 
-    // Method to programmatically select items (for All/None buttons)
+    /**
+     * Programmatically selects items by their indices (used for All/None buttons).
+     * 
+     * @param indices set of indices to select
+     */
     public void selectItems(Set<Integer> indices) {
         if (getSelectionModel() == null)
             return;
@@ -61,6 +92,9 @@ public class DragSelectListView<T> extends ListView<T> {
         refresh();
     }
 
+    /**
+     * Clears all selections in the list view.
+     */
     public void clearSelection() {
         if (getSelectionModel() == null)
             return;
@@ -68,6 +102,9 @@ public class DragSelectListView<T> extends ListView<T> {
         refresh();
     }
 
+    /**
+     * Sets up mouse event filters for drag selection. Called once per instance.
+     */
     private void forceSetup() {
         if (setupDone)
             return;
@@ -83,17 +120,20 @@ public class DragSelectListView<T> extends ListView<T> {
         setupDone = true;
     }
 
+    /**
+     * Handles mouse press events to initiate drag selection.
+     */
     private void onPressed(MouseEvent event) {
         if (event.getButton() != MouseButton.PRIMARY || getSelectionModel() == null) {
             return;
         }
 
-        // Check if clicking on scrollbar
+        // Ignore clicks on the scrollbar
         if (event.getX() > getWidth() - 20) {
-            return; // Let scrollbar handle the event
+            return;
         }
 
-        // Force layout update before calculating index
+        // Ensure layout is up-to-date before index calculation
         this.layout();
 
         int index = getIndexAt(event);
@@ -115,25 +155,28 @@ public class DragSelectListView<T> extends ListView<T> {
         event.consume();
     }
 
+    /**
+     * Handles mouse drag events to update drag selection preview.
+     */
     private void onDragged(MouseEvent event) {
         if (!isDragging || getSelectionModel() == null)
             return;
 
-        // Check if dragging on scrollbar
+        // Ignore drags on the scrollbar
         if (event.getX() > getWidth() - 20) {
             return;
         }
 
-        // Force layout update before calculating index
+        // Ensure layout is up-to-date before index calculation
         this.layout();
 
         int currentIndex = getIndexAt(event);
         if (currentIndex >= 0 && currentIndex < getItems().size()) {
-            // Update min/max range
+            // Update min/max range for drag selection
             minDraggedIndex = Math.min(minDraggedIndex, currentIndex);
             maxDraggedIndex = Math.max(maxDraggedIndex, currentIndex);
 
-            // Fill entire range from min to max
+            // Fill entire range from min to max for preview
             draggedIndices.clear();
             for (int i = minDraggedIndex; i <= maxDraggedIndex; i++) {
                 draggedIndices.add(i);
@@ -145,11 +188,14 @@ public class DragSelectListView<T> extends ListView<T> {
         event.consume();
     }
 
+    /**
+     * Handles mouse release events to finalize drag selection.
+     */
     private void onReleased(MouseEvent event) {
         if (!isDragging)
             return;
 
-        // Apply actual selection changes
+        // Apply selection changes for all dragged indices
         for (Integer index : draggedIndices) {
             if (initialSelectionState) {
                 getSelectionModel().select(index);
@@ -171,11 +217,16 @@ public class DragSelectListView<T> extends ListView<T> {
         refresh();
     }
 
+    /**
+     * Refreshes the ListView to update drag preview styling.
+     */
     private void updateDragPreview() {
-        // Refresh cells to show drag preview
         refresh();
     }
 
+    /**
+     * Notifies the selection change callback with the current selected indices.
+     */
     private void notifySelectionChanged() {
         if (onSelectionChanged != null) {
             Set<Integer> selectedIndices = new HashSet<>();
@@ -188,8 +239,15 @@ public class DragSelectListView<T> extends ListView<T> {
         }
     }
 
+    /**
+     * Calculates the index of the item under the mouse event.
+     * Uses robust cell lookup, falling back to coordinate math if needed.
+     * 
+     * @param event the mouse event
+     * @return the index under the mouse, or a bounded fallback
+     */
     private int getIndexAt(MouseEvent event) {
-        // Robust index calculation: find the cell under the mouse Y coordinate
+        // Try to find the cell under the mouse Y coordinate
         try {
             var virtualFlow = lookup(".virtual-flow");
             if (virtualFlow != null) {
@@ -210,7 +268,7 @@ public class DragSelectListView<T> extends ListView<T> {
             // Ignore and fallback
         }
 
-        // Fallback: use previous logic
+        // Fallback: estimate index by Y coordinate and cell height
         double y = event.getY();
         double cellHeight = getCellHeight();
         double scrollOffset = 0;
@@ -232,12 +290,18 @@ public class DragSelectListView<T> extends ListView<T> {
                 }
             }
         } catch (Exception e) {
+            // Ignore and fallback
         }
         int index = (int) ((y + scrollOffset) / cellHeight);
         int boundedIndex = Math.max(0, Math.min(index, getItems().size() - 1));
         return boundedIndex;
     }
 
+    /**
+     * Returns the height of a cell in the list view.
+     * 
+     * @return cell height in pixels
+     */
     private double getCellHeight() {
         if (getFixedCellSize() > 0) {
             return getFixedCellSize();
@@ -256,18 +320,29 @@ public class DragSelectListView<T> extends ListView<T> {
                 }
             }
         } catch (Exception e) {
-            // Ignore
+            // Ignore and fallback
         }
 
         return 24.0;
     }
 
-    // Helper method to check if index is being dragged (for cell styling)
+    /**
+     * Checks if the given index is currently being dragged over (for cell styling).
+     * 
+     * @param index the index to check
+     * @return true if index is part of the current drag selection
+     */
     public boolean isDraggedIndex(int index) {
         return isDragging && draggedIndices.contains(index);
     }
 
-    // Helper method to get drag state for styling
+    /**
+     * Returns true if a drag selection is in progress and the initial state is
+     * selecting.
+     * Used for cell styling.
+     * 
+     * @return true if drag selecting
+     */
     public boolean isDragSelecting() {
         return isDragging && initialSelectionState;
     }

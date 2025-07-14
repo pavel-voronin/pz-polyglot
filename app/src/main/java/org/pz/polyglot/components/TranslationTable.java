@@ -1,11 +1,19 @@
 package org.pz.polyglot.components;
 
+import java.util.Objects;
+import java.util.Set;
+import java.io.IOException;
+
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.MouseButton;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.collections.transformation.FilteredList;
@@ -14,26 +22,54 @@ import javafx.collections.transformation.SortedList;
 import org.pz.polyglot.Logger;
 import org.pz.polyglot.State;
 import org.pz.polyglot.models.translations.PZTranslationEntry;
+import org.pz.polyglot.models.translations.PZTranslations;
 import org.pz.polyglot.viewModels.TranslationEntryViewModel;
 import org.pz.polyglot.viewModels.registries.TranslationEntryViewModelRegistry;
 
-import java.util.Set;
-
-import java.io.IOException;
-
 /**
- * Component encapsulating the translation entries TableView and its logic.
- * Now subscribes directly to global State for all table-related events.
+ * TableView component for displaying and managing translation entries.
+ * Subscribes to global State for all table-related events and updates.
  */
 public class TranslationTable extends TableView<TranslationEntryViewModel> {
-    private ObservableList<TranslationEntryViewModel> backingList = FXCollections.observableArrayList();
+    /**
+     * Backing list for all translation entry view models.
+     */
+    private final ObservableList<TranslationEntryViewModel> backingList = FXCollections.observableArrayList();
+
+    /**
+     * Filtered list for table virtualization and filtering.
+     */
     private FilteredList<TranslationEntryViewModel> filteredTableItems;
+
+    /**
+     * Sorted list for table virtualization and sorting.
+     */
     private SortedList<TranslationEntryViewModel> sortedTableItems;
-    private ObservableList<PZTranslationEntry> allEntries = FXCollections.observableArrayList();
+
+    /**
+     * All translation entries loaded from the model.
+     */
+    private final ObservableList<PZTranslationEntry> allEntries = FXCollections.observableArrayList();
+
+    /**
+     * Manages table columns and their configuration.
+     */
     private ColumnManager columnManager;
+
+    /**
+     * Current filter text applied to the table.
+     */
     private String filterText = "";
+
+    /**
+     * Reference to the global state manager singleton.
+     */
     private final State stateManager = State.getInstance();
 
+    /**
+     * Constructs the TranslationTable and initializes FXML, state subscriptions,
+     * and table data.
+     */
     public TranslationTable() {
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/fxml/TranslationTable.fxml"));
         fxmlLoader.setRoot(this);
@@ -45,10 +81,13 @@ public class TranslationTable extends TableView<TranslationEntryViewModel> {
         }
         subscribeToState();
         setupTableVirtualization();
-
         populateTranslationsTable();
     }
 
+    /**
+     * Sets up table virtualization, sorting, filtering, and row context menu.
+     * Also listens for selection changes to update global state.
+     */
     private void setupTableVirtualization() {
         filteredTableItems = new FilteredList<>(backingList, p -> true);
         sortedTableItems = new SortedList<>(filteredTableItems);
@@ -62,14 +101,14 @@ public class TranslationTable extends TableView<TranslationEntryViewModel> {
                 }
             };
 
-            // Context menu for copying key
+            // Context menu for copying the translation key to clipboard
             ContextMenu contextMenu = new ContextMenu();
             MenuItem copyKeyItem = new MenuItem("Copy key");
             copyKeyItem.setOnAction(event -> {
                 TranslationEntryViewModel item = row.getItem();
                 if (item != null) {
-                    var clipboard = javafx.scene.input.Clipboard.getSystemClipboard();
-                    var content = new javafx.scene.input.ClipboardContent();
+                    var clipboard = Clipboard.getSystemClipboard();
+                    var content = new ClipboardContent();
                     content.putString(item.getKey());
                     clipboard.setContent(content);
                 }
@@ -77,7 +116,8 @@ public class TranslationTable extends TableView<TranslationEntryViewModel> {
             contextMenu.getItems().add(copyKeyItem);
 
             row.setOnMouseClicked(event -> {
-                if (!row.isEmpty() && event.getButton() == javafx.scene.input.MouseButton.SECONDARY) {
+                // Show context menu on right mouse button click
+                if (!row.isEmpty() && event.getButton() == MouseButton.SECONDARY) {
                     row.setContextMenu(contextMenu);
                     contextMenu.show(row, event.getScreenX(), event.getScreenY());
                     event.consume();
@@ -87,7 +127,7 @@ public class TranslationTable extends TableView<TranslationEntryViewModel> {
             return row;
         });
 
-        // Listen for selection changes to support keyboard navigation
+        // Listen for selection changes to support keyboard navigation and update state
         getSelectionModel().selectedItemProperty().addListener((obs, oldItem, newItem) -> {
             if (newItem != null) {
                 String newKey = newItem.getKey();
@@ -97,12 +137,20 @@ public class TranslationTable extends TableView<TranslationEntryViewModel> {
         });
     }
 
+    /**
+     * Initializes the table columns using ColumnManager. Called by FXML.
+     */
     @FXML
     private void initialize() {
         columnManager = new ColumnManager(this);
         columnManager.createColumns();
     }
 
+    /**
+     * Subscribes to global state properties to update the table when relevant
+     * events occur.
+     * Handles table refresh, selection, filtering, and rebuild events.
+     */
     private void subscribeToState() {
         stateManager.saveAllTriggeredProperty().addListener((obs, oldVal, newVal) -> refreshTableIndicators());
         stateManager.refreshKeyProperty().addListener((obs, oldVal, newVal) -> {
@@ -118,7 +166,7 @@ public class TranslationTable extends TableView<TranslationEntryViewModel> {
                 getSelectionModel().clearSelection();
             } else {
                 var selectedItem = getSelectionModel().getSelectedItem();
-                if (selectedItem == null || !java.util.Objects.equals(selectedItem.getKey(), newVal)) {
+                if (selectedItem == null || !Objects.equals(selectedItem.getKey(), newVal)) {
                     for (var item : filteredTableItems) {
                         if (item.getKey().equals(newVal)) {
                             getSelectionModel().select(item);
@@ -137,17 +185,22 @@ public class TranslationTable extends TableView<TranslationEntryViewModel> {
         stateManager.enabledSourcesChangedProperty()
                 .addListener((obs, oldVal, newVal) -> applyFilter());
         stateManager.getFilteredLanguages()
-                .addListener((javafx.collections.ListChangeListener<? super String>) change -> applyFilter());
+                .addListener((ListChangeListener<? super String>) change -> applyFilter());
     }
 
     /**
-     * Set the items to display in the table. This is the only way to set data.
+     * Sets the items to display in the table. This is the only way to set data.
+     * 
+     * @param entries Observable list of translation entries to display
      */
     public void setTableEntries(ObservableList<PZTranslationEntry> entries) {
         allEntries.setAll(entries);
         rebuildFilteredList();
     }
 
+    /**
+     * Rebuilds the backing list from all entries and applies the current filter.
+     */
     private void rebuildFilteredList() {
         backingList.clear();
         for (var entry : allEntries) {
@@ -156,6 +209,19 @@ public class TranslationTable extends TableView<TranslationEntryViewModel> {
         applyFilter();
     }
 
+    /**
+     * Applies the current filter to the table items based on text, type, source,
+     * and language.
+     * <p>
+     * Filtering logic:
+     * <ul>
+     * <li>- If filter text is blank, all items match.</li>
+     * <li>- If filtered languages are set, only items containing all filtered
+     * languages
+     * are shown, unless the key is new.</li>
+     * <li>- Items are also filtered by type and source.</li>
+     * </ul>
+     */
     private void applyFilter() {
         Logger.info("Applying filter");
         var selectedTypes = stateManager.getSelectedTypes();
@@ -186,12 +252,18 @@ public class TranslationTable extends TableView<TranslationEntryViewModel> {
                 });
     }
 
+    /**
+     * Populates the table with all translation entries from the model.
+     */
     public void populateTranslationsTable() {
-        var translations = org.pz.polyglot.models.translations.PZTranslations.getInstance();
+        var translations = PZTranslations.getInstance();
         allEntries.setAll(translations.getAllTranslations().values());
         rebuildFilteredList();
     }
 
+    /**
+     * Refreshes all table indicators for visible items.
+     */
     public void refreshTableIndicators() {
         for (TranslationEntryViewModel entryViewModel : filteredTableItems) {
             if (entryViewModel != null) {
@@ -201,6 +273,11 @@ public class TranslationTable extends TableView<TranslationEntryViewModel> {
         refresh();
     }
 
+    /**
+     * Refreshes table indicators for a specific translation key.
+     * 
+     * @param translationKey the key to refresh
+     */
     public void refreshTableIndicatorsForKey(String translationKey) {
         for (TranslationEntryViewModel item : filteredTableItems) {
             if (item.getKey().equals(translationKey)) {
@@ -211,6 +288,11 @@ public class TranslationTable extends TableView<TranslationEntryViewModel> {
         }
     }
 
+    /**
+     * Returns the column manager for this table.
+     * 
+     * @return the column manager
+     */
     public ColumnManager getColumnManager() {
         return columnManager;
     }

@@ -1,6 +1,18 @@
 package org.pz.polyglot.viewModels;
 
-import javafx.beans.property.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -11,9 +23,6 @@ import org.pz.polyglot.models.translations.PZTranslationType;
 import org.pz.polyglot.models.translations.PZTranslationVariant;
 import org.pz.polyglot.viewModels.registries.TranslationVariantViewModelRegistry;
 
-import java.util.*;
-import java.util.stream.Collectors;
-
 /**
  * ViewModel for PZTranslationEntry that provides observable properties
  * and manages the list of variant ViewModels.
@@ -21,25 +30,46 @@ import java.util.stream.Collectors;
 public class TranslationEntryViewModel {
     /**
      * Returns all language codes for which this entry has a translation.
+     * 
+     * @return a set of language codes present in the translation entry
      */
     public Set<String> getLanguages() {
         return getVariantViewModels().stream()
-                .map(vm -> vm.getLanguage())
-                .filter(java.util.Objects::nonNull)
+                .map(TranslationVariantViewModel::getLanguage)
+                .filter(Objects::nonNull)
                 .map(lang -> lang.getCode())
-                .collect(java.util.stream.Collectors.toSet());
+                .collect(Collectors.toSet());
     }
 
+    /**
+     * The underlying translation entry model.
+     */
     private final PZTranslationEntry entry;
 
+    /**
+     * The translation key property.
+     */
     private final StringProperty key = new SimpleStringProperty();
+
+    /**
+     * Observable list of variant ViewModels for this entry.
+     */
     private final ObservableList<TranslationVariantViewModel> variantViewModels = FXCollections.observableArrayList();
+
+    /**
+     * Property indicating if this entry has any changes.
+     */
     private final BooleanProperty hasChanges = new SimpleBooleanProperty();
 
+    /**
+     * Constructs a ViewModel for the given translation entry.
+     * Initializes properties and listeners for change tracking.
+     * 
+     * @param entry the translation entry to wrap
+     */
     public TranslationEntryViewModel(PZTranslationEntry entry) {
         this.entry = entry;
 
-        // Initialize properties
         key.set(entry.getKey());
 
         // Build initial variant ViewModels
@@ -63,17 +93,26 @@ public class TranslationEntryViewModel {
 
     /**
      * Gets the translation key.
+     * 
+     * @return the translation key
      */
     public String getKey() {
         return key.get();
     }
 
+    /**
+     * Gets the translation key property.
+     * 
+     * @return the key property
+     */
     public StringProperty keyProperty() {
         return key;
     }
 
     /**
-     * Gets the underlying PZTranslationEntry.
+     * Gets the underlying translation entry model.
+     * 
+     * @return the translation entry
      */
     public PZTranslationEntry getEntry() {
         return entry;
@@ -81,6 +120,8 @@ public class TranslationEntryViewModel {
 
     /**
      * Gets the observable list of variant ViewModels.
+     * 
+     * @return the list of variant ViewModels
      */
     public ObservableList<TranslationVariantViewModel> getVariantViewModels() {
         return variantViewModels;
@@ -88,6 +129,9 @@ public class TranslationEntryViewModel {
 
     /**
      * Gets variant ViewModels for a specific language code.
+     * 
+     * @param languageCode the language code to filter by
+     * @return list of variant ViewModels for the language
      */
     public List<TranslationVariantViewModel> getVariantViewModelsForLanguage(String languageCode) {
         return variantViewModels.stream()
@@ -98,6 +142,10 @@ public class TranslationEntryViewModel {
     /**
      * Gets variant ViewModels for a specific language code filtered by enabled
      * sources.
+     * 
+     * @param languageCode   the language code to filter by
+     * @param enabledSources set of enabled source names
+     * @return list of variant ViewModels for the language and enabled sources
      */
     public List<TranslationVariantViewModel> getVariantViewModelsForLanguageFromEnabledSources(String languageCode,
             Set<String> enabledSources) {
@@ -109,6 +157,9 @@ public class TranslationEntryViewModel {
 
     /**
      * Gets variant ViewModels for the specified language codes in the given order.
+     * 
+     * @param languageCodes list of language codes
+     * @return list of variant ViewModels for the languages
      */
     public List<TranslationVariantViewModel> getVariantViewModelsForLanguages(List<String> languageCodes) {
         List<TranslationVariantViewModel> result = new ArrayList<>();
@@ -120,6 +171,9 @@ public class TranslationEntryViewModel {
 
     /**
      * Checks if this translation entry has variants for the specified language.
+     * 
+     * @param languageCode the language code to check
+     * @return true if there is at least one variant for the language
      */
     public boolean hasTranslationForLanguage(String languageCode) {
         return variantViewModels.stream()
@@ -129,6 +183,9 @@ public class TranslationEntryViewModel {
 
     /**
      * Checks if this translation entry has changes for the specified language.
+     * 
+     * @param languageCode the language code to check
+     * @return true if there are changes for the language
      */
     public boolean hasChangesForLanguage(String languageCode) {
         return variantViewModels.stream()
@@ -138,18 +195,26 @@ public class TranslationEntryViewModel {
     }
 
     /**
-     * Property indicating if this entry has any changes.
+     * Returns whether this entry has any changes.
+     * 
+     * @return true if any variant has changes
      */
     public boolean getHasChanges() {
         return hasChanges.get();
     }
 
+    /**
+     * Gets the property indicating if this entry has any changes.
+     * 
+     * @return the hasChanges property
+     */
     public BooleanProperty hasChangesProperty() {
         return hasChanges;
     }
 
     /**
-     * Refreshes the variant ViewModels from the underlying entry.
+     * Refreshes the variant ViewModels from the underlying entry and updates change
+     * tracking.
      */
     public void refresh() {
         refreshVariantViewModels();
@@ -157,7 +222,9 @@ public class TranslationEntryViewModel {
     }
 
     /**
-     * Builds language presence and changes maps for table display.
+     * Builds a map indicating language presence for table display.
+     * 
+     * @return map of language code to presence (true/false)
      */
     public Map<String, Boolean> buildLanguagePresenceMap() {
         Map<String, Boolean> languagePresence = new HashMap<>();
@@ -179,7 +246,9 @@ public class TranslationEntryViewModel {
     }
 
     /**
-     * Builds language changes map for table display.
+     * Builds a map indicating language changes for table display.
+     * 
+     * @return map of language code to change status (true/false)
      */
     public Map<String, Boolean> buildLanguageChangesMap() {
         Map<String, Boolean> languageChanges = new HashMap<>();
@@ -202,13 +271,17 @@ public class TranslationEntryViewModel {
 
     /**
      * Gets the translation type for this entry.
+     * 
+     * @return the translation type
      */
     public PZTranslationType getType() {
         return entry.getType();
     }
 
     /**
-     * Returns all types present in this entry (from its variants).
+     * Returns all translation types present in this entry (from its variants).
+     * 
+     * @return set of translation types from variants
      */
     public Set<PZTranslationType> getTypes() {
         return entry.getVariants().stream()
@@ -219,6 +292,8 @@ public class TranslationEntryViewModel {
 
     /**
      * Returns all sources present in this entry (from its variants).
+     * 
+     * @return set of source names from variants
      */
     public Set<String> getSources() {
         return entry.getVariants().stream()
@@ -226,8 +301,11 @@ public class TranslationEntryViewModel {
                 .collect(Collectors.toSet());
     }
 
+    /**
+     * Rebuilds the list of variant ViewModels from the underlying entry.
+     * Listeners for change tracking are also attached here.
+     */
     private void refreshVariantViewModels() {
-        // Clear current ViewModels
         variantViewModels.clear();
 
         // Create ViewModels for all variants
@@ -235,13 +313,16 @@ public class TranslationEntryViewModel {
             TranslationVariantViewModel viewModel = TranslationVariantViewModelRegistry.getViewModel(variant);
             variantViewModels.add(viewModel);
 
-            // Add listener for changes in this variant ViewModel
+            // Attach listener for changes in this variant ViewModel
             viewModel.changedProperty().addListener((obs, oldVal, newVal) -> {
                 updateHasChangesProperty();
             });
         }
     }
 
+    /**
+     * Updates the hasChanges property based on the change status of all variants.
+     */
     private void updateHasChangesProperty() {
         boolean hasAnyChanges = variantViewModels.stream()
                 .anyMatch(vm -> vm.getVariant().isChanged());
