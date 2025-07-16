@@ -232,7 +232,12 @@ public class TranslationTable extends TableView<TranslationEntryViewModel> {
         filteredTableItems.setPredicate(
                 item -> {
                     boolean matchesText = filterText.isBlank()
-                            || item.getKey().toLowerCase().contains(filterText.toLowerCase());
+                            || item.getKey().toLowerCase().contains(filterText.toLowerCase())
+                            || item.getVariantViewModels().stream()
+                                    .anyMatch(variant -> {
+                                        String text = variant.getVariant().getEditedText();
+                                        return text != null && text.toLowerCase().contains(filterText.toLowerCase());
+                                    });
                     boolean matchesType = item.getTypes().isEmpty() || selectedTypes.contains(item.getType());
                     boolean matchesSource = item.getSources().isEmpty() ||
                             (!enabledSources.isEmpty()
