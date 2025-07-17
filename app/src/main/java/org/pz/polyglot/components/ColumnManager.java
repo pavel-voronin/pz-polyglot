@@ -146,6 +146,22 @@ public class ColumnManager {
         });
         keyColumn.setPrefWidth(150);
         keyColumn.setReorderable(false);
+        // Highlight key cell if filter matches key
+        keyColumn.setCellFactory(tc -> new javafx.scene.control.TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(item);
+                getStyleClass().remove("highlight-cell");
+                if (!empty && item != null) {
+                    String filterText = stateManager.filterTextProperty().get();
+                    if (filterText != null && !filterText.isBlank()
+                            && item.toLowerCase().contains(filterText.toLowerCase())) {
+                        getStyleClass().add("highlight-cell");
+                    }
+                }
+            }
+        });
         tableView.getColumns().add(keyColumn);
     }
 
@@ -201,6 +217,38 @@ public class ColumnManager {
         col.setMinWidth(48);
         col.setReorderable(true);
 
+        // Highlight cell only if filter text matches a variant for this language
+        col.setCellFactory(tc -> new javafx.scene.control.TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(item);
+                getStyleClass().remove("highlight-cell");
+                if (!empty) {
+                    TranslationEntryViewModel entryViewModel = getTableRow() != null
+                            ? (TranslationEntryViewModel) getTableRow().getItem()
+                            : null;
+                    if (entryViewModel != null) {
+                        String filterText = stateManager.filterTextProperty().get();
+                        if (filterText != null && !filterText.isBlank()) {
+                            boolean matches = entryViewModel.getVariantViewModels().stream()
+                                    .filter(variant -> {
+                                        var language = variant.getVariant().getLanguage();
+                                        return language != null && lang.equals(language.getCode());
+                                    })
+                                    .anyMatch(variant -> {
+                                        String text = variant.getVariant().getEditedText();
+                                        return text != null && text.toLowerCase().contains(filterText.toLowerCase());
+                                    });
+                            if (matches) {
+                                getStyleClass().add("highlight-cell");
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
         col.setVisible(visible);
         col.setGraphic(createLanguageHeaderBox(lang));
         col.setText("");
@@ -246,6 +294,38 @@ public class ColumnManager {
         col.setPrefWidth(60);
         col.setMinWidth(48);
         col.setReorderable(true);
+
+        // Highlight cell only if filter text matches a variant for this language
+        col.setCellFactory(tc -> new javafx.scene.control.TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(item);
+                getStyleClass().remove("highlight-cell");
+                if (!empty) {
+                    TranslationEntryViewModel entryViewModel = getTableRow() != null
+                            ? (TranslationEntryViewModel) getTableRow().getItem()
+                            : null;
+                    if (entryViewModel != null) {
+                        String filterText = stateManager.filterTextProperty().get();
+                        if (filterText != null && !filterText.isBlank()) {
+                            boolean matches = entryViewModel.getVariantViewModels().stream()
+                                    .filter(variant -> {
+                                        var language = variant.getVariant().getLanguage();
+                                        return language != null && lang.equals(language.getCode());
+                                    })
+                                    .anyMatch(variant -> {
+                                        String text = variant.getVariant().getEditedText();
+                                        return text != null && text.toLowerCase().contains(filterText.toLowerCase());
+                                    });
+                            if (matches) {
+                                getStyleClass().add("highlight-cell");
+                            }
+                        }
+                    }
+                }
+            }
+        });
 
         col.setVisible(visible);
         col.setGraphic(createLanguageHeaderBox(lang));
