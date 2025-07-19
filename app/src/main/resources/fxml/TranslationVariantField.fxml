@@ -23,6 +23,7 @@
             <Region fx:id="spacer" HBox.hgrow="ALWAYS" />
             <Hyperlink fx:id="saveLink" styleClass="action-link" text="save" visible="false" />
             <Hyperlink fx:id="resetLink" styleClass="action-link" text="reset" visible="false" />
+            <Hyperlink fx:id="deleteLink" styleClass="action-link" text="delete" visible="false" />
          </children>
       </HBox>
       <StackPane fx:id="textAreaContainer">

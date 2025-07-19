@@ -12,10 +12,14 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Polygon;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.Cursor;
 
+import org.pz.polyglot.State;
+import org.pz.polyglot.models.TranslationSession;
 import org.pz.polyglot.models.translations.PZTranslationManager;
 import org.pz.polyglot.viewModels.TranslationVariantViewModel;
+import org.pz.polyglot.viewModels.registries.TranslationEntryViewModelRegistry;
 
 /**
  * JavaFX component for displaying and editing a single translation variant.
@@ -41,6 +45,9 @@ public class TranslationVariantField extends VBox {
     /** Hyperlink for saving the variant. */
     @FXML
     private Hyperlink saveLink;
+    /** Hyperlink for deleting the variant. */
+    @FXML
+    private Hyperlink deleteLink;
     /** Container for the text area. */
     @FXML
     private StackPane textAreaContainer;
@@ -52,7 +59,7 @@ public class TranslationVariantField extends VBox {
     private Polygon resizeHandle;
     /** Rectangle area for mouse hit detection for resizing. */
     @FXML
-    private javafx.scene.shape.Rectangle hitArea;
+    private Rectangle hitArea;
 
     /** Indicates if the text area has been manually resized by the user. */
     private boolean manuallyResized = false;
@@ -114,6 +121,9 @@ public class TranslationVariantField extends VBox {
         resetLink.visibleProperty().bind(viewModel.changedProperty());
         saveLink.visibleProperty().bind(viewModel.changedProperty());
 
+        // Set deleteLink visibility based on source editability
+        deleteLink.setVisible(isEditable);
+
         // Setup resize handle cursor
         resizeHandle.setCursor(Cursor.SE_RESIZE);
         hitArea.setCursor(Cursor.SE_RESIZE);
@@ -153,6 +163,39 @@ public class TranslationVariantField extends VBox {
                 onVariantChanged.accept(viewModel.getTranslationKey());
                 onVariantChanged.accept(""); // Temporary placeholder
             }
+        });
+
+        deleteLink.setOnAction(e -> {
+            if (!viewModel.isSourceEditable()) {
+                return; // Do not allow deletion if not editable
+            }
+
+            var variant = viewModel.getVariant();
+            var entry = variant.getKey();
+
+            // First, remove the variant from the entry's variant list
+            entry.getVariants().remove(variant);
+
+            // Then remove from session and registry
+            TranslationEntryViewModelRegistry.removeViewModel(entry);
+            TranslationSession.getInstance().removeVariant(variant);
+            PZTranslationManager.deleteVariant(variant);
+
+            // Refresh the parent entry ViewModel
+            var entryViewModel = org.pz.polyglot.viewModels.registries.TranslationEntryViewModelRegistry
+                    .getViewModel(entry);
+            if (entryViewModel != null) {
+                entryViewModel.refresh();
+            }
+
+            // Remove this panel from its parent (reload UI)
+            Platform.runLater(() -> {
+                State.getInstance().requestTableRefresh();
+                State.getInstance().setSelectedTranslationKey(null);
+                Platform.runLater(() -> {
+                    State.getInstance().setSelectedTranslationKey(viewModel.getTranslationKey());
+                });
+            });
         });
 
         // Listen to ViewModel property changes for callbacks

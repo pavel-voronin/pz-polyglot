@@ -243,4 +243,35 @@ public class PZTranslationManager {
         var variantsCopy = new ArrayList<>(TranslationSession.getInstance().getVariants());
         variantsCopy.forEach(PZTranslationManager::saveVariant);
     }
+
+    /**
+     * Deletes a translation variant from its file.
+     *
+     * @param variant the translation variant to delete
+     */
+    public static void deleteVariant(PZTranslationVariant variant) {
+        try {
+            Path filePath = constructFilePath(variant);
+            if (!Files.exists(filePath)) {
+                return;
+            }
+
+            List<String> lines = Files.readAllLines(filePath, variant.getUsedCharset());
+            String key = variant.getKey().getKey();
+            int[] keyLines = findKeyInFile(lines, key);
+
+            if (keyLines != null) {
+                // Remove lines for the key (inclusive)
+                int startIndex = keyLines[0] - 1;
+                int endIndex = keyLines[1] - 1;
+                for (int i = endIndex; i >= startIndex; i--) {
+                    lines.remove(i);
+                }
+
+                Files.write(filePath, lines, variant.getUsedCharset());
+            }
+        } catch (IOException e) {
+            System.err.println("Failed to delete variant: " + e.getMessage());
+        }
+    }
 }
