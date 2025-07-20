@@ -18,6 +18,12 @@ pz-polyglot is a desktop tool for managing translations in Project Zomboid mods.
 2. Unpack the archive.
 3. Run the executable file. No installation required.
 
+## How to run from code
+
+1. git clone
+2. install JDK
+3. run `./gradlew run`
+
 ## Help me with...
 
 - Testing, especially on macOS and Linux with PZ installed
