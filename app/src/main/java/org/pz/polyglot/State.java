@@ -8,7 +8,9 @@ import java.util.Set;
 import java.util.Objects;
 
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
@@ -18,6 +20,7 @@ import javafx.collections.ObservableSet;
 import org.pz.polyglot.models.translations.PZTranslationType;
 import org.pz.polyglot.models.TranslationSession;
 import org.pz.polyglot.models.languages.PZLanguages;
+import org.pz.polyglot.models.WorkMode;
 
 /**
  * Centralized Observable state manager for UI components.
@@ -65,6 +68,8 @@ public class State {
     private final BooleanProperty enabledSourcesChanged = new SimpleBooleanProperty(false);
     /** Controls visibility of the SourcesPanel. */
     private final BooleanProperty sourcesPanelVisible = new SimpleBooleanProperty(false);
+    /** Current work mode (Discovery, Focus, etc.). */
+    private final ObjectProperty<WorkMode> currentWorkMode = new SimpleObjectProperty<>(WorkMode.DISCOVERY);
 
     /**
      * Private constructor for singleton pattern. Initializes state from
@@ -186,6 +191,13 @@ public class State {
      */
     public BooleanProperty sourcesPanelVisibleProperty() {
         return sourcesPanelVisible;
+    }
+
+    /**
+     * Property for observing work mode changes.
+     */
+    public ObjectProperty<WorkMode> currentWorkModeProperty() {
+        return currentWorkMode;
     }
 
     /**
@@ -418,6 +430,22 @@ public class State {
      */
     public void setSourcesPanelVisible(boolean visible) {
         sourcesPanelVisible.set(visible);
+    }
+
+    /**
+     * Returns the current work mode.
+     */
+    public WorkMode getCurrentWorkMode() {
+        return currentWorkMode.get();
+    }
+
+    /**
+     * Sets the current work mode.
+     * 
+     * @param mode the work mode to set
+     */
+    public void setCurrentWorkMode(WorkMode mode) {
+        currentWorkMode.set(mode);
     }
 
     /**

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.pz.polyglot.components.ToggleSwitch?>
+
+<fx:root type="HBox" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" styleClass="mode-selector" stylesheets="/css/mode-selector.css">
+   <Label fx:id="discoveryModeLabel" text="Discovery mode" />
+   <ToggleSwitch fx:id="modeSwitch" />
+   <Label fx:id="focusModeLabel" text="Focus mode" />
+</fx:root>

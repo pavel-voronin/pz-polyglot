@@ -1,0 +1,5 @@
+.mode-selector {
+    -fx-spacing: 8px;
+    -fx-alignment: center;
+    -fx-fill-height: true;
+}

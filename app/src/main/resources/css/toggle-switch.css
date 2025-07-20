@@ -1,0 +1,70 @@
+.toggle-switch {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.toggle-switch .box {
+    -fx-background-color: #aa35be;
+    -fx-background-radius: 12px;
+    -fx-border-radius: 12px;
+    -fx-min-width: 40px;
+    -fx-max-width: 40px;
+    -fx-pref-width: 40px;
+    -fx-min-height: 20px;
+    -fx-max-height: 20px;
+    -fx-pref-height: 20px;
+    -fx-border-width: 0;
+    -fx-effect: innershadow(one-pass-box, rgba(0, 0, 0, 0.1), 2, 0, 0, 1);
+}
+
+.toggle-switch:selected .box {
+    -fx-background-color: #4CAF50;
+}
+
+.toggle-switch .mark {
+    -fx-background-color: white;
+    -fx-background-radius: 9px;
+    -fx-min-width: 16px;
+    -fx-max-width: 16px;
+    -fx-pref-width: 16px;
+    -fx-min-height: 16px;
+    -fx-max-height: 16px;
+    -fx-pref-height: 16px;
+    -fx-translate-x: -10px;
+    -fx-translate-y: 1px;
+    -fx-effect: dropshadow(one-pass-box, rgba(0, 0, 0, 0.2), 2, 0, 0, 1);
+    -fx-shape: null;
+}
+
+/* Hide the default checkmark */
+.toggle-switch .mark .check {
+    -fx-background-color: transparent;
+    -fx-shape: null;
+    -fx-content-display: none;
+}
+
+.toggle-switch:selected .mark {
+    -fx-translate-x: 10px;
+    -fx-translate-y: 0px;
+}
+
+/* Remove default text */
+.toggle-switch .text {
+    -fx-font-size: 0;
+}
+
+/* Hide all default checkmark elements */
+.toggle-switch:selected .mark .check {
+    -fx-background-color: transparent;
+    -fx-shape: null;
+    -fx-content-display: none;
+}
+
+/* Hover effects */
+.toggle-switch:hover .box {
+    -fx-background-color: #7B1FA2;
+}
+
+.toggle-switch:selected:hover .box {
+    -fx-background-color: #45a049;
+}
