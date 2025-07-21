@@ -21,6 +21,7 @@ import javafx.collections.transformation.SortedList;
 
 import org.pz.polyglot.Logger;
 import org.pz.polyglot.State;
+import org.pz.polyglot.models.TranslationSession;
 import org.pz.polyglot.models.translations.PZTranslationEntry;
 import org.pz.polyglot.models.translations.PZTranslations;
 import org.pz.polyglot.viewModels.TranslationEntryViewModel;
@@ -121,6 +122,12 @@ public class TranslationTable extends TableView<TranslationEntryViewModel> {
                     row.setContextMenu(contextMenu);
                     contextMenu.show(row, event.getScreenX(), event.getScreenY());
                     event.consume();
+                } else if (!row.isEmpty() && event.getClickCount() == 2 && event.getButton() != MouseButton.SECONDARY) {
+                    // Add key to sessionKeys on double click (any button except right)
+                    var item = row.getItem();
+                    if (item != null) {
+                        TranslationSession.getInstance().addSessionKey(item.getKey());
+                    }
                 }
             });
 
