@@ -9,6 +9,7 @@ import javafx.scene.layout.HBox;
 
 import org.pz.polyglot.State;
 import org.pz.polyglot.models.WorkMode;
+import org.pz.polyglot.models.TranslationSession;
 
 /**
  * A UI component that allows users to switch between different work modes.
@@ -45,6 +46,7 @@ public class ModeSelector extends HBox {
         }
 
         initializeMode();
+        initializeSessionKeyListener();
     }
 
     /**
@@ -90,5 +92,28 @@ public class ModeSelector extends HBox {
             discoveryModeLabel.setDisable(true);
             focusModeLabel.setDisable(false);
         }
+        updateFocusModeLabelText();
+    }
+
+    /**
+     * Updates the Focus Mode label to include the number of translation keys in
+     * parentheses.
+     */
+    private void updateFocusModeLabelText() {
+        int keyCount = TranslationSession.getInstance().getSessionKeyCount();
+        focusModeLabel.setText("Focus Mode" + (keyCount > 0 ? " (" + keyCount + ")" : ""));
+    }
+
+    /**
+     * Sets up a listener to update the Focus Mode label when the session key count
+     * changes.
+     */
+    private void initializeSessionKeyListener() {
+        TranslationSession.getInstance().getSessionKeys()
+                .addListener((javafx.collections.ListChangeListener<? super String>) change -> {
+                    updateFocusModeLabelText();
+                });
+        // Set initial label text
+        updateFocusModeLabelText();
     }
 }
