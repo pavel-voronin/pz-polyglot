@@ -4,7 +4,6 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableSet;
 
-import org.pz.polyglot.components.SystemMonitor;
 import org.pz.polyglot.models.translations.PZTranslationVariant;
 
 /**
@@ -31,8 +30,6 @@ public class TranslationSession {
      * Private constructor to enforce singleton pattern.
      */
     private TranslationSession() {
-        SystemMonitor.addHook(() -> "Session keys: " + sessionKeys.size() +
-                ", Variants: " + variants.size());
     }
 
     /**

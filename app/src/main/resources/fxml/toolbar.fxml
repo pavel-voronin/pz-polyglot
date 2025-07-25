@@ -9,8 +9,8 @@
       <Button fx:id="addModButton" mnemonicParsing="false" text="Add Mod" />
       <Button fx:id="saveAllToolbarButton" mnemonicParsing="false" text="Save All" />
       <Separator style="-fx-padding: 0 10;" />
-      <ModeSelector />
-      <Separator style="-fx-padding: 0 10;" />
+      <!-- <ModeSelector />
+      <Separator style="-fx-padding: 0 10;" /> -->
       <ToggleButton fx:id="typesButton" mnemonicParsing="false" text="Types" />
       <ToggleButton fx:id="sourcesButton" mnemonicParsing="false" text="Sources" />
       <ToggleButton fx:id="languagesButton" mnemonicParsing="false" text="Languages" />
